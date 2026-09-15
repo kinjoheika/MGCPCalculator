@@ -42,17 +42,42 @@ export function pendingChanges() {
   return w.step === 'done' ? [] : w.changes;
 }
 
+// Review (03) and Approve (04) write nothing, so the stored status can't tell them apart from Simulate (02).
+// Remember the last stage per proposal in this browser so reopening resumes where it was left.
+const RESUME_KEY = 'mgc_pricing_v1_resume';
+function readResume() {
+  try { return JSON.parse(localStorage.getItem(RESUME_KEY)) || {}; } catch { return {}; }
+}
+function writeResume(r) {
+  try { localStorage.setItem(RESUME_KEY, JSON.stringify(r)); } catch { /* storage unavailable */ }
+}
+function rememberStage() {
+  if (!w.proposalId) return;
+  const r = readResume();
+  if (['simulate', 'review', 'approve'].includes(w.step)) r[w.proposalId] = { step: w.step, instructedBy: w.instructedBy, verifiedBy: w.verifiedBy };
+  else delete r[w.proposalId];
+  writeResume(r);
+}
+// Only resume past Simulate while the proposal is still simulated for exactly these changes.
+function resumeFor(p) {
+  const saved = readResume()[p.id];
+  if (p.status !== 'simulated' || !saved || p.simKey !== keyOf(p.changes)) return null;
+  return saved;
+}
+
 // Load a simulation shared by URL. Viewing it writes nothing.
 export function loadShared(param, s) {
   if (w.sharedParam === param) return;
   try {
     const obj = decode(param);
     const existing = obj.proposalId ? s.proposals.find(p => p.id === obj.proposalId) : null;
+    const saved = existing && keyOf(obj.changes || []) === keyOf(existing.changes) ? resumeFor(existing) : null;
     w = fresh();
     Object.assign(w, {
       proposalId: existing && existing.status !== 'published' ? existing.id : null,
       objective: obj.objective || '', changes: obj.changes || [], drafterId: existing?.draftedBy ?? null,
-      simKey: existing?.simKey ?? null, step: 'simulate', sharedParam: param,
+      simKey: existing?.simKey ?? null, step: existing?.status === 'approved' ? 'publish' : saved?.step ?? 'simulate', sharedParam: param,
+      instructedBy: existing?.instructedBy ?? saved?.instructedBy ?? '', verifiedBy: existing?.verifiedBy ?? saved?.verifiedBy ?? '',
     });
   } catch {
     w = fresh();
@@ -62,11 +87,12 @@ export function loadShared(param, s) {
 }
 
 export function openProposal(p) {
+  const saved = resumeFor(p);
   w = fresh();
   Object.assign(w, {
     proposalId: p.id, objective: p.objective, changes: p.changes, drafterId: p.draftedBy, simKey: p.simKey ?? null,
-    instructedBy: p.instructedBy ?? '', verifiedBy: p.verifiedBy ?? '',
-    step: p.status === 'approved' ? 'publish' : p.status === 'simulated' ? 'simulate' : 'draft',
+    instructedBy: p.instructedBy ?? saved?.instructedBy ?? '', verifiedBy: p.verifiedBy ?? saved?.verifiedBy ?? '',
+    step: p.status === 'approved' ? 'publish' : saved ? saved.step : p.status === 'simulated' ? 'simulate' : 'draft',
   });
   if (w.step !== 'draft') {
     w.sharedParam = encode({ proposalId: p.id, objective: p.objective, changes: p.changes });
@@ -77,6 +103,7 @@ export function openProposal(p) {
 // ---------------- HTML ----------------
 
 export function html(s, user) {
+  rememberStage();
   const idx = STEPS.findIndex(([k]) => k === w.step);
   const bar = `<ol class="chevrons" aria-label="Stages">${STEPS.map(([k, l], i) => {
     const cls = w.step === 'done' || i < idx ? 'done' : i === idx ? 'on' : '';
