@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MGC Pricing — summary for management and IT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --navy: #0B1F3A; --navy2: #143560; --blue: #1F5AD6; --blue50: #EDF3FF;
+    --tif: #0ABAB5; --tif-d: #067F7B; --tif50: #E6F8F7;
+    --line: #DDE4EC; --muted: #55657B; --amber: #A45F00; --green: #0E8A5F;
+    --font: "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E9EDF3; font-family: var(--font); color: var(--navy); font-size: 10.2px; line-height: 1.38; }
+  .sheet { width: 8.5in; height: 11in; padding: 12mm 13mm; margin: 16px auto; background: #fff; box-shadow: 0 6px 24px rgba(11,31,58,.18); position: relative; overflow: hidden; }
+  h1 { font-size: 23px; margin: 0; letter-spacing: -.5px; }
+  h2 { font-size: 12.5px; margin: 13px 0 6px; letter-spacing: -.1px; display: flex; align-items: center; gap: 7px; }
+  h2::before { content: ""; width: 4px; height: 14px; background: var(--tif); border-radius: 2px; }
+  h3 { font-size: 10.4px; margin: 0 0 3px; }
+  p { margin: 0 0 6px; }
+  .muted { color: var(--muted); }
+  b, strong { font-weight: 700; }
+
+  .band { background: linear-gradient(95deg, var(--navy), var(--navy2)); color: #fff; margin: -12mm -13mm 12px; padding: 13px 13mm 14px; }
+  .band .row { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+  .band .tag { color: var(--tif); font-weight: 700; font-size: 10px; letter-spacing: .4px; text-transform: none; }
+  .band .sub { color: #C7D4E6; font-size: 10.5px; margin-top: 3px; }
+  .band .meta { text-align: right; color: #C7D4E6; font-size: 9.4px; line-height: 1.5; white-space: nowrap; }
+  .mark { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, var(--tif), var(--blue)); font-weight: 800; font-size: 11px; color: #fff; margin-right: 7px; vertical-align: -5px; }
+
+  .claims { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .claim { border: 1px solid var(--line); border-left: 3px solid var(--tif); border-radius: 7px; padding: 8px 10px; }
+  .claim b { display: block; font-size: 15.5px; letter-spacing: -.3px; }
+  .claim span { color: var(--muted); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 9.7px; }
+  th, td { text-align: left; padding: 4.5px 7px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-size: 9px; font-weight: 700; border-bottom: 1.5px solid var(--navy); }
+  tbody tr:nth-child(even) td { background: #F2FAFA; }
+  .pill { display: inline-block; padding: 1px 6px; border-radius: 99px; font-size: 8.6px; font-weight: 700; }
+  .p-blue { background: var(--blue50); color: var(--blue); }
+  .p-tif { background: var(--tif50); color: var(--tif-d); }
+  .p-amber { background: #FFF1D6; color: var(--amber); }
+
+  ul { margin: 0; padding-left: 15px; }
+  li { margin-bottom: 3px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .box { border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; }
+  .box.tif { background: var(--tif50); border-color: #BDE8E5; }
+  .box.blue { background: var(--blue50); border-color: #CFE0FF; }
+
+  .bar { display: inline-block; height: 7px; border-radius: 3px; vertical-align: 1px; }
+  .bar.c { background: var(--blue); }
+  .bar.k { background: var(--tif); }
+  .score { font-weight: 700; font-size: 9px; margin-left: 4px; }
+
+  .foot { position: absolute; left: 13mm; right: 13mm; bottom: 8mm; border-top: 1px solid var(--line); padding-top: 5px; display: flex; justify-content: space-between; color: var(--muted); font-size: 8.6px; }
+
+  @page { size: letter portrait; margin: 0; }
+  @media print {
+    body { background: #fff; }
+    .sheet { margin: 0; box-shadow: none; page-break-after: always; }
+    .sheet:last-child { page-break-after: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================ PAGE 1 ============================ -->
+<section class="sheet">
+  <div class="band">
+    <div class="row">
+      <div>
+        <div class="tag">Pricing operations</div>
+        <h1><span class="mark">M</span>MGC Pricing</h1>
+        <div class="sub">One place to set the price, one place everyone reads it — and a record of both.</div>
+      </div>
+      <div class="meta">Working prototype<br>For: Management &amp; IT<br>September 2026</div>
+    </div>
+  </div>
+
+  <div class="claims">
+    <div class="claim"><b>No typed prices</b><span>Sellers pick a customer and a product. The price is computed, never keyed in.</span></div>
+    <div class="claim"><b>Simulated first</b><span>Every change shows its peso impact per month before anyone approves it.</span></div>
+    <div class="claim"><b>Nothing unlogged</b><span>12 kinds of events — publish, quote, print, import — recorded as they happen.</span></div>
+  </div>
+
+  <h2>How a price travels</h2>
+  <svg viewBox="0 0 740 168" width="100%" height="152" role="img" aria-label="Flow from cost basis through approval and publishing to customers, with competitor readings feeding back">
+    <defs>
+      <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#1F5AD6"/>
+      </marker>
+      <marker id="at" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#0ABAB5"/>
+      </marker>
+    </defs>
+    <g font-family="Inter, sans-serif">
+      <!-- boxes -->
+      <g>
+        <rect x="0" y="26" width="128" height="52" rx="7" fill="#0B1F3A"/>
+        <text x="12" y="46" fill="#fff" font-size="11.5" font-weight="700">Cost + margins</text>
+        <text x="12" y="61" fill="#9FB6D4" font-size="9.5">Manager only</text>
+      </g>
+      <g>
+        <rect x="152" y="18" width="160" height="68" rx="7" fill="#E6F8F7" stroke="#0ABAB5"/>
+        <text x="164" y="38" fill="#0B1F3A" font-size="11.5" font-weight="700">MPL calculator</text>
+        <text x="164" y="53" fill="#067F7B" font-size="9.5">Draft › Simulate › Review</text>
+        <text x="164" y="66" fill="#067F7B" font-size="9.5">› Approve (2 people) › Publish</text>
+        <text x="164" y="79" fill="#55657B" font-size="9">Nothing changes until Publish</text>
+      </g>
+      <g>
+        <rect x="352" y="26" width="142" height="52" rx="7" fill="#1F5AD6"/>
+        <text x="364" y="46" fill="#fff" font-size="11.5" font-weight="700">Price list v(n)</text>
+        <text x="364" y="61" fill="#CFE0FF" font-size="9.5">7 lists, one per audience</text>
+      </g>
+      <g>
+        <rect x="534" y="6" width="206" height="44" rx="7" fill="#fff" stroke="#DDE4EC"/>
+        <text x="546" y="24" font-size="11" font-weight="700">Sellers quote</text>
+        <text x="546" y="38" fill="#55657B" font-size="9.3">PDF quotation · floor enforced</text>
+      </g>
+      <g>
+        <rect x="534" y="56" width="206" height="44" rx="7" fill="#fff" stroke="#DDE4EC"/>
+        <text x="546" y="74" font-size="11" font-weight="700">PL notices</text>
+        <text x="546" y="88" fill="#55657B" font-size="9.3">Who has read v(n), who has not</text>
+      </g>
+      <g>
+        <rect x="152" y="112" width="342" height="44" rx="7" fill="#fff" stroke="#0ABAB5" stroke-dasharray="4 3"/>
+        <text x="164" y="130" font-size="11" font-weight="700" fill="#067F7B">Competitor price watch</text>
+        <text x="164" y="144" fill="#55657B" font-size="9.3">Messengers, weekly per brand × zone, photo required → exceptions</text>
+      </g>
+      <!-- arrows -->
+      <path d="M128 52 H150" stroke="#1F5AD6" stroke-width="2" marker-end="url(#a)"/>
+      <path d="M312 52 H350" stroke="#1F5AD6" stroke-width="2" marker-end="url(#a)"/>
+      <path d="M494 52 H512 V28 H532" stroke="#1F5AD6" stroke-width="2" fill="none" marker-end="url(#a)"/>
+      <path d="M494 52 H512 V78 H532" stroke="#1F5AD6" stroke-width="2" fill="none" marker-end="url(#a)"/>
+      <path d="M152 134 H64 V80" stroke="#0ABAB5" stroke-width="2" fill="none" marker-end="url(#at)"/>
+    </g>
+  </svg>
+  <p class="muted" style="margin:-4px 0 0">Below the floor, the quote stops: the seller must request approval, and the request cannot be submitted without a competitor reading attached.</p>
+
+  <h2>Who can do what</h2>
+  <table>
+    <thead><tr><th style="width:15%">Role</th><th style="width:31%">Sees</th><th style="width:31%">Can change</th><th>Cannot</th></tr></thead>
+    <tbody>
+      <tr><td><b>Manager</b></td><td>Everything: boards, exceptions, log, config</td><td>Cost, margins, buffers, client premiums and discounts, users, client list</td><td>Publish alone — a second manager must verify</td></tr>
+      <tr><td><b>Seller</b></td><td>Own price lists, own customers, own past quotes</td><td>Nothing priced — only sends quotes and requests</td><td>Type a price, or send below floor</td></tr>
+      <tr><td><b>Messenger</b></td><td>Competitor price watch only</td><td>Adds competitor readings with a photo</td><td>See any MGC price, anywhere</td></tr>
+      <tr><td><b>Viewer</b></td><td>One assigned price list</td><td>Acknowledges receipt</td><td>Reach quotes, exceptions or the log</td></tr>
+    </tbody>
+  </table>
+
+  <h2>What it stops</h2>
+  <div class="two">
+    <ul>
+      <li><b>Quotes below the floor</b> — blocked, and only released by a manager decision with a reason on record.</li>
+      <li><b>Selling on yesterday's cost</b> — if the cost basis moves and no one republishes, sending is frozen.</li>
+    </ul>
+    <ul>
+      <li><b>Screenshots of unknown vintage</b> — every printed list and quotation carries its version, date and reference.</li>
+      <li><b>Silent discounts</b> — each premium and discount is a named line, itemised per client.</li>
+    </ul>
+  </div>
+
+  <h2>Six checks and balances</h2>
+  <div class="two">
+    <ul>
+      <li><b>No price typing</b> anywhere in the seller's screen.</li>
+      <li><b>Freshness gate</b> — a cost change freezes sending until republished.</li>
+      <li><b>Simulate before approve</b> — impact in pesos per month, accounts that fall below floor, and accounts that cross above the nearest competitor.</li>
+    </ul>
+    <ul>
+      <li><b>Four eyes</b> — the verifier can never be the drafter.</li>
+      <li><b>Immutable quotes</b> — a sent quotation keeps its price, with a hash, after any later change.</li>
+      <li><b>Versioned prices</b> — a price row is never edited; publishing closes the old one and inserts a new one.</li>
+    </ul>
+  </div>
+
+  <div class="box tif" style="margin-top:11px">
+    <b>The prototype runs today</b> — 7 price lists, 12 products, 10 sample clients, 8 users across 4 roles, 17 automated pricing tests passing.
+    It is a working tool for the pricing cycle, not a mockup: quotes, approvals, publishing, notices and the audit trail all function.
+  </div>
+
+  <div class="foot"><span>MGC Pricing — summary for management and IT</span><span>Page 1 of 2</span></div>
+</section>
+
+<!-- ============================ PAGE 2 ============================ -->
+<section class="sheet">
+  <h2 style="margin-top:0">Ranked by control and cascade</h2>
+  <p class="muted" style="margin-bottom:8px"><b>Control</b> = how tightly management can set and enforce the rule. <b>Cascade</b> = how fast and how far the result reaches the people who act on it. The features worth the most sit high on both.</p>
+  <table>
+    <thead><tr><th style="width:27%">Capability</th><th style="width:15%">Control</th><th style="width:15%">Cascade</th><th>What it buys you</th></tr></thead>
+    <tbody>
+      <tr><td><b>MPL calculator, 5 stages</b></td>
+        <td><span class="bar c" style="width:56px"></span><span class="score">5</span></td>
+        <td><span class="bar k" style="width:56px"></span><span class="score">5</span></td>
+        <td>One approved publish moves every price list, quote screen and PDF at the same instant. Two names required.</td></tr>
+      <tr><td><b>Price lists + PL notices</b></td>
+        <td><span class="bar c" style="width:34px"></span><span class="score">3</span></td>
+        <td><span class="bar k" style="width:56px"></span><span class="score">5</span></td>
+        <td>A per-audience list plus a matrix of who has acknowledged version n, with date and time. Ends "I never got it".</td></tr>
+      <tr><td><b>Quote desk without a price field</b></td>
+        <td><span class="bar c" style="width:56px"></span><span class="score">5</span></td>
+        <td><span class="bar k" style="width:45px"></span><span class="score">4</span></td>
+        <td>Discounting becomes a request with a reason and a competitor reading, not a favour granted in the field.</td></tr>
+      <tr><td><b>Event log, 12 event types</b></td>
+        <td><span class="bar c" style="width:45px"></span><span class="score">4</span></td>
+        <td><span class="bar k" style="width:34px"></span><span class="score">3</span></td>
+        <td>Who changed what, when, why, and on whose instruction — written by the same action, never typed in after.</td></tr>
+      <tr><td><b>Configuration: users + clients</b></td>
+        <td><span class="bar c" style="width:56px"></span><span class="score">5</span></td>
+        <td><span class="bar k" style="width:23px"></span><span class="score">2</span></td>
+        <td>Roles, price-list access and the whole client list (CSV import/export) maintained in-app, without IT.</td></tr>
+      <tr><td><b>Competitor price watch</b></td>
+        <td><span class="bar c" style="width:23px"></span><span class="score">2</span></td>
+        <td><span class="bar k" style="width:45px"></span><span class="score">4</span></td>
+        <td>Weekly readings per brand and zone, photo required, 10% outlier challenge. Feeds every discount request.</td></tr>
+      <tr><td><b>Comparison boards, 5 at a time</b></td>
+        <td><span class="bar c" style="width:34px"></span><span class="score">3</span></td>
+        <td><span class="bar k" style="width:23px"></span><span class="score">2</span></td>
+        <td>Clients, products or channels side by side, showing proposed prices while a change is still being drafted.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>For IT</h2>
+  <div class="two">
+    <div class="box">
+      <h3>What it is today</h3>
+      <ul>
+        <li>Plain HTML and JavaScript modules. <b>No build step, no packages, no server code.</b> Runs from any static web host, a shared folder or a laptop.</li>
+        <li>Prototype data lives in the browser (localStorage), with export/import and reset. Nothing leaves the machine.</li>
+        <li>The pricing engine is one dependency-free file covered by 17 tests that run in the browser.</li>
+        <li>Money is whole centavos end to end — no floating-point drift, two decimals everywhere.</li>
+      </ul>
+    </div>
+    <div class="box blue">
+      <h3>Path to production</h3>
+      <ul>
+        <li>The engine file moves unchanged into the server and the web client — the arithmetic is written once.</li>
+        <li>Every write already passes through one function; that becomes the API call. The event object is already the audit table row.</li>
+        <li>Seed collections map to tables; effective-dated rows map to a date-range column that makes overlapping prices impossible.</li>
+        <li><b>Needed for production:</b> real accounts and passwords, server-enforced roles, a database, backups. The role switcher is a stand-in for login.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Decisions we need from you</h2>
+  <table>
+    <thead><tr><th style="width:22%">Decision</th><th style="width:44%">Why it matters</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><b>The floor</b></td><td>Today the floor is cost + hauling + margin. On current data, 5 of 10 sample clients already sit below it because of long-standing discounts.</td><td><span class="pill p-amber">Open — needs a ruling</span></td></tr>
+      <tr><td><b>Who may instruct and verify</b></td><td>Approval records both names. We can restrict the lists to named people in Configuration.</td><td><span class="pill p-blue">Ready to set</span></td></tr>
+      <tr><td><b>Client master data</b></td><td>Clients, contracts, volumes and premiums come in by CSV. Someone must own that list.</td><td><span class="pill p-blue">Ready to load</span></td></tr>
+      <tr><td><b>Go-live scope</b></td><td>Pilot one channel for a month, or move all seven at the next price change.</td><td><span class="pill p-tif">Your call</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="box tif" style="margin-top:10px">
+    <b>The short version.</b> Price setting becomes a five-stage, two-signature procedure that takes minutes. Price telling becomes one versioned list per audience, with proof of receipt.
+    Everything in between — quotes, discounts, competitor prices, printed lists — is recorded as it happens, so a price can always be explained after the fact.
+  </div>
+
+  <div class="foot"><span>MGC Pricing — summary for management and IT</span><span>Page 2 of 2</span></div>
+</section>
+
+</body>
+</html>
