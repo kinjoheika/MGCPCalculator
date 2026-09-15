@@ -19,7 +19,7 @@ const NOTICE_ORDER = ['BULK', 'COMMERCIAL', 'DEALER', 'RETAIL_OUTLET', 'COBANKIA
 const TABS = [['clients', 'Clients board'], ['products', 'Products board'], ['channels', 'Channels board'], ['notices', 'PL notices']];
 const ui = {
   tab: 'clients', open: true, panel: 'exceptions', wide: false, animate: false, lastSim: null, scrollTop: null,
-  clients: ['acc_alta', 'acc_kja', 'acc_silca'], clientQuery: '', clientSku: '',
+  clients: ['acc_alta', 'acc_kja', 'acc_silca'], clientQuery: '', clientSku: '', clientOpen: false, clientScroll: 0,
   products: ['11KG_MGAS', '50KG_A', '22KG_A'], prodOpen: false, channels: ['DEALER', 'COMMERCIAL', 'END_USER'],
   reasons: {}, errors: {},
 };
@@ -201,14 +201,21 @@ function bindExceptions(root, rerender) {
 
 // ---------------- Clients board ----------------
 
-function clientResults(s) {
+// Every client, A–Z, filtered by the search box. The list shows 10 lines and scrolls.
+function clientOptions(s) {
   const q = ui.clientQuery.trim().toLowerCase();
-  if (!q) return '';
-  const hits = s.accounts.filter(a => !ui.clients.includes(a.id) && a.name.toLowerCase().includes(q)).slice(0, 8);
-  return hits.length
-    ? `<ul>${hits.map(a => `<li><button type="button" data-pick="${esc(a.id)}"><span><b>${esc(a.name)}</b> ${a.status === 'Active' ? '' : '<span class="pill grey">Inactive</span>'}<br>
-        <span class="small muted">${esc(channelLabel(s, a.channelId))} · ${esc(a.zone ?? '—')}</span></span></button></li>`).join('')}</ul>`
-    : '<p class="small muted">No other clients match.</p>';
+  const full = ui.clients.length >= MAX;
+  const list = [...s.accounts]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .filter(a => !q || a.name.toLowerCase().includes(q) || (a.zone || '').toLowerCase().includes(q) || channelLabel(s, a.channelId).toLowerCase().includes(q));
+  if (!list.length) return '<p class="small muted" style="padding:8px">No clients match.</p>';
+  return list.map(a => {
+    const on = ui.clients.includes(a.id);
+    const dis = !on && full;
+    return `<label class="multi-opt client-opt ${dis ? 'dis' : ''}"><input type="checkbox" data-client="${esc(a.id)}" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''}>
+      <span class="grow"><span class="opt-name">${esc(a.name)}</span><span class="opt-sub">${esc(channelLabel(s, a.channelId))} · ${esc(a.zone ?? '—')}</span></span>
+      ${a.status === 'Active' ? '' : '<span class="pill grey">Inactive</span>'}</label>`;
+  }).join('');
 }
 
 function clientsBoard(s, proposed) {
@@ -216,13 +223,21 @@ function clientsBoard(s, proposed) {
   const sel = ui.clients.map(id => byId(s.accounts, id));
   const full = sel.length >= MAX;
   const picker = `<div class="picker">
-    <div class="chips">${sel.map(a => `<span class="chip">${esc(a.name)}<button type="button" data-unpick="${esc(a.id)}" aria-label="Remove ${esc(a.name)}">✕</button></span>`).join('')}
-      <span class="small muted">${sel.length} of ${MAX} clients</span></div>
     <div class="row">
-      <div class="typeahead grow"><input id="cb-q" type="search" autocomplete="off" aria-label="Add a client" value="${esc(ui.clientQuery)}"
-        placeholder="${full ? 'Remove a client to add another' : 'Add a client to compare'}" ${full ? 'disabled' : ''}><div id="cb-results">${full ? '' : clientResults(s)}</div></div>
+      <div class="multi" id="cb-multi">
+        <button type="button" id="cb-toggle" class="multi-btn" aria-haspopup="listbox" aria-expanded="${ui.clientOpen}">
+          <span>Clients · <b>${sel.length}</b> of ${MAX} selected</span><span aria-hidden="true">▾</span></button>
+        ${ui.clientOpen ? `<div class="multi-menu client-menu">
+          <input id="cb-q" type="search" autocomplete="off" placeholder="Search client, zone or channel" aria-label="Search clients" value="${esc(ui.clientQuery)}">
+          <div class="multi-actions small"><span class="muted">${full ? `Maximum of ${MAX} reached` : `Choose up to ${MAX}`} · ${s.accounts.length} clients</span>
+            <button type="button" class="link" id="cb-clear">Clear all</button></div>
+          <div id="cb-list" class="multi-list" role="listbox" aria-multiselectable="true" aria-label="Clients">${clientOptions(s)}</div>
+        </div>` : ''}
+      </div>
       <label class="field inline"><span>Price for</span><select id="cb-sku" style="min-width:220px">${options(s.skus, ui.clientSku, { placeholder: "Each client's main product" })}</select></label>
-    </div></div>`;
+    </div>
+    ${sel.length ? `<div class="chips" style="margin:10px 0 0">${sel.map(a => `<span class="chip">${esc(a.name)}<button type="button" data-unpick="${esc(a.id)}" aria-label="Remove ${esc(a.name)}">✕</button></span>`).join('')}</div>` : ''}
+  </div>`;
   if (!sel.length) return picker + '<p class="muted">Add up to 5 clients to compare side by side.</p>';
 
   const n = sel.length;
@@ -337,15 +352,21 @@ function productPicker(s) {
 }
 
 let closeProductMenu = null;
+// Close the product or client dropdown on an outside click or Escape.
 document.addEventListener('click', e => {
-  if (!ui.prodOpen) return;
-  if (!document.getElementById('pb-multi')) { ui.prodOpen = false; return; }
-  if (!e.target.isConnected || e.target.closest('#pb-multi')) return;
-  ui.prodOpen = false;
-  closeProductMenu?.();
+  if (!ui.prodOpen && !ui.clientOpen) return;
+  const onPage = document.querySelector('#pb-multi, #cb-multi');
+  if (!onPage) { ui.prodOpen = ui.clientOpen = false; return; }
+  if (!e.target.isConnected) return;
+  let changed = false;
+  if (ui.prodOpen && !e.target.closest('#pb-multi')) { ui.prodOpen = false; changed = true; }
+  if (ui.clientOpen && !e.target.closest('#cb-multi')) { ui.clientOpen = false; changed = true; }
+  if (changed) closeProductMenu?.();
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && ui.prodOpen && document.getElementById('pb-multi')) { ui.prodOpen = false; closeProductMenu?.(); }
+  if (e.key !== 'Escape' || !(ui.prodOpen || ui.clientOpen) || !document.querySelector('#pb-multi, #cb-multi')) return;
+  ui.prodOpen = ui.clientOpen = false;
+  closeProductMenu?.();
 });
 
 function productsBoard(s, proposed) {
@@ -407,14 +428,29 @@ function noticesTab(s) {
 
 function bindMain(root, rerender) {
   const $ = id => root.querySelector('#' + id);
-  const bindPick = () => root.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => {
-    if (ui.clients.length < MAX && !ui.clients.includes(b.dataset.pick)) ui.clients.push(b.dataset.pick);
-    ui.clientQuery = '';
+  if ($('cb-toggle')) $('cb-toggle').onclick = () => {
+    ui.clientOpen = !ui.clientOpen;
+    ui.clientScroll = 0;
     rerender();
-    document.getElementById('cb-q')?.focus();
+    if (ui.clientOpen) document.getElementById('cb-q')?.focus();
+  };
+  const bindClientOpts = () => root.querySelectorAll('[data-client]').forEach(cb => cb.onchange = () => {
+    // Keep the list where it was so several clients can be ticked in a row.
+    ui.clientScroll = document.getElementById('cb-list')?.scrollTop ?? 0;
+    const id = cb.dataset.client;
+    ui.clients = ui.clients.includes(id) ? ui.clients.filter(x => x !== id) : ui.clients.length < MAX ? [...ui.clients, id] : ui.clients;
+    rerender();
   });
-  bindPick();
-  if ($('cb-q')) $('cb-q').oninput = e => { ui.clientQuery = e.target.value; $('cb-results').innerHTML = clientResults(store.get()); bindPick(); };
+  bindClientOpts();
+  if ($('cb-list')) $('cb-list').scrollTop = ui.clientScroll;
+  if ($('cb-q')) $('cb-q').oninput = e => {
+    ui.clientQuery = e.target.value;
+    ui.clientScroll = 0;
+    $('cb-list').innerHTML = clientOptions(store.get());
+    $('cb-list').scrollTop = 0;
+    bindClientOpts();
+  };
+  if ($('cb-clear')) $('cb-clear').onclick = () => { ui.clients = []; rerender(); };
   root.querySelectorAll('[data-unpick]').forEach(b => b.onclick = () => { ui.clients = ui.clients.filter(x => x !== b.dataset.unpick); rerender(); });
   if ($('cb-sku')) $('cb-sku').onchange = e => { ui.clientSku = e.target.value; rerender(); };
   const toggle = (list, id) => (list.includes(id) ? list.filter(x => x !== id) : list.length < MAX ? [...list, id] : list);

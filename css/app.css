@@ -321,3 +321,14 @@ table.matrix tbody tr:hover > td, table.matrix tbody tr:hover > th { background:
   body.print-doc #print-sheet { display: block; }
   body.print-doc #print-sheet img { display: block; width: 8.5in; height: 11in; }
 }
+
+/* ---- Client dropdown: search + fixed 10-line list ---- */
+.client-menu { width: min(440px, calc(100vw - 40px)); max-height: none; overflow: visible; padding: 8px; }
+.client-menu input[type=search] { min-height: 40px; }
+.client-menu .multi-actions { margin-top: 4px; }
+.multi-list { height: 440px; max-height: 440px; overflow-y: auto; overscroll-behavior: contain; }
+.client-opt { height: 44px; min-height: 44px; padding: 4px 8px; }
+.client-opt .grow { min-width: 0; }
+.opt-name, .opt-sub { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.3; }
+.opt-name { font-size: 13px; font-weight: 600; color: var(--navy); }
+.opt-sub { font-size: 11.5px; color: var(--muted); }
