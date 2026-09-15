@@ -36,9 +36,9 @@ export function render(root, ctx) {
       </table></div>` : '<p class="muted">Prices for this version were not captured in the prototype seed.</p>'}
     ${superseded ? '' : `<div class="row no-print" style="margin-top:16px">
       ${ack ? `<span class="pill green">Acknowledged ${esc(fmtDateTime(ack.acknowledgedAt))}</span>`
-        : '<button type="button" id="b-ack" class="primary">Acknowledge price list</button>'}
+        : '<button type="button" id="b-ack" class="primary">Acknowledge</button>'}
       <button type="button" id="b-print">Print</button>
-      <button type="button" id="b-save">Save price list</button></div>`}
+      <button type="button" id="b-save">Save</button></div>`}
   </section>`;
 
   const ackBtn = root.querySelector('#b-ack');
