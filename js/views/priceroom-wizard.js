@@ -171,7 +171,7 @@ function simulateHtml(s) {
         ${sim.crossesCompetitor.length ? `<ul>${sim.crossesCompetitor.map(x => { const r = s.competitorReadings.find(c => c.id === x.readingId); return `<li><b>${esc(accName(x.accountId))}</b> — ${fmt(x.afterGrossPerCyl)} vs ${esc(r.brand)} ${fmt(r.pricePerCyl)}</li>`; }).join('')}</ul>` : '<p class="muted small">None.</p>'}
         <h3>Accounts</h3>
         <div class="table-wrap"><table><thead><tr><th>Account</th><th class="num">Δ/kg</th><th class="num">Vol kg/mo</th><th class="num">Monthly</th></tr></thead><tbody>
-        ${sim.accountRows.map(r => `<tr><td>${esc(accName(r.accountId))}<br><span class="small muted">${esc(skuLabel(s, r.skuId))} ${fmt(r.beforePerKg)} → ${fmt(r.afterPerKg)}</span></td>
+        ${sim.accountRows.map(r => `<tr><td>${esc(accName(r.accountId))}<br><span class="small muted">${esc(skuLabel(s, r.skuId))} <span class="was">${fmt(r.beforePerKg)}</span> → <span class="now">${fmt(r.afterPerKg)}</span></span></td>
           <td class="num">${d(r.deltaPerKg)}</td><td class="num">${r.volumeKg == null ? '<span class="muted">none</span>' : r.volumeKg.toLocaleString('en-PH')}</td>
           <td class="num">${r.impact == null ? '<span class="muted">excluded</span>' : fmtSigned(r.impact)}</td></tr>`).join('')}
         </tbody></table></div>
@@ -181,8 +181,8 @@ function simulateHtml(s) {
           <label class="toggle small"><input id="w-showall" type="checkbox" ${w.showAll ? 'checked' : ''}> Show unchanged</label></div>
         <div class="table-wrap"><table><thead><tr><th>Channel · product</th><th class="num">Per kg</th><th class="num">Δ/kg</th><th class="num">Per cyl, net</th><th class="num">Δ/cyl</th></tr></thead><tbody>
         ${rows.length ? rows.map(r => `<tr><td>${esc(channelLabel(s, r.channelId))}<br><span class="small muted">${esc(skuLabel(s, r.skuId))}</span></td>
-          <td class="num">${fmt(r.beforePerKg)}<br>${fmt(r.afterPerKg)}</td><td class="num">${d(r.deltaPerKg)}</td>
-          <td class="num">${fmt(r.beforePerCyl)}<br>${fmt(r.afterPerCyl)}</td><td class="num">${d(r.deltaPerCyl)}</td></tr>`).join('')
+          <td class="num"><span class="was">${fmt(r.beforePerKg)}</span><br><span class="now">${fmt(r.afterPerKg)}</span></td><td class="num">${d(r.deltaPerKg)}</td>
+          <td class="num"><span class="was">${fmt(r.beforePerCyl)}</span><br><span class="now">${fmt(r.afterPerCyl)}</span></td><td class="num">${d(r.deltaPerCyl)}</td></tr>`).join('')
           : '<tr><td colspan="5" class="muted">No channel list prices change.</td></tr>'}
         </tbody></table></div>
       </div>
