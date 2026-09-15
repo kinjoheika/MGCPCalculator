@@ -10,6 +10,7 @@ const loaders = {
   market: () => import('./views/market.js'),
   board: () => import('./views/board.js'),
   log: () => import('./views/log.js'),
+  config: () => import('./views/config.js'),
 };
 
 export function parse(hash = location.hash) {
@@ -26,6 +27,7 @@ export function canAccess(s, user, route) {
     case 'quote': return role === 'seller';
     case 'priceroom': return role === 'manager';
     case 'log': return role === 'manager';
+    case 'config': return role === 'manager';
     case 'market': return role === 'messenger';
     case 'board': {
       if (role === 'messenger') return false;
@@ -40,9 +42,9 @@ export function navFor(s, user) {
   const items = [];
   if (user.role === 'seller') items.push(['#/quote', 'Quote desk']);
   if (user.role === 'manager') items.push(['#/priceroom', 'Price room']);
-  if (user.role === 'messenger') items.push(['#/market', 'Market watch']);
-  if (user.role !== 'messenger') items.push(['#/board', 'Boards']);
-  if (user.role === 'manager') items.push(['#/log', 'Log']);
+  if (user.role === 'messenger') items.push(['#/market', 'Competitor price watch']);
+  if (user.role !== 'messenger') items.push(['#/board', 'Price lists']);
+  if (user.role === 'manager') items.push(['#/log', 'Log'], ['#/config', 'Configuration']);
   return items;
 }
 

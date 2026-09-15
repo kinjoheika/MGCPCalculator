@@ -3,10 +3,10 @@
 import * as store from '../store.js';
 import { fmt, toCentavos } from '../money.js';
 import { esc, toast, options, preserveFocus } from '../ui.js';
-import { newestReading, isStaleReading, daysSince, fmtDate } from '../pricing.js';
+import { newestReading, isStaleReading, daysSince, fmtDate, userName } from '../pricing.js';
 
 const LAST_ZONE = 'mgc_pricing_v1_last_zone';
-const ui = { brand: '', brandOther: '', zone: null, skuId: '11KG_MGAS', price: '', photoUrl: null, photoName: '', noCamera: false, error: '', outlier: null };
+const ui = { dueOpen: true, recentOpen: false, brand: '', brandOther: '', zone: null, skuId: '11KG_MGAS', price: '', photoUrl: null, photoName: '', noCamera: false, error: '', outlier: null };
 
 function lastZone() {
   try { return localStorage.getItem(LAST_ZONE); } catch { return null; }
@@ -38,7 +38,7 @@ function view({ state: s, user }) {
   const skuList = s.skus.filter(k => k.active);
 
   return `<section class="page narrow">
-    <h1>Market watch</h1>
+    <div class="page-head"><div><div class="eyebrow">Field</div><h1>Competitor price watch</h1></div></div>
     <p class="muted small">One reading per brand, zone and product each week.</p>
     <div class="stack">
       <label class="field"><span>Brand</span>
@@ -61,20 +61,22 @@ function view({ state: s, user }) {
 
     <div class="panel" style="margin-top:20px"><b>Today: ${todayCount} submitted</b></div>
 
-    <h2>Still due this week</h2>
-    ${due.length ? `<ul class="stack" style="list-style:none;padding:0">${due.map(d => `<li class="row"><span aria-hidden="true">☐</span>
+    <details class="collapse" id="m-due" ${ui.dueOpen ? 'open' : ''}><summary>Still due this week (${due.length})</summary>
+    ${due.length ? `<ul class="stack" style="list-style:none;padding:0;margin:0 0 12px">${due.map(d => `<li class="row"><span aria-hidden="true">☐</span>
       <span class="grow">${esc(d.brand)} · ${esc(d.zone)}</span>
       <span class="small muted">${d.r ? `last ${daysSince(d.r.capturedAt, now)} days ago` : 'never'}</span></li>`).join('')}</ul>`
       : '<p class="muted">All tracked brands and zones have a reading this week.</p>'}
+    </details>
 
-    <h2>Recent readings</h2>
-    <div class="table-wrap"><table><tbody>
+    <details class="collapse" id="m-recent" ${ui.recentOpen ? 'open' : ''}><summary>Recent readings (${recent.length})</summary>
+    <div class="table-wrap"><table><thead><tr><th>Brand · zone</th><th>Submitted by</th><th class="num">Per cyl</th></tr></thead><tbody>
     ${recent.map(r => {
       const stale = isStaleReading(s, r, now);
       return `<tr class="${stale ? 'stale' : ''}"><td>${esc(r.brand)}<br><span class="small">${esc(r.zone)} · ${esc(s.skus.find(k => k.id === r.skuId)?.label ?? r.skuId)}</span></td>
+        <td class="small">${esc(userName(s, r.capturedBy))}</td>
         <td class="num">${fmt(r.pricePerCyl)}<br><span class="small">${fmtDate(r.capturedAt)}${stale ? ` · <span class="pill grey">${daysSince(r.capturedAt, now)} days old</span>` : ''}</span></td></tr>`;
     }).join('')}
-    </tbody></table></div>
+    </tbody></table></div></details>
   </section>`;
 }
 
@@ -83,6 +85,8 @@ function bind(root, ctx) {
   const $ = id => root.querySelector('#' + id);
   const clearFlags = () => { ui.error = ''; ui.outlier = null; };
 
+  $('m-due').ontoggle = e => { ui.dueOpen = e.target.open; };
+  $('m-recent').ontoggle = e => { ui.recentOpen = e.target.open; };
   $('m-brand').onchange = e => { ui.brand = e.target.value; clearFlags(); rerender(); };
   if ($('m-brand-other')) $('m-brand-other').oninput = e => { ui.brandOther = e.target.value; clearFlags(); };
   $('m-zone').onchange = e => { ui.zone = e.target.value; clearFlags(); rerender(); };

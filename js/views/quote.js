@@ -64,7 +64,7 @@ function newQuote(s, user) {
       <label class="field" style="flex:0 0 110px"><span>Quantity</span><input id="q-qty" type="number" min="1" step="1" inputmode="numeric" value="${esc(ui.qty)}"></label>
     </div></div>`;
 
-  return `${stale ? '<div class="banner red">Board is out of date — prices cannot be sent. Ask a manager to republish.</div>' : ''}
+  return `${stale ? '<div class="banner red">Price list is out of date — prices cannot be sent. Ask a manager to republish.</div>' : ''}
     ${form}<div id="q-result">${resultHtml(s, user)}</div>`;
 }
 
@@ -114,13 +114,13 @@ function resultCard(s, p, stale) {
   const blockedByFloor = r.belowFloor && !p.exception;
   const canSend = !stale && !pending && !blockedByFloor && r.quantity > 0;
   const reasons = [];
-  if (stale) reasons.push('Board is out of date — republish before sending.');
+  if (stale) reasons.push('Price list is out of date — republish before sending.');
   if (pending) reasons.push(`Price request pending in the Price Room since ${fmtDateTime(pending.requestedAt)}.`);
   if (blockedByFloor) reasons.push('Below floor — request a lower price for approval before sending.');
   if (r.quantity <= 0) reasons.push('Enter a quantity of at least 1.');
 
   return `<div class="card" style="margin-top:14px">
-    <div class="muted small">${esc(p.sku.label)} · ${esc(p.channel.label)} · board v${currentPublication(s).version}</div>
+    <div class="muted small">${esc(p.sku.label)} · ${esc(p.channel.label)} · price list v${currentPublication(s).version}</div>
     <div class="price-hero">${fmt(r.grossPerCyl)}</div>
     <div class="muted small">per cylinder, VAT inclusive</div>
     <div class="price-sub"><span>Per kg <b>${fmt(r.netPerKg)}</b> <span class="small muted">net</span></span>
@@ -167,7 +167,7 @@ function printable(s, q) {
     <div class="price-hero">${fmt(o.grossPerCyl)}</div>
     <div class="muted small">${esc(q.snapshot.input.sku.label)}, per cylinder, VAT inclusive</div>
     <div class="price-sub"><span>Quantity <b>${o.quantity}</b></span><span>Total <b>${fmt(o.grossTotal)}</b></span></div>
-    <p class="small">Sent ${fmtDateTime(q.sentAt)} by ${esc(byId(s.users, q.sentBy)?.name)} · valid until ${fmtDate(q.validUntil)} · board v${q.snapshot.boardVersion}</p>
+    <p class="small">Sent ${fmtDateTime(q.sentAt)} by ${esc(byId(s.users, q.sentBy)?.name)} · valid until ${fmtDate(q.validUntil)} · price list v${q.snapshot.boardVersion}</p>
     <details><summary>Why this price</summary>${ladderTable(o)}</details>
     <div class="row no-print"><button type="button" onclick="window.print()">Print</button><button type="button" id="q-close">Close</button></div></div>`;
 }
@@ -208,7 +208,7 @@ async function sendQuote(s, user) {
   const { account, channelId, p } = currentLine(s, user);
   if (p.error) return;
   // Re-check every gate at the moment of sending.
-  if (boardIsStale(s)) return toast('Board is out of date — republish before sending', 'bad');
+  if (boardIsStale(s)) return toast('Price list is out of date — republish before sending', 'bad');
   if (pendingRequest(s, p.lineKey, p.sku.id)) return toast('A price request is pending for this line', 'bad');
   if (p.result.belowFloor && !p.exception) return toast('Below floor — request a lower price first', 'bad');
 

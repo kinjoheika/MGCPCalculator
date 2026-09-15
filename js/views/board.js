@@ -11,7 +11,7 @@ export function render(root, ctx) {
   if (!channelId) { root.innerHTML = index(s, user); return; }
 
   const channel = byId(s.channels, channelId);
-  if (!channel) { root.innerHTML = `<section class="page narrow"><h1>No such board</h1><p><a href="#/board">All boards</a></p></section>`; return; }
+  if (!channel) { root.innerHTML = `<section class="page narrow"><h1>No such price list</h1><p><a href="#/board">All price lists</a></p></section>`; return; }
 
   const pub = currentPublication(s);
   const askedVersion = route.query.v ? parseInt(route.query.v, 10) : pub.version;
@@ -21,10 +21,10 @@ export function render(root, ctx) {
   const ack = s.acknowledgments.find(a => a.userId === user.id && a.boardVersion === pub.version && a.channelId === channelId);
 
   root.innerHTML = `<section class="page" style="max-width:760px">
-    ${superseded ? `<div class="banner amber">This is board v${shownPub.version}, superseded. <a href="#/board/${esc(channelId)}">Open the current board (v${pub.version})</a></div>` : ''}
-    ${!superseded && boardIsStale(s) ? '<div class="banner red">Cost basis has changed since this board was published — republish before quoting.</div>' : ''}
+    ${superseded ? `<div class="banner amber">This is price list v${shownPub.version}, superseded. <a href="#/board/${esc(channelId)}">Open the current price list (v${pub.version})</a></div>` : ''}
+    ${!superseded && boardIsStale(s) ? '<div class="banner red">Cost basis has changed since this price list was published — republish before quoting.</div>' : ''}
     <div class="board-head">
-      <div><div class="muted">${esc(channel.audience)} board</div><h1 style="margin:2px 0 0">${esc(channel.label)}</h1></div>
+      <div><div class="muted">${esc(channel.audience)} price list</div><h1 style="margin:2px 0 0">${esc(channel.label)}</h1></div>
       <div style="text-align:right"><div class="version">v${shownPub.version}</div><div class="muted">Effective ${fmtDate(shownPub.publishedAt)}</div></div>
     </div>
     <hr class="hr">
@@ -35,7 +35,7 @@ export function render(root, ctx) {
       </table></div>` : '<p class="muted">Prices for this version were not captured in the prototype seed.</p>'}
     ${superseded ? '' : `<div class="row no-print" style="margin-top:16px">
       ${ack ? `<span class="pill green">Acknowledged ${esc(fmtDateTime(ack.acknowledgedAt))}</span>`
-        : '<button type="button" id="b-ack" class="primary">Acknowledge board</button>'}
+        : '<button type="button" id="b-ack" class="primary">Acknowledge price list</button>'}
       <button type="button" id="b-img">Export image</button></div>`}
   </section>`;
 
@@ -53,7 +53,7 @@ export function render(root, ctx) {
 function index(s, user) {
   const pub = currentPublication(s);
   const mine = s.channels.filter(c => userChannels(s, user).includes(c.id));
-  return `<section class="page narrow"><h1>Boards</h1><p class="muted">Current version v${pub.version}, effective ${fmtDate(pub.publishedAt)}</p>
+  return `<section class="page narrow"><h1>Price lists</h1><p class="muted">Current version v${pub.version}, effective ${fmtDate(pub.publishedAt)}</p>
     <ul class="stack" style="list-style:none;padding:0">${mine.map(c => `<li><a class="btn" style="width:100%;justify-content:space-between" href="#/board/${esc(c.id)}">
       <span>${esc(c.label)}</span><span class="muted small">${esc(c.audience)}</span></a></li>`).join('')}</ul></section>`;
 }
@@ -67,7 +67,7 @@ function exportImage(channel, pub, rows) {
   g.scale(scale, scale);
   g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
   g.fillStyle = '#141414';
-  g.font = '600 16px system-ui, sans-serif'; g.fillText(`${channel.audience} board`, 32, 44);
+  g.font = '600 16px system-ui, sans-serif'; g.fillText(`${channel.audience} price list`, 32, 44);
   g.font = '700 30px system-ui, sans-serif'; g.fillText(channel.label, 32, 82);
   g.textAlign = 'right';
   g.font = '700 44px system-ui, sans-serif'; g.fillText(`v${pub.version}`, W - 32, 76);
@@ -88,6 +88,6 @@ function exportImage(channel, pub, rows) {
   });
   // Version stamp burned in, so a forwarded image always carries its version.
   g.textAlign = 'left'; g.fillStyle = '#b3261e'; g.font = '600 13px system-ui, sans-serif';
-  g.fillText(`MGC board v${pub.version} · ${channel.id} · effective ${fmtDate(pub.publishedAt)} · check the live board before quoting`, 32, H - 30);
-  c.toBlob(blob => download(`MGC-board-${channel.id}-v${pub.version}.png`, blob), 'image/png');
+  g.fillText(`MGC price list v${pub.version} · ${channel.id} · effective ${fmtDate(pub.publishedAt)} · check the live price list before quoting`, 32, H - 30);
+  c.toBlob(blob => download(`MGC-price-list-${channel.id}-v${pub.version}.png`, blob), 'image/png');
 }

@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MGC Pricing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 <header class="topbar">
-  <a class="brand" href="#/">MGC Pricing</a>
+  <a class="brand" href="#/"><span class="mark" aria-hidden="true">M</span>MGC Pricing</a>
   <nav id="nav" aria-label="Screens"></nav>
   <div class="tools">
     <label class="row small"><span class="muted">Acting as</span>
@@ -37,6 +39,10 @@ try {
     <p>Serve the folder over HTTP: <code>python3 -m http.server 8000</code>, then open <code>http://localhost:8000/</code>.</p></section>`;
   throw e;
 }
+
+// Sliding panels sit below the header, whose height changes when it wraps.
+const topbar = document.querySelector('.topbar');
+new ResizeObserver(() => document.documentElement.style.setProperty('--topbar-h', topbar.offsetHeight + 'px')).observe(topbar);
 
 const who = document.getElementById('who');
 const nav = document.getElementById('nav');

@@ -24,10 +24,15 @@ Serve it over HTTP. Browsers block ES modules and `fetch` on `file://`, and `cry
 | Route | Role | What it is |
 |---|---|---|
 | `#/quote` | seller | Quote desk: customer, product, quantity → price. No editable price field. Send quote, Request lower, My quotes |
-| `#/priceroom` | manager | Exceptions, price requests, price change wizard, read receipts, account / SKU / channel lenses |
-| `#/market` | messenger | Market watch: competitor readings with a required photo. No MGC prices |
-| `#/board/:channelId` | manager, seller (own channels), viewer (own board) | Published board, acknowledge, export PNG |
+| `#/priceroom` | manager | Clients board, Products board, Channels board (compare up to 5 each), PL notices. The **MPL calculator** and **Exceptions** live in a sliding panel on the right; changes added in the calculator are previewed on every board until published |
+| `#/market` | messenger | Competitor price watch: readings with a required photo. No MGC prices |
+| `#/board/:channelId` | manager, seller (own), viewer (own) | Price list: acknowledge, export PNG |
 | `#/log` | manager | Append-only event log, four views |
+| `#/config` | manager | Users and roles; clients list with CSV import / export |
+
+## Importing clients
+
+Configuration → Clients. Choose a CSV (or paste rows from Google Sheets), check the preview, then import. Required columns: **Name, Channel, Status**. Optional: Account ID, Needs attention, Zone, Main product, Contract start / end, TRMV kg, Volume generated kg, Avg monthly volume kg, Credit term days, Floor override per kg, Premiums (`TANK_RENTAL; CREDIT_30`), Discounts (`DUAL_SUPPLIER=6.25`), Competitor brand, Installation investment, Entrusted cylinders, Cylinder cost. "Download template" gives a ready header row. Clients match by Account ID, then by name; a column left out keeps the client's current value. "Active but needs attention" imports as Inactive with the needs-attention flag. Rows with errors are skipped and listed. The import is logged.
 
 **Role switcher.** "Acting as" in the header stands in for auth. Routes a role can't reach are never rendered — the view module isn't even loaded.
 

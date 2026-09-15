@@ -11,7 +11,7 @@ const ui = { tab: 'week', accountId: null, skuId: '11KG_MGAS' };
 const ACTION_LABEL = {
   DRAFT: 'Draft', SIMULATE: 'Simulate', APPROVE: 'Approve', PUBLISH: 'Publish', QUOTE_SENT: 'Quote sent',
   REQUEST_LOWER: 'Price request', REQUEST_DECIDED: 'Request decided', READING_CAPTURED: 'Reading captured',
-  BOARD_ACKNOWLEDGED: 'Board acknowledged',
+  BOARD_ACKNOWLEDGED: 'PL notice acknowledged', ACCOUNTS_IMPORTED: 'Clients imported', CONFIG_CHANGED: 'Configuration',
 };
 
 export function describeEvent(s, ev) {
@@ -20,7 +20,7 @@ export function describeEvent(s, ev) {
     case 'DRAFT': return `Proposal drafted. Objective: ${ev.objective}. Changes: ${a.cause ?? '—'}`;
     case 'SIMULATE': return `Simulated ${a.cause}. Estimated monthly impact ${fmt(a.monthlyImpact)} (${a.excludedCount} accounts without volume excluded); ${a.newlyBelowFloor} accounts newly below floor. No prices changed.`;
     case 'APPROVE': return `Approved. Instructed by ${userName(s, ev.instructedBy)}, verified by ${userName(s, ev.verifiedBy)}.`;
-    case 'PUBLISH': return `Cause: ${a.cause}. Board v${a.version} published.`;
+    case 'PUBLISH': return `Cause: ${a.cause}. Price list v${a.version} published.`;
     case 'QUOTE_SENT': return `${byId(s.accounts, ev.entityId)?.name ?? ev.entityId}: ${skuLabel(s, a.skuId)} × ${a.qty} quoted at ${fmt(a.grossPerCyl)}/cyl (${fmt(a.grossTotal)})`;
     case 'REQUEST_LOWER': return `${byId(s.accounts, ev.entityId)?.name ?? ev.entityId}: lower price requested, ${fmt(ev.before)} → ${fmt(ev.after)}/cyl`;
     case 'REQUEST_DECIDED': return `${byId(s.accounts, a.accountId)?.name ?? 'Walk-in'}: request ${a.status}. Reason: ${a.decisionReason}`;
@@ -28,7 +28,9 @@ export function describeEvent(s, ev) {
       const r = s.competitorReadings.find(x => x.id === ev.entityId);
       return r ? `${r.brand}, ${r.zone}, ${skuLabel(s, r.skuId)}: ${fmt(ev.after)}${ev.before != null ? ` (previous ${fmt(ev.before)})` : ''}` : `Reading ${fmt(ev.after)}`;
     }
-    case 'BOARD_ACKNOWLEDGED': return `${channelLabel(s, a.channelId)} board v${a.boardVersion} acknowledged`;
+    case 'BOARD_ACKNOWLEDGED': return `${channelLabel(s, a.channelId)} price list v${a.boardVersion} acknowledged`;
+    case 'ACCOUNTS_IMPORTED': return `Clients imported from ${a.file}: ${a.added} added, ${a.updated} updated${a.removed ? `, ${a.removed} removed (replace)` : ''}, ${a.skipped} rows skipped`;
+    case 'CONFIG_CHANGED': return `Users changed — ${a.summary}`;
     default: return ev.action;
   }
 }

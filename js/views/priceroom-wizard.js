@@ -10,6 +10,7 @@ import {
 } from '../pricing.js';
 
 const STEPS = [['draft', 'Draft'], ['simulate', 'Simulate'], ['review', 'Review'], ['approve', 'Approve'], ['publish', 'Publish']];
+const STAGE_NOTE = { draft: 'Objective and inputs', simulate: 'Impact, nothing written', review: 'Plain-language diff', approve: 'Four-eyes check', publish: 'Atomic release' };
 
 const fresh = () => ({
   proposalId: null, step: 'draft', objective: '', changes: [], drafterId: null,
@@ -28,9 +29,17 @@ function decode(param) {
   return JSON.parse(decodeURIComponent(escape(atob(b64 + '==='.slice((b64.length + 3) % 4)))));
 }
 
+// Keeps the rest of the Price room query (board tab) and only sets or clears the shared simulation.
 function setHash(sim) {
-  const h = sim ? `#/priceroom?tab=change&sim=${sim}` : '#/priceroom?tab=change';
-  history.replaceState(null, '', h);
+  const qs = new URLSearchParams(location.hash.split('?')[1] || '');
+  if (sim) qs.set('sim', sim); else qs.delete('sim');
+  const str = qs.toString();
+  history.replaceState(null, '', `#/priceroom${str ? '?' + str : ''}`);
+}
+
+// The proposal being built, so the boards can preview it. Cumulative across every board.
+export function pendingChanges() {
+  return w.step === 'done' ? [] : w.changes;
 }
 
 // Load a simulation shared by URL. Viewing it writes nothing.
@@ -69,10 +78,13 @@ export function openProposal(p) {
 
 export function html(s, user) {
   const idx = STEPS.findIndex(([k]) => k === w.step);
-  const bar = `<ol class="steps">${STEPS.map(([k, l], i) => `<li class="${i === idx ? 'on' : i < idx || w.step === 'done' ? 'done' : ''}">${i + 1}. ${l}</li>`).join('')}</ol>`;
+  const bar = `<ol class="chevrons" aria-label="Stages">${STEPS.map(([k, l], i) => {
+    const cls = w.step === 'done' || i < idx ? 'done' : i === idx ? 'on' : '';
+    return `<li class="${cls}"${i === idx ? ' aria-current="step"' : ''}><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${l}</span><span class="s">${STAGE_NOTE[k]}</span></li>`;
+  }).join('')}</ol>`;
   const body = { draft: draftHtml, simulate: simulateHtml, review: reviewHtml, approve: approveHtml, publish: publishHtml, done: doneHtml }[w.step](s, user);
   const open = s.proposals.filter(p => p.status !== 'published').sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
-  return `<div class="row"><h2 class="grow" style="margin:0">Price change</h2><button type="button" id="w-new" class="small">New proposal</button></div>
+  return `<div class="row"><h2 class="grow" style="margin:0">MPL calculator</h2><button type="button" id="w-new" class="small">New proposal</button></div>
     ${bar}
     ${w.error ? `<div class="banner red" role="alert">${esc(w.error)}</div>` : ''}
     ${body}
@@ -87,45 +99,48 @@ export function html(s, user) {
 }
 
 function changeList(s, editable) {
-  if (!w.changes.length) return '<p class="muted">No changes added yet.</p>';
-  return `<ul class="stack" style="list-style:none;padding:0">${w.changes.map((c, i) => `<li class="row card">
-    <span class="grow"><span class="small muted">${esc(CHANGE_TYPES[c.type])}</span><br>${esc(describeChange(s, c))}</span>
-    ${editable ? `<button type="button" class="small" data-del-change="${i}">Remove</button>` : ''}</li>`).join('')}</ul>`;
+  if (!w.changes.length) return '<p class="muted small">No changes yet — add one above. Boards preview every change you add.</p>';
+  return `<ul class="change-list">${w.changes.map((c, i) => `<li>
+    <span class="grow"><span class="small muted">${esc(CHANGE_TYPES[c.type])}</span> · ${esc(describeChange(s, c))}</span>
+    ${editable ? `<button type="button" class="icon small" data-del-change="${i}" aria-label="Remove change">✕</button>` : ''}</li>`).join('')}</ul>`;
 }
 
+// Compact calculator: one line of inputs, the current value as a hint underneath.
 function draftHtml(s) {
   const cb = currentCostBasis(s);
   const a = w.add;
-  const money = (label, ph) => `<label class="field grow"><span>${esc(label)}</span><input id="w-val" type="text" inputmode="decimal" placeholder="${esc(ph)}" value="${esc(a.value)}"></label>`;
-  const chSel = `<label class="field grow"><span>Channel</span><select id="w-ch">${options(s.channels, a.channelId)}</select></label>`;
-  const accSel = `<label class="field grow"><span>Account</span><select id="w-acc">${options(s.accounts, a.accountId, { placeholder: 'Choose account', label: x => `${x.name} (${x.status})` })}</select></label>`;
-  const removeT = `<label class="toggle"><input id="w-remove" type="checkbox" ${a.remove ? 'checked' : ''}> Remove from account</label>`;
-  let fields = '';
-  if (a.type === 'ACQ') fields = money(`New acquisition cost, ₱/kg (now ${toInput(cb.acqPerKg)})`, toInput(cb.acqPerKg));
-  if (a.type === 'HAULING') fields = money(`New hauling, ₱/kg (now ${toInput(cb.haulingPerKg)})`, toInput(cb.haulingPerKg));
+  const chSel = `<select id="w-ch" aria-label="Channel">${options(s.channels, a.channelId)}</select>`;
+  const accSel = `<select id="w-acc" aria-label="Client">${options(s.accounts, a.accountId, { placeholder: 'Client' })}</select>`;
+  const removeT = `<label class="check"><input id="w-remove" type="checkbox" ${a.remove ? 'checked' : ''}> Remove</label>`;
+  let extra = '', hint = '', ph = '₱/kg';
+  if (a.type === 'ACQ') hint = `Now ${fmt(cb.acqPerKg)}/kg`;
+  if (a.type === 'HAULING') hint = `Now ${fmt(cb.haulingPerKg)}/kg`;
   if (a.type === 'MARGIN') {
     const cur = marginRule(s, a.channelId, a.skuId);
-    fields = chSel + `<label class="field grow"><span>Product</span><select id="w-sku">${options(s.skus, a.skuId)}</select></label>`
-      + money(`New margin, ₱/kg (now ${cur ? toInput(cur.perKg) : 'not priced on this channel'})`, cur ? toInput(cur.perKg) : '');
+    extra = chSel + `<select id="w-sku" aria-label="Product">${options(s.skus, a.skuId)}</select>`;
+    hint = cur ? `Now ${fmt(cur.perKg)}/kg` : 'Not priced on this channel yet';
   }
-  if (a.type === 'BUFFER') fields = chSel + money(`New buffer, ₱/kg — may be negative (now ${toInput(bufferFor(s, a.channelId))})`, '0.00');
-  if (a.type === 'ACCOUNT_PREMIUM') fields = accSel
-    + `<label class="field grow"><span>Premium</span><select id="w-code">${options(s.premiumComponents, a.code, { value: x => x.code, placeholder: 'Choose premium' })}</select></label>`
-    + (a.remove ? '' : money('₱/kg — leave blank to use the catalogue rate or formula', 'blank = catalogue')) + removeT;
-  if (a.type === 'ACCOUNT_DISCOUNT') fields = accSel
-    + `<label class="field grow"><span>Discount</span><select id="w-code">${options(s.discountComponents, a.code, { value: x => x.code, placeholder: 'Choose discount' })}</select></label>`
-    + (a.remove ? '' : money('₱/kg', '6.25')) + removeT;
+  if (a.type === 'BUFFER') { extra = chSel; ph = '±₱/kg'; hint = `Now ${fmt(bufferFor(s, a.channelId))}/kg · negative allowed`; }
+  if (a.type === 'ACCOUNT_PREMIUM') {
+    extra = accSel + `<select id="w-code" aria-label="Premium">${options(s.premiumComponents, a.code, { value: x => x.code, placeholder: 'Premium' })}</select>` + removeT;
+    ph = 'Catalogue'; hint = 'Leave ₱/kg blank to use the catalogue rate or formula';
+  }
+  if (a.type === 'ACCOUNT_DISCOUNT') {
+    extra = accSel + `<select id="w-code" aria-label="Discount">${options(s.discountComponents, a.code, { value: x => x.code, placeholder: 'Discount' })}</select>` + removeT;
+  }
 
-  return `<div class="stack">
-    <label class="field"><span>Objective (required, one line)</span><input id="w-obj" type="text" maxlength="160" placeholder="e.g. Pass through September acquisition increase" value="${esc(w.objective)}"></label>
-    <div class="panel stack">
-      <label class="field"><span>What changes</span><select id="w-type">${options(Object.entries(CHANGE_TYPES).map(([id, label]) => ({ id, label })), a.type)}</select></label>
-      <div class="row">${fields}</div>
-      <button type="button" id="w-add">Add change</button>
+  return `<div class="calc">
+      <input id="w-obj" class="calc-obj" type="text" maxlength="160" aria-label="Objective (required)" placeholder="Objective (required) — e.g. Pass through September acquisition increase" value="${esc(w.objective)}">
+      <div class="calc-row">
+        <select id="w-type" aria-label="What changes">${options(Object.entries(CHANGE_TYPES).map(([id, label]) => ({ id, label })), a.type)}</select>
+        ${extra}
+        ${a.remove ? '' : `<input id="w-val" class="calc-val" type="text" inputmode="decimal" aria-label="Amount per kg" placeholder="${esc(ph)}" value="${esc(a.value)}">`}
+        <button type="button" id="w-add" class="primary">Add</button>
+      </div>
+      ${hint ? `<div class="calc-hint">${esc(hint)}</div>` : ''}
     </div>
     ${changeList(s, true)}
-    <div class="row"><button type="button" id="w-sim" class="primary">Save draft and simulate</button></div>
-  </div>`;
+    <div class="row end"><button type="button" id="w-sim" class="primary">Save draft and simulate</button></div>`;
 }
 
 function impactClass(v) {
@@ -221,7 +236,7 @@ function publishHtml(s, user) {
 }
 
 function doneHtml(s) {
-  return `<div class="banner green">Published — board v${w.published} is live on every board and the Quote Desk.</div>
+  return `<div class="banner green">Published — price list v${w.published} is live on every price list and the Quote desk.</div>
     <div class="row">${s.channels.map(c => `<a class="btn small" href="#/board/${esc(c.id)}">${esc(c.label)}</a>`).join('')}</div>`;
 }
 
@@ -256,7 +271,7 @@ export function bind(root, user, rerender) {
   on('w-showall', 'onchange', e => { w.showAll = e.target.checked; rerender(); });
   on('w-rerun', 'onclick', async () => { await saveDraftAndSimulate(user); rerender(); });
   on('w-share', 'onclick', async () => {
-    const url = location.href.split('#')[0] + `#/priceroom?tab=change&sim=${encode({ proposalId: w.proposalId, objective: w.objective, changes: w.changes })}`;
+    const url = location.href.split('#')[0] + `#/priceroom?sim=${encode({ proposalId: w.proposalId, objective: w.objective, changes: w.changes })}`;
     try { await navigator.clipboard.writeText(url); toast('Share link copied'); } catch { prompt('Copy this link', url); }
   });
   on('w-to-review', 'onclick', () => { if (w.simKey === keyOf(w.changes) && w.proposalId) go('review'); });
