@@ -295,3 +295,34 @@ dialog.modal::backdrop { background: rgba(11, 31, 58, .45); }
   #app { padding: 0; }
   body { background: #fff; }
 }
+
+/* ---- Alternating rows: white and light Tiffany blue, every table ---- */
+:root { --row-alt: #EDF9F8; }
+table.matrix tbody th { background: var(--surface); }
+table tbody tr:nth-child(even) > td,
+table tbody tr:nth-child(even) > th { background: var(--row-alt); }
+table.matrix tbody tr:hover > td, table.matrix tbody tr:hover > th { background: var(--blue-50); }
+
+/* ---- Multi-select dropdown ---- */
+.multi { position: relative; }
+.multi-btn { min-width: 270px; justify-content: space-between; gap: 14px; font-weight: 500; }
+.multi-btn[aria-expanded="true"] { border-color: var(--tiffany); box-shadow: 0 0 0 3px var(--tiffany-50); }
+.multi-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 15; width: 310px; max-height: 400px; overflow: auto; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 14px 36px rgba(11, 31, 58, .18); padding: 6px; }
+.multi-actions { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.multi-opt { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; min-height: 42px; }
+.multi-opt:nth-child(odd) { background: var(--row-alt); }
+.multi-opt:hover { background: var(--tiffany-50); }
+.multi-opt.dis { opacity: .5; cursor: not-allowed; }
+.multi-opt input { width: 18px; height: 18px; }
+
+.ack-date { font-size: 11.5px; color: var(--muted); margin-top: 3px; white-space: nowrap; }
+
+/* ---- Document preview and printing (short bond, portrait) ---- */
+.doc-preview { display: block; width: 100%; aspect-ratio: 8.5 / 11; margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); background: #fff; }
+#print-sheet { display: none; }
+@media print {
+  @page { size: letter portrait; margin: 0; }
+  body.print-doc > *:not(#print-sheet) { display: none !important; }
+  body.print-doc #print-sheet { display: block; }
+  body.print-doc #print-sheet img { display: block; width: 8.5in; height: 11in; }
+}

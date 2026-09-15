@@ -23,12 +23,16 @@ Serve it over HTTP. Browsers block ES modules and `fetch` on `file://`, and `cry
 
 | Route | Role | What it is |
 |---|---|---|
-| `#/quote` | seller | Quote desk: customer, product, quantity → price. No editable price field. Send quote, Request lower, My quotes |
+| `#/quote` | seller | Quote desk: customer → **All products** price list, or one product with quantity. No editable price field, no floor or ladder shown. Send quote, Request lower, Print, Save price list, Past quotes |
 | `#/priceroom` | manager | Clients board, Products board, Channels board (compare up to 5 each), PL notices. The **MPL calculator** and **Exceptions** live in a sliding panel on the right; changes added in the calculator are previewed on every board until published |
 | `#/market` | messenger | Competitor price watch: readings with a required photo. No MGC prices |
 | `#/board/:channelId` | manager, seller (own), viewer (own) | Price list: acknowledge, export PNG |
 | `#/log` | manager | Append-only event log, four views |
 | `#/config` | manager | Users and roles; clients list with CSV import / export |
+
+## Documents
+
+Print, Save price list and Send quote all use one template (`js/pricedoc.js`): short bond (8.5 × 11 in) portrait, drawn on a canvas and saved as a one-page PDF with no library. Send quote downloads the quotation PDF; Past quotes can reprint it from the immutable snapshot. On the Quote desk, printing or saving a customer price list is gated like sending (current price list, no pending request, no unapproved below-floor price) and logged as `PRICE_LIST_ISSUED`; lines that need approval are left off.
 
 ## Importing clients
 

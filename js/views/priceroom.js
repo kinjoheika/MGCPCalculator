@@ -18,7 +18,7 @@ const TABS = [['clients', 'Clients board'], ['products', 'Products board'], ['ch
 const ui = {
   tab: 'clients', open: true, panel: 'exceptions', wide: false, animate: false, lastSim: null, scrollTop: null,
   clients: ['acc_alta', 'acc_kja', 'acc_silca'], clientQuery: '', clientSku: '',
-  products: ['11KG_MGAS', '50KG_A', '22KG_A'], channels: ['DEALER', 'COMMERCIAL', 'END_USER'],
+  products: ['11KG_MGAS', '50KG_A', '22KG_A'], prodOpen: false, channels: ['DEALER', 'COMMERCIAL', 'END_USER'],
   reasons: {}, errors: {},
 };
 
@@ -313,9 +313,42 @@ function pickerPills(items, selected, attr, noun) {
   }).join('')}<span class="small muted">${selected.length} of ${MAX} ${noun}</span></div></div>`;
 }
 
+// Dropdown with checkboxes, up to MAX products; selected ones also show as removable chips.
+function productPicker(s) {
+  const sel = ui.products;
+  const full = sel.length >= MAX;
+  return `<div class="picker"><div class="row">
+    <div class="multi" id="pb-multi">
+      <button type="button" id="pb-toggle" class="multi-btn" aria-haspopup="listbox" aria-expanded="${ui.prodOpen}">
+        <span>Products · <b>${sel.length}</b> of ${MAX} selected</span><span aria-hidden="true">▾</span></button>
+      ${ui.prodOpen ? `<div class="multi-menu" role="listbox" aria-multiselectable="true" aria-label="Products">
+        <div class="multi-actions small"><span class="muted">${full ? `Maximum of ${MAX} reached` : `Choose up to ${MAX}`}</span><button type="button" class="link" id="pb-clear">Clear all</button></div>
+        ${s.skus.filter(k => k.active).map(k => {
+          const on = sel.includes(k.id);
+          const dis = !on && full;
+          return `<label class="multi-opt ${dis ? 'dis' : ''}"><input type="checkbox" data-prod="${esc(k.id)}" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''}>
+            <span class="grow">${esc(k.label)}</span><span class="small muted">${k.contentKg} kg</span></label>`;
+        }).join('')}</div>` : ''}
+    </div>
+    <div class="chips" style="margin:0">${sel.map(id => `<span class="chip">${esc(skuLabel(s, id))}<button type="button" data-unprod="${esc(id)}" aria-label="Remove ${esc(skuLabel(s, id))}">✕</button></span>`).join('')}</div>
+  </div></div>`;
+}
+
+let closeProductMenu = null;
+document.addEventListener('click', e => {
+  if (!ui.prodOpen) return;
+  if (!document.getElementById('pb-multi')) { ui.prodOpen = false; return; }
+  if (!e.target.isConnected || e.target.closest('#pb-multi')) return;
+  ui.prodOpen = false;
+  closeProductMenu?.();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && ui.prodOpen && document.getElementById('pb-multi')) { ui.prodOpen = false; closeProductMenu?.(); }
+});
+
 function productsBoard(s, proposed) {
   const cols = ui.products.map(id => byId(s.skus, id)).filter(Boolean);
-  const pills = pickerPills(s.skus.filter(k => k.active), ui.products, 'prod', 'products');
+  const pills = productPicker(s);
   if (!cols.length) return pills + '<p class="muted">Pick up to 5 products to compare across channels.</p>';
   return pills + `<div class="card" style="padding:0"><div class="table-wrap"><table class="matrix">
     <thead><tr><th>Channel</th>${cols.map(k => `<th class="num"><div class="mh">${esc(k.label)}</div><div class="small muted">${k.contentKg} kg · per cyl, VAT incl.</div></th>`).join('')}</tr></thead>
@@ -350,7 +383,9 @@ function noticesTab(s) {
         total++;
         const a = s.acknowledgments.find(x => x.userId === u.id && x.channelId === c.id && x.boardVersion === pub.version);
         if (a) acked++;
-        return `<td class="center">${a ? `<span class="badge green" title="Acknowledged ${esc(fmtDateTime(a.acknowledgedAt))}">✓ Acknowledged</span>` : '<span class="badge amber">Not seen</span>'}</td>`;
+        return `<td class="center">${a
+          ? `<span class="badge green">✓ Acknowledged</span><div class="ack-date">${esc(fmtDateTime(a.acknowledgedAt))}</div>`
+          : '<span class="badge amber">Not seen</span><div class="ack-date">&nbsp;</div>'}</td>`;
       }).join('')}</tr>`;
   }).join('');
   return `<div class="card">
@@ -381,6 +416,10 @@ function bindMain(root, rerender) {
   root.querySelectorAll('[data-unpick]').forEach(b => b.onclick = () => { ui.clients = ui.clients.filter(x => x !== b.dataset.unpick); rerender(); });
   if ($('cb-sku')) $('cb-sku').onchange = e => { ui.clientSku = e.target.value; rerender(); };
   const toggle = (list, id) => (list.includes(id) ? list.filter(x => x !== id) : list.length < MAX ? [...list, id] : list);
-  root.querySelectorAll('[data-prod]').forEach(b => b.onclick = () => { ui.products = toggle(ui.products, b.dataset.prod); rerender(); });
+  closeProductMenu = rerender;
+  if ($('pb-toggle')) $('pb-toggle').onclick = () => { ui.prodOpen = !ui.prodOpen; rerender(); };
+  if ($('pb-clear')) $('pb-clear').onclick = () => { ui.products = []; rerender(); };
+  root.querySelectorAll('[data-prod]').forEach(b => b.onchange = () => { ui.products = toggle(ui.products, b.dataset.prod); rerender(); });
+  root.querySelectorAll('[data-unprod]').forEach(b => b.onclick = () => { ui.products = ui.products.filter(x => x !== b.dataset.unprod); rerender(); });
   root.querySelectorAll('[data-chan]').forEach(b => b.onclick = () => { ui.channels = toggle(ui.channels, b.dataset.chan); rerender(); });
 }

@@ -2,7 +2,8 @@
 
 import * as store from '../store.js';
 import { fmt } from '../money.js';
-import { esc, toast, download } from '../ui.js';
+import { esc, toast } from '../ui.js';
+import { printDoc, savePdf, slug } from '../pricedoc.js';
 import { byId, boardPrices, currentPublication, boardIsStale, userChannels, fmtDate, fmtDateTime } from '../pricing.js';
 
 export function render(root, ctx) {
@@ -36,7 +37,8 @@ export function render(root, ctx) {
     ${superseded ? '' : `<div class="row no-print" style="margin-top:16px">
       ${ack ? `<span class="pill green">Acknowledged ${esc(fmtDateTime(ack.acknowledgedAt))}</span>`
         : '<button type="button" id="b-ack" class="primary">Acknowledge price list</button>'}
-      <button type="button" id="b-img">Export image</button></div>`}
+      <button type="button" id="b-print">Print</button>
+      <button type="button" id="b-save">Save price list</button></div>`}
   </section>`;
 
   const ackBtn = root.querySelector('#b-ack');
@@ -46,8 +48,13 @@ export function render(root, ctx) {
     }, (d, ev) => { d.acknowledgments.push({ userId: user.id, boardVersion: pub.version, channelId, acknowledgedAt: ev.timestamp }); });
     toast('Acknowledged');
   };
-  const imgBtn = root.querySelector('#b-img');
-  if (imgBtn) imgBtn.onclick = () => exportImage(channel, pub, rows);
+  const printBtn = root.querySelector('#b-print');
+  if (printBtn) printBtn.onclick = () => printDoc(boardDoc(s, user, channel, pub, rows));
+  const saveBtn = root.querySelector('#b-save');
+  if (saveBtn) saveBtn.onclick = async () => {
+    await savePdf(boardDoc(s, user, channel, pub, rows), `MGC-price-list-${slug(channel.label)}-v${pub.version}.pdf`);
+    toast('Price list saved');
+  };
 }
 
 function index(s, user) {
@@ -58,36 +65,14 @@ function index(s, user) {
       <span>${esc(c.label)}</span><span class="muted small">${esc(c.audience)}</span></a></li>`).join('')}</ul></section>`;
 }
 
-function exportImage(channel, pub, rows) {
-  const scale = 2, W = 900, rowH = 44, top = 170;
-  const H = top + rows.length * rowH + 80;
-  const c = document.createElement('canvas');
-  c.width = W * scale; c.height = H * scale;
-  const g = c.getContext('2d');
-  g.scale(scale, scale);
-  g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
-  g.fillStyle = '#141414';
-  g.font = '600 16px system-ui, sans-serif'; g.fillText(`${channel.audience} price list`, 32, 44);
-  g.font = '700 30px system-ui, sans-serif'; g.fillText(channel.label, 32, 82);
-  g.textAlign = 'right';
-  g.font = '700 44px system-ui, sans-serif'; g.fillText(`v${pub.version}`, W - 32, 76);
-  g.font = '15px system-ui, sans-serif'; g.fillText(`Effective ${fmtDate(pub.publishedAt)}`, W - 32, 100);
-  g.textAlign = 'left';
-  g.fillStyle = '#5f5f5a'; g.font = '600 13px system-ui, sans-serif';
-  const cols = [[32, 'Product', 'left'], [470, 'Per kg, net', 'right'], [680, 'Per cyl, net', 'right'], [W - 32, 'Per cyl, VAT incl.', 'right']];
-  cols.forEach(([x, t, a]) => { g.textAlign = a; g.fillText(t, x, top - 16); });
-  g.fillStyle = '#e3e3df'; g.fillRect(32, top - 8, W - 64, 1);
-  rows.forEach((r, i) => {
-    const y = top + i * rowH + 26;
-    g.fillStyle = '#141414';
-    g.textAlign = 'left'; g.font = '600 16px system-ui, sans-serif'; g.fillText(r.label, 32, y);
-    g.font = '16px ui-monospace, Consolas, monospace';
-    g.textAlign = 'right'; g.fillText(fmt(r.netPerKg), 470, y); g.fillText(fmt(r.netPerCyl), 680, y);
-    g.font = '700 17px ui-monospace, Consolas, monospace'; g.fillText(fmt(r.grossPerCyl), W - 32, y);
-    g.fillStyle = '#e3e3df'; g.fillRect(32, y + 14, W - 64, 1);
-  });
-  // Version stamp burned in, so a forwarded image always carries its version.
-  g.textAlign = 'left'; g.fillStyle = '#b3261e'; g.font = '600 13px system-ui, sans-serif';
-  g.fillText(`MGC price list v${pub.version} · ${channel.id} · effective ${fmtDate(pub.publishedAt)} · check the live price list before quoting`, 32, H - 30);
-  c.toBlob(blob => download(`MGC-price-list-${channel.id}-v${pub.version}.png`, blob), 'image/png');
+// Same short bond template as the Quote desk; the version stamp is printed on every copy.
+function boardDoc(s, user, channel, pub, rows) {
+  return {
+    title: 'Price list', docNo: `Price list v${pub.version} · ${channel.id}`,
+    customer: channel.label, subtitle: `${channel.audience} price list`,
+    version: pub.version, effective: fmtDate(pub.publishedAt), issued: fmtDateTime(new Date()), validUntil: null,
+    issuedBy: user.name, vatRate: s.settings.vatRate, ref: (pub.snapshotHash || '').slice(0, 8),
+    rows: rows.map(r => ({ label: r.label, contentKg: r.contentKg, netPerKg: r.netPerKg, grossPerCyl: r.grossPerCyl })),
+    total: null,
+  };
 }
