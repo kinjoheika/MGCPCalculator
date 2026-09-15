@@ -49,17 +49,17 @@ check('Dealer 11 kg MGas net per kg is 8575 centavos', dealer.netPerKg, 8575);
 check('Zero-premium ladder has 4 steps (acq, hauling, margin, buffer)', dealer.ladder.map(l => l.step), ['Acquisition cost', 'Hauling', 'Margin', 'Buffer']);
 check('Zero-premium case sits exactly on the floor', [dealer.floorPerKg, dealer.marginVsFloorPerKg, dealer.belowFloor], [8575, 0, false]);
 
-// 5–8. Spec example — commercial, tank rental, dual supplier discount → below floor
-const spec = resolvePrice({
+// 5–8. Commercial, tank rental, dual supplier discount → below floor
+const commercial = resolvePrice({
   costBasis: cb, sku: mgas, channel: { id: 'COMMERCIAL' }, marginPerKg: 4950, bufferPerKg: 0,
   premiums: [{ code: 'TANK_RENTAL', label: 'Tank rental', perKg: 90 }],
   discounts: [{ code: 'DUAL_SUPPLIER', label: 'Competition (dual supplier)', perKg: 675 }],
   quantity: 40, vatRate: 0.12, vatInclusive: true, floorPerKg: 11725,
 });
-check('Spec ladder running totals', spec.ladder.map(l => l.runningPerKg), [6550, 6775, 11725, 11815, 11140, 11140]);
-check('Spec per-cylinder figures', [spec.netPerCyl, spec.vatPerCyl, spec.grossPerCyl, spec.grossTotal], [122540, 14705, 137245, 5489800]);
-check('Below-floor case flags ₱5.85/kg under', [spec.belowFloor, spec.marginVsFloorPerKg], [true, -585]);
-check('Below-floor warning text', spec.warnings, ['Final price is ₱5.85/kg below floor']);
+check('Commercial ladder running totals', commercial.ladder.map(l => l.runningPerKg), [6550, 6775, 11725, 11815, 11140, 11140]);
+check('Commercial per-cylinder figures', [commercial.netPerCyl, commercial.vatPerCyl, commercial.grossPerCyl, commercial.grossTotal], [122540, 14705, 137245, 5489800]);
+check('Below-floor case flags ₱5.85/kg under', [commercial.belowFloor, commercial.marginVsFloorPerKg], [true, -585]);
+check('Below-floor warning text', commercial.warnings, ['Final price is ₱5.85/kg below floor']);
 
 // 9. Rounding edge — 2.7 kg dealer: 9075 × 2.7 = 24502.5 centavos (₱245.025) → ₱245.03
 const small = resolvePrice({

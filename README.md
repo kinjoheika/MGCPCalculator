@@ -26,7 +26,7 @@ Serve it over HTTP. Browsers block ES modules and `fetch` on `file://`, and `cry
 | `#/quote` | seller | Quote desk: customer → **All products** price list, or one product with quantity. No editable price field, no floor or ladder shown. Send quote, Request lower, Print, Save price list, Past quotes |
 | `#/priceroom` | manager | Clients board, Products board, Channels board (compare up to 5 each), PL notices. The **MPL calculator** and **Exceptions** live in a sliding panel on the right; changes added in the calculator are previewed on every board until published |
 | `#/market` | messenger | Competitor price watch: readings with a required photo. No MGC prices |
-| `#/board/:channelId` | manager, seller (own), viewer (own) | Price list: acknowledge, export PNG |
+| `#/board/:channelId` | manager, seller (own), viewer (own) | Price list: Acknowledge, Print, Save |
 | `#/log` | manager | Append-only event log, four views |
 | `#/config` | manager | Users and roles; clients list with CSV import / export |
 
@@ -67,9 +67,9 @@ engine.test.html browser test page for the engine
 
 ## Seed data
 
-Cost basis (₱65.50 acquisition, ₱2.25 hauling), channel × SKU margins and the premium catalogue come from the Aug 11, 2026 MPL. The first five accounts and three competitor readings come from the build spec; the other five accounts are invented so the picker feels real. The CODO_SRP MGAS 50 kg B row is deliberately excluded. User names are placeholders — edit `users` in `data/seed.json`, then Reset demo data.
+The seed holds the cost basis (₱65.50 acquisition, ₱2.25 hauling), channel × product margins, the premium and discount catalogue, 10 sample clients and 3 competitor readings. User names are placeholders — edit them in Configuration → Users, or in `data/seed.json` and then Reset demo data.
 
-Additions beyond the spec's shapes, all needed by the screens: `settings` (VAT 12%, quote validity 7 days), `id` and `effectiveTo` on margin rules, per-channel `buffers`, `primarySkuId` on accounts (used for exceptions and monthly impact), `trackedBrands` (drives the messenger's weekly checklist), and empty `publications`, `proposals`, `quotes`, `priceRequests`, `acknowledgments`, `events` collections.
+It also holds `settings` (VAT 12%, quote validity 7 days), per-channel `buffers`, `primarySkuId` on each client (used for exceptions and monthly impact), `trackedBrands` (drives the weekly competitor checklist), and empty `publications`, `proposals`, `quotes`, `priceRequests`, `acknowledgments`, `events` collections.
 
 ## Pricing rules
 
