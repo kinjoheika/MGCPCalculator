@@ -47,13 +47,9 @@ function newQuote(s, user) {
       <div class="card row"><div class="grow"><b>${esc(account.name)}</b><br><span class="small muted">${esc(channelLabel(s, account.channelId))} · ${esc(account.zone)}</span></div>
       <button type="button" id="q-clear" class="small">Change</button></div></div>`;
   } else {
-    const q = ui.query.trim().toLowerCase();
-    // Inactive accounts never appear here.
-    const matches = q ? s.accounts.filter(a => a.status === 'Active' && myChannels.includes(a.channelId) && a.name.toLowerCase().includes(q)).slice(0, 8) : [];
     customer = `<div class="typeahead"><label class="field"><span>Customer</span>
       <input id="q-query" type="search" autocomplete="off" placeholder="Type a customer name" value="${esc(ui.query)}"></label>
-      ${q ? (matches.length ? `<ul>${matches.map(a => `<li><button type="button" data-acc="${esc(a.id)}"><span><b>${esc(a.name)}</b><br><span class="small muted">${esc(channelLabel(s, a.channelId))} · ${esc(a.zone)}</span></span></button></li>`).join('')}</ul>`
-        : '<p class="muted small">No active customers match.</p>') : ''}</div>`;
+      <div id="q-results">${typeaheadResults(s, user)}</div></div>`;
   }
 
   const skus = channelId ? skusForChannel(s, channelId) : [];
@@ -68,14 +64,27 @@ function newQuote(s, user) {
       <label class="field" style="flex:0 0 110px"><span>Quantity</span><input id="q-qty" type="number" min="1" step="1" inputmode="numeric" value="${esc(ui.qty)}"></label>
     </div></div>`;
 
-  let result = '';
-  if (channelId && ui.skuId) {
-    const p = priceFor(s, { accountId: ui.walkIn ? null : ui.accountId, channelId, skuId: ui.skuId, quantity: ui.qty });
-    result = p.error ? `<p class="err">${esc(p.error)}</p>` : resultCard(s, p, stale);
-  }
-
   return `${stale ? '<div class="banner red">Board is out of date — prices cannot be sent. Ask a manager to republish.</div>' : ''}
-    ${form}${result}`;
+    ${form}<div id="q-result">${resultHtml(s, user)}</div>`;
+}
+
+function typeaheadResults(s, user) {
+  const q = ui.query.trim().toLowerCase();
+  if (!q) return '';
+  // Inactive accounts never appear here.
+  const myChannels = chans(s, user);
+  const matches = s.accounts.filter(a => a.status === 'Active' && myChannels.includes(a.channelId) && a.name.toLowerCase().includes(q)).slice(0, 8);
+  return matches.length
+    ? `<ul>${matches.map(a => `<li><button type="button" data-acc="${esc(a.id)}"><span><b>${esc(a.name)}</b><br><span class="small muted">${esc(channelLabel(s, a.channelId))} · ${esc(a.zone)}</span></span></button></li>`).join('')}</ul>`
+    : '<p class="muted small">No active customers match.</p>';
+}
+
+function resultHtml(s, user) {
+  const account = !ui.walkIn && ui.accountId ? byId(s.accounts, ui.accountId) : null;
+  const channelId = ui.walkIn ? (ui.channelId || chans(s, user)[0]) : account?.channelId;
+  if (!channelId || !ui.skuId) return '';
+  const p = priceFor(s, { accountId: account?.id ?? null, channelId, skuId: ui.skuId, quantity: ui.qty });
+  return p.error ? `<p class="err">${esc(p.error)}</p>` : resultCard(s, p, boardIsStale(s));
 }
 
 function marginBar(r) {
@@ -172,14 +181,21 @@ function bind(root, ctx) {
   if ($('q-close')) $('q-close').onclick = () => { ui.openQuoteId = null; rerender(); };
   if ($('q-walkin')) $('q-walkin').onchange = e => { ui.walkIn = e.target.checked; ui.skuId = null; rerender(); };
   if ($('q-channel')) $('q-channel').onchange = e => { ui.channelId = e.target.value; ui.skuId = null; rerender(); };
-  if ($('q-query')) $('q-query').oninput = e => { ui.query = e.target.value; rerender(); };
-  root.querySelectorAll('[data-acc]').forEach(b => b.onclick = () => { ui.accountId = b.dataset.acc; ui.query = ''; ui.skuId = null; rerender(); });
+  // Typing updates only the results list / price card, never the input being typed into.
+  const bindResults = () => root.querySelectorAll('[data-acc]').forEach(b => b.onclick = () => { ui.accountId = b.dataset.acc; ui.query = ''; ui.skuId = null; rerender(); });
+  bindResults();
+  if ($('q-query')) $('q-query').oninput = e => { ui.query = e.target.value; $('q-results').innerHTML = typeaheadResults(store.get(), user); bindResults(); };
   if ($('q-clear')) $('q-clear').onclick = () => { ui.accountId = null; ui.skuId = null; rerender(); };
   if ($('q-sku')) $('q-sku').onchange = e => { ui.skuId = e.target.value || null; rerender(); };
-  if ($('q-qty')) $('q-qty').oninput = e => { ui.qty = Math.max(0, parseInt(e.target.value, 10) || 0); rerender(); };
+  if ($('q-qty')) $('q-qty').oninput = e => { ui.qty = Math.max(0, parseInt(e.target.value, 10) || 0); $('q-result').innerHTML = resultHtml(store.get(), user); bindResult(root, user, rerender); };
+  bindResult(root, user, rerender);
+}
+
+function bindResult(root, user, rerender) {
+  const $ = id => root.querySelector('#' + id);
   if ($('q-why')) $('q-why').ontoggle = e => { ui.showWhy = e.target.open; };
-  if ($('q-send')) $('q-send').onclick = () => sendQuote(s, user).then(rerender);
-  if ($('q-lower')) $('q-lower').onclick = () => requestLower(s, user);
+  if ($('q-send')) $('q-send').onclick = () => sendQuote(store.get(), user).then(rerender);
+  if ($('q-lower')) $('q-lower').onclick = () => requestLower(store.get(), user);
 }
 
 function currentLine(s, user) {
