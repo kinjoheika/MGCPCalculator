@@ -390,10 +390,8 @@ function noticesTab(s) {
   }).join('');
   return `<div class="card">
     <div class="notice-head">
-      <div>Notice acknowledgement</div>
-      <div><span>Price list</span><b>Price List v${pub.version}</b></div>
-      <div><span>Published date</span><b>${fmtDate(pub.publishedAt)}</b></div>
-      <div><span>Count</span><b>${acked}/${total}</b></div>
+      <h2>Notice acknowledgement</h2>
+      <div class="muted">Price List v${pub.version} · Published ${fmtDate(pub.publishedAt)} · <b>${acked}/${total}</b> acknowledged</div>
     </div>
     <div class="legend"><span class="lg green">Green: user acknowledged</span><span class="lg amber">Amber: not seen</span><span class="muted">· not on this user's price lists</span></div>
     <div class="table-wrap"><table class="matrix">
