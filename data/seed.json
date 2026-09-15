@@ -1,0 +1,199 @@
+{
+  "settings": { "vatRate": 0.12, "vatInclusive": true, "quoteValidityDays": 7, "competitorStaleDays": 7 },
+
+  "costBasis": [
+    { "id": "cb_2026_08_11", "acqPerKg": 6550, "haulingPerKg": 225, "effectiveFrom": "2026-08-11", "effectiveTo": null }
+  ],
+
+  "skus": [
+    { "id": "50KG_A", "label": "50 kg Class A", "contentKg": 50, "active": true },
+    { "id": "50KG_B", "label": "50 kg Class B", "contentKg": 47, "active": true },
+    { "id": "50KG_C", "label": "50 kg Class C", "contentKg": 45, "active": true },
+    { "id": "22KG_A", "label": "22 kg Class A", "contentKg": 22, "active": true },
+    { "id": "22KG_B", "label": "22 kg Class B", "contentKg": 20, "active": true },
+    { "id": "22KG_FL_A", "label": "22 kg Forklift A", "contentKg": 22, "active": true },
+    { "id": "11KG_MGAS", "label": "11 kg MGas", "contentKg": 11, "active": true },
+    { "id": "11KG_SULIT", "label": "11 kg Sulit", "contentKg": 11, "active": true },
+    { "id": "MINI9", "label": "Mini 9 kg", "contentKg": 9, "active": true },
+    { "id": "5KG_SULIT", "label": "Sulit Gas 5 kg", "contentKg": 5, "active": true },
+    { "id": "2.7KG", "label": "2.7 kg Non-Sulit", "contentKg": 2.7, "active": true },
+    { "id": "2.7KG_SULIT", "label": "2.7 kg Sulit", "contentKg": 2.7, "active": true }
+  ],
+
+  "channels": [
+    { "id": "DEALER", "label": "Dealer (pick-up)", "audience": "CODO group" },
+    { "id": "COBANKIAT", "label": "Cobankiat CBK (pick-up)", "audience": "CBK" },
+    { "id": "COMMERCIAL", "label": "Commercial delivery", "audience": "Commercial" },
+    { "id": "RETAIL_OUTLET", "label": "Retail outlet / Semi-dealer", "audience": "Retail Cylinder" },
+    { "id": "MGSA", "label": "MGSA", "audience": "Accounting" },
+    { "id": "END_USER", "label": "End user residential", "audience": "Contact Center" }
+  ],
+
+  "marginRules": [
+    { "id": "mr_1", "channelId": "DEALER", "skuId": "50KG_A", "perKg": 1700, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_2", "channelId": "DEALER", "skuId": "22KG_A", "perKg": 1800, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_3", "channelId": "DEALER", "skuId": "11KG_MGAS", "perKg": 1800, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_4", "channelId": "DEALER", "skuId": "11KG_SULIT", "perKg": 1250, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_5", "channelId": "DEALER", "skuId": "MINI9", "perKg": 1805, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_6", "channelId": "DEALER", "skuId": "5KG_SULIT", "perKg": 2005, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_7", "channelId": "DEALER", "skuId": "2.7KG", "perKg": 2300, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_8", "channelId": "DEALER", "skuId": "2.7KG_SULIT", "perKg": 2800, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+
+    { "id": "mr_9", "channelId": "COBANKIAT", "skuId": "50KG_A", "perKg": 1650, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_10", "channelId": "COBANKIAT", "skuId": "22KG_A", "perKg": 1650, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_11", "channelId": "COBANKIAT", "skuId": "11KG_MGAS", "perKg": 1650, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_12", "channelId": "COBANKIAT", "skuId": "11KG_SULIT", "perKg": 1250, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+
+    { "id": "mr_13", "channelId": "COMMERCIAL", "skuId": "50KG_A", "perKg": 3400, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_14", "channelId": "COMMERCIAL", "skuId": "22KG_A", "perKg": 4800, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_15", "channelId": "COMMERCIAL", "skuId": "22KG_FL_A", "perKg": 5000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_16", "channelId": "COMMERCIAL", "skuId": "11KG_MGAS", "perKg": 4950, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_17", "channelId": "COMMERCIAL", "skuId": "11KG_SULIT", "perKg": 4469, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_18", "channelId": "COMMERCIAL", "skuId": "MINI9", "perKg": 2483, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_19", "channelId": "COMMERCIAL", "skuId": "5KG_SULIT", "perKg": 4350, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_20", "channelId": "COMMERCIAL", "skuId": "2.7KG", "perKg": 7560, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+
+    { "id": "mr_21", "channelId": "RETAIL_OUTLET", "skuId": "11KG_MGAS", "perKg": 2750, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_22", "channelId": "RETAIL_OUTLET", "skuId": "11KG_SULIT", "perKg": 2200, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_23", "channelId": "RETAIL_OUTLET", "skuId": "2.7KG", "perKg": 3400, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_24", "channelId": "RETAIL_OUTLET", "skuId": "2.7KG_SULIT", "perKg": 3700, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+
+    { "id": "mr_25", "channelId": "MGSA", "skuId": "50KG_A", "perKg": 1100, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_26", "channelId": "MGSA", "skuId": "22KG_A", "perKg": 1100, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_27", "channelId": "MGSA", "skuId": "11KG_MGAS", "perKg": 1100, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+
+    { "id": "mr_28", "channelId": "END_USER", "skuId": "50KG_A", "perKg": 3400, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_29", "channelId": "END_USER", "skuId": "22KG_A", "perKg": 5200, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_30", "channelId": "END_USER", "skuId": "11KG_MGAS", "perKg": 4400, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_31", "channelId": "END_USER", "skuId": "11KG_SULIT", "perKg": 3600, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_32", "channelId": "END_USER", "skuId": "MINI9", "perKg": 4000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_33", "channelId": "END_USER", "skuId": "5KG_SULIT", "perKg": 6320, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_34", "channelId": "END_USER", "skuId": "2.7KG", "perKg": 6100, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_35", "channelId": "END_USER", "skuId": "2.7KG_SULIT", "perKg": 5900, "effectiveFrom": "2026-08-11", "effectiveTo": null }
+  ],
+
+  "buffers": [
+    { "id": "buf_1", "channelId": "DEALER", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "buf_2", "channelId": "COBANKIAT", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "buf_3", "channelId": "COMMERCIAL", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "buf_4", "channelId": "RETAIL_OUTLET", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "buf_5", "channelId": "MGSA", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "buf_6", "channelId": "END_USER", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null }
+  ],
+
+  "premiumComponents": [
+    { "code": "TANK_RENTAL", "label": "Tank rental", "perKg": 90, "type": "fixed" },
+    { "code": "CREDIT_07", "label": "Credit term 7 days", "perKg": 50, "type": "fixed" },
+    { "code": "CREDIT_15", "label": "Credit term 15 days", "perKg": 100, "type": "fixed" },
+    { "code": "CREDIT_30", "label": "Credit term 30 days", "perKg": 150, "type": "fixed" },
+    { "code": "REPAIRS", "label": "Repairs and maintenance", "perKg": 100, "type": "fixed" },
+    { "code": "MARKETING", "label": "Marketing collateral", "perKg": 10, "type": "fixed" },
+    { "code": "ROI_INSTALL", "label": "ROI — installation", "type": "derived", "formula": "investmentCentavos / trmvKg" },
+    { "code": "ENTRUSTED_CYL", "label": "Entrusted cylinders", "type": "derived", "formula": "(entrustedCylCount * cylCostCentavos) / trmvKg" }
+  ],
+
+  "discountComponents": [
+    { "code": "SUPPLY_ONLY", "label": "Supply only" },
+    { "code": "DUAL_SUPPLIER", "label": "Competition (dual supplier)" },
+    { "code": "CASH_ZERO", "label": "Cash / zero-rated" }
+  ],
+
+  "accounts": [
+    { "id": "acc_alta", "name": "ALTA D' TAGAYTAY HOTEL", "status": "Active",
+      "needsAttention": true, "channelId": "COMMERCIAL", "zone": "Tagaytay City", "primarySkuId": "50KG_A",
+      "contractStart": "2024-03-19", "contractEnd": "2029-03-19",
+      "trmvKg": 135000, "volumeGeneratedKg": 81250, "avgMonthlyVolumeKg": null,
+      "creditTermDays": 30, "floorOverridePerKg": null,
+      "premiums": [{ "code": "TANK_RENTAL" }, { "code": "CREDIT_30" }],
+      "discounts": [{ "code": "DUAL_SUPPLIER", "perKg": 625 }],
+      "competitorBrand": "DC Starr" },
+
+    { "id": "acc_kja", "name": "KJA SUMMIT FOOD CORP.", "status": "Active",
+      "needsAttention": false, "channelId": "COMMERCIAL", "zone": "Plaridel, Bulacan", "primarySkuId": "50KG_A",
+      "contractStart": null, "contractEnd": null,
+      "trmvKg": null, "volumeGeneratedKg": null, "avgMonthlyVolumeKg": 6000,
+      "creditTermDays": 15, "floorOverridePerKg": null,
+      "premiums": [{ "code": "TANK_RENTAL" }],
+      "discounts": [{ "code": "DUAL_SUPPLIER", "perKg": 400 }],
+      "competitorBrand": "Petron" },
+
+    { "id": "acc_silca", "name": "SILCA COFFEE ROASTING COMPANY", "status": "Active",
+      "needsAttention": true, "channelId": "COMMERCIAL", "zone": "Silang", "primarySkuId": "11KG_MGAS",
+      "trmvKg": null, "volumeGeneratedKg": null, "avgMonthlyVolumeKg": 2000,
+      "creditTermDays": 30, "floorOverridePerKg": null,
+      "premiums": [{ "code": "CREDIT_30" }],
+      "discounts": [{ "code": "DUAL_SUPPLIER", "perKg": 400 }],
+      "competitorBrand": "Solane" },
+
+    { "id": "acc_ifp", "name": "IFP MANUFACTURING CORPORATION", "status": "Inactive",
+      "needsAttention": false, "channelId": "COMMERCIAL", "zone": "Caloocan", "primarySkuId": "50KG_A",
+      "avgMonthlyVolumeKg": 3050, "creditTermDays": 30,
+      "premiums": [], "discounts": [] },
+
+    { "id": "acc_leslies", "name": "LESLIE'S CORPORATION (CANLUBANG)", "status": "Active",
+      "needsAttention": false, "channelId": "COMMERCIAL", "zone": "Canlubang", "primarySkuId": "22KG_FL_A",
+      "trmvKg": null, "avgMonthlyVolumeKg": 8000, "creditTermDays": 30,
+      "premiums": [{ "code": "REPAIRS" }, { "code": "CREDIT_30" }],
+      "discounts": [{ "code": "DUAL_SUPPLIER", "perKg": 675 }] },
+
+    { "id": "acc_jmr", "name": "JMR LPG TRADING", "status": "Active",
+      "needsAttention": false, "channelId": "DEALER", "zone": "Dasmariñas", "primarySkuId": "11KG_MGAS",
+      "avgMonthlyVolumeKg": 12000, "creditTermDays": 7, "floorOverridePerKg": null,
+      "premiums": [{ "code": "CREDIT_07" }], "discounts": [] },
+
+    { "id": "acc_sanroque", "name": "SAN ROQUE GAS CENTER", "status": "Active",
+      "needsAttention": false, "channelId": "DEALER", "zone": "Silang", "primarySkuId": "11KG_SULIT",
+      "avgMonthlyVolumeKg": 9000, "creditTermDays": 0, "floorOverridePerKg": null,
+      "premiums": [], "discounts": [{ "code": "CASH_ZERO", "perKg": 50 }] },
+
+    { "id": "acc_cbk_makati", "name": "COBANKIAT HARDWARE — MAKATI", "status": "Active",
+      "needsAttention": false, "channelId": "COBANKIAT", "zone": "Makati", "primarySkuId": "50KG_A",
+      "avgMonthlyVolumeKg": 15000, "creditTermDays": 30, "floorOverridePerKg": null,
+      "premiums": [{ "code": "CREDIT_30" }], "discounts": [] },
+
+    { "id": "acc_nena", "name": "ALING NENA SARI-SARI STORE", "status": "Active",
+      "needsAttention": false, "channelId": "RETAIL_OUTLET", "zone": "Tagaytay City", "primarySkuId": "11KG_MGAS",
+      "avgMonthlyVolumeKg": null, "creditTermDays": 7, "floorOverridePerKg": null,
+      "premiums": [{ "code": "CREDIT_07" }, { "code": "MARKETING" }], "discounts": [] },
+
+    { "id": "acc_bayview", "name": "BAYVIEW LPG REFILLING STATION", "status": "Inactive",
+      "needsAttention": true, "channelId": "RETAIL_OUTLET", "zone": "Plaridel, Bulacan", "primarySkuId": "11KG_MGAS",
+      "avgMonthlyVolumeKg": 1500, "creditTermDays": 15,
+      "premiums": [], "discounts": [] }
+  ],
+
+  "competitorReadings": [
+    { "id": "cr_1", "brand": "Solane", "zone": "Silang", "skuId": "11KG_MGAS",
+      "pricePerCyl": 105500, "capturedAt": "2026-09-09", "capturedBy": "u_msgr_1", "photoUrl": "placeholder.jpg" },
+    { "id": "cr_2", "brand": "Petron Gasul", "zone": "Plaridel", "skuId": "11KG_MGAS",
+      "pricePerCyl": 102000, "capturedAt": "2026-09-08", "capturedBy": "u_msgr_1", "photoUrl": "placeholder.jpg" },
+    { "id": "cr_3", "brand": "Island Gas", "zone": "Tagaytay City", "skuId": "11KG_MGAS",
+      "pricePerCyl": 88000, "capturedAt": "2026-07-02", "capturedBy": "u_msgr_2", "photoUrl": "placeholder.jpg" }
+  ],
+
+  "trackedBrands": ["Solane", "Petron Gasul", "Island Gas"],
+
+  "zones": ["Silang", "Tagaytay City", "Plaridel", "Caloocan", "Canlubang", "Dasmariñas", "Makati"],
+
+  "users": [
+    { "id": "u_sales_1", "name": "Seller 1 (edit name)", "role": "seller", "channels": ["COMMERCIAL", "END_USER"], "canDraft": false, "canApprove": false },
+    { "id": "u_sales_2", "name": "Seller 2 (edit name)", "role": "seller", "channels": ["DEALER", "RETAIL_OUTLET"], "canDraft": false, "canApprove": false },
+    { "id": "u_mgr_1", "name": "Manager 1 (edit name)", "role": "manager", "channels": ["*"], "canDraft": true, "canApprove": false },
+    { "id": "u_mgr_2", "name": "Manager 2 (edit name)", "role": "manager", "channels": ["*"], "canDraft": false, "canApprove": true },
+    { "id": "u_msgr_1", "name": "Messenger 1 (edit name)", "role": "messenger", "channels": [], "canDraft": false, "canApprove": false },
+    { "id": "u_msgr_2", "name": "Messenger 2 (edit name)", "role": "messenger", "channels": [], "canDraft": false, "canApprove": false },
+    { "id": "u_view_acct", "name": "Accounting viewer (edit name)", "role": "viewer", "channels": ["MGSA"], "canDraft": false, "canApprove": false },
+    { "id": "u_view_cc", "name": "Contact Center viewer (edit name)", "role": "viewer", "channels": ["END_USER"], "canDraft": false, "canApprove": false }
+  ],
+
+  "publications": [
+    { "version": 1, "publishedAt": "2026-08-11T00:00:00Z", "proposalId": null, "objective": "Initial board from Aug 11 MPL",
+      "instructedBy": null, "verifiedBy": null, "draftedBy": null, "publishedBy": null }
+  ],
+
+  "proposals": [],
+  "quotes": [],
+  "priceRequests": [],
+  "acknowledgments": [],
+  "events": []
+}

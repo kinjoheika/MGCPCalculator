@@ -1,0 +1,413 @@
+// Price change wizard: Draft → Simulate → Review → Approve → Publish, enforced in order.
+// Simulate is pure (writes only a SIMULATE event). Publish is one atomic commit.
+
+import * as store from '../store.js';
+import { fmt, fmtSigned, toCentavos, toInput } from '../money.js';
+import { esc, toast, options } from '../ui.js';
+import {
+  byId, simulate, applyChanges, describeChange, CHANGE_TYPES, currentCostBasis, marginRule, bufferFor,
+  currentPublication, allBoardPrices, skuLabel, channelLabel, userName, fmtDateTime,
+} from '../pricing.js';
+
+const STEPS = [['draft', 'Draft'], ['simulate', 'Simulate'], ['review', 'Review'], ['approve', 'Approve'], ['publish', 'Publish']];
+
+const fresh = () => ({
+  proposalId: null, step: 'draft', objective: '', changes: [], drafterId: null,
+  instructedBy: '', verifiedBy: '', error: '', simKey: null, sharedParam: null, showAll: false, published: null,
+  add: { type: 'ACQ', channelId: 'DEALER', skuId: '11KG_MGAS', accountId: '', code: '', value: '', remove: false },
+});
+let w = fresh();
+
+const keyOf = changes => JSON.stringify(changes);
+
+function encode(obj) {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function decode(param) {
+  const b64 = param.replace(/-/g, '+').replace(/_/g, '/');
+  return JSON.parse(decodeURIComponent(escape(atob(b64 + '==='.slice((b64.length + 3) % 4)))));
+}
+
+function setHash(sim) {
+  const h = sim ? `#/priceroom?tab=change&sim=${sim}` : '#/priceroom?tab=change';
+  history.replaceState(null, '', h);
+}
+
+// Load a simulation shared by URL. Viewing it writes nothing.
+export function loadShared(param, s) {
+  if (w.sharedParam === param) return;
+  try {
+    const obj = decode(param);
+    const existing = obj.proposalId ? s.proposals.find(p => p.id === obj.proposalId) : null;
+    w = fresh();
+    Object.assign(w, {
+      proposalId: existing && existing.status !== 'published' ? existing.id : null,
+      objective: obj.objective || '', changes: obj.changes || [], drafterId: existing?.draftedBy ?? null,
+      simKey: existing?.simKey ?? null, step: 'simulate', sharedParam: param,
+    });
+  } catch {
+    w = fresh();
+    w.sharedParam = param;
+    w.error = 'The shared simulation link could not be read.';
+  }
+}
+
+export function openProposal(p) {
+  w = fresh();
+  Object.assign(w, {
+    proposalId: p.id, objective: p.objective, changes: p.changes, drafterId: p.draftedBy, simKey: p.simKey ?? null,
+    instructedBy: p.instructedBy ?? '', verifiedBy: p.verifiedBy ?? '',
+    step: p.status === 'approved' ? 'publish' : p.status === 'simulated' ? 'simulate' : 'draft',
+  });
+  if (w.step !== 'draft') {
+    w.sharedParam = encode({ proposalId: p.id, objective: p.objective, changes: p.changes });
+    setHash(w.sharedParam);
+  } else setHash(null);
+}
+
+// ---------------- HTML ----------------
+
+export function html(s, user) {
+  const idx = STEPS.findIndex(([k]) => k === w.step);
+  const bar = `<ol class="steps">${STEPS.map(([k, l], i) => `<li class="${i === idx ? 'on' : i < idx || w.step === 'done' ? 'done' : ''}">${i + 1}. ${l}</li>`).join('')}</ol>`;
+  const body = { draft: draftHtml, simulate: simulateHtml, review: reviewHtml, approve: approveHtml, publish: publishHtml, done: doneHtml }[w.step](s, user);
+  const open = s.proposals.filter(p => p.status !== 'published').sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+  return `<div class="row"><h2 class="grow" style="margin:0">Price change</h2><button type="button" id="w-new" class="small">New proposal</button></div>
+    ${bar}
+    ${w.error ? `<div class="banner red" role="alert">${esc(w.error)}</div>` : ''}
+    ${body}
+    <hr class="hr">
+    <h3>Open proposals</h3>
+    ${open.length ? `<div class="table-wrap"><table><tbody>${open.map(p => `<tr><td><b>${esc(p.objective)}</b><br>
+      <span class="small muted">${esc(p.changes.map(c => describeChange(s, c)).join('; '))}</span></td>
+      <td><span class="pill ${p.status === 'approved' ? 'green' : 'amber'}">${esc(p.status[0].toUpperCase() + p.status.slice(1))}</span></td>
+      <td class="small muted">Drafted by ${esc(userName(s, p.draftedBy))}<br>${fmtDateTime(p.updatedAt)}</td>
+      <td><button type="button" class="small" data-open-prop="${esc(p.id)}">Open</button></td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="muted small">None.</p>'}`;
+}
+
+function changeList(s, editable) {
+  if (!w.changes.length) return '<p class="muted">No changes added yet.</p>';
+  return `<ul class="stack" style="list-style:none;padding:0">${w.changes.map((c, i) => `<li class="row card">
+    <span class="grow"><span class="small muted">${esc(CHANGE_TYPES[c.type])}</span><br>${esc(describeChange(s, c))}</span>
+    ${editable ? `<button type="button" class="small" data-del-change="${i}">Remove</button>` : ''}</li>`).join('')}</ul>`;
+}
+
+function draftHtml(s) {
+  const cb = currentCostBasis(s);
+  const a = w.add;
+  const money = (label, ph) => `<label class="field grow"><span>${esc(label)}</span><input id="w-val" type="text" inputmode="decimal" placeholder="${esc(ph)}" value="${esc(a.value)}"></label>`;
+  const chSel = `<label class="field grow"><span>Channel</span><select id="w-ch">${options(s.channels, a.channelId)}</select></label>`;
+  const accSel = `<label class="field grow"><span>Account</span><select id="w-acc">${options(s.accounts, a.accountId, { placeholder: 'Choose account', label: x => `${x.name} (${x.status})` })}</select></label>`;
+  const removeT = `<label class="toggle"><input id="w-remove" type="checkbox" ${a.remove ? 'checked' : ''}> Remove from account</label>`;
+  let fields = '';
+  if (a.type === 'ACQ') fields = money(`New acquisition cost, ₱/kg (now ${toInput(cb.acqPerKg)})`, toInput(cb.acqPerKg));
+  if (a.type === 'HAULING') fields = money(`New hauling, ₱/kg (now ${toInput(cb.haulingPerKg)})`, toInput(cb.haulingPerKg));
+  if (a.type === 'MARGIN') {
+    const cur = marginRule(s, a.channelId, a.skuId);
+    fields = chSel + `<label class="field grow"><span>Product</span><select id="w-sku">${options(s.skus, a.skuId)}</select></label>`
+      + money(`New margin, ₱/kg (now ${cur ? toInput(cur.perKg) : 'not priced on this channel'})`, cur ? toInput(cur.perKg) : '');
+  }
+  if (a.type === 'BUFFER') fields = chSel + money(`New buffer, ₱/kg — may be negative (now ${toInput(bufferFor(s, a.channelId))})`, '0.00');
+  if (a.type === 'ACCOUNT_PREMIUM') fields = accSel
+    + `<label class="field grow"><span>Premium</span><select id="w-code">${options(s.premiumComponents, a.code, { value: x => x.code, placeholder: 'Choose premium' })}</select></label>`
+    + (a.remove ? '' : money('₱/kg — leave blank to use the catalogue rate or formula', 'blank = catalogue')) + removeT;
+  if (a.type === 'ACCOUNT_DISCOUNT') fields = accSel
+    + `<label class="field grow"><span>Discount</span><select id="w-code">${options(s.discountComponents, a.code, { value: x => x.code, placeholder: 'Choose discount' })}</select></label>`
+    + (a.remove ? '' : money('₱/kg', '6.25')) + removeT;
+
+  return `<div class="stack">
+    <label class="field"><span>Objective (required, one line)</span><input id="w-obj" type="text" maxlength="160" placeholder="e.g. Pass through September acquisition increase" value="${esc(w.objective)}"></label>
+    <div class="panel stack">
+      <label class="field"><span>What changes</span><select id="w-type">${options(Object.entries(CHANGE_TYPES).map(([id, label]) => ({ id, label })), a.type)}</select></label>
+      <div class="row">${fields}</div>
+      <button type="button" id="w-add">Add change</button>
+    </div>
+    ${changeList(s, true)}
+    <div class="row"><button type="button" id="w-sim" class="primary">Save draft and simulate</button></div>
+  </div>`;
+}
+
+function impactClass(v) {
+  return v > 0 ? 'neg' : v < 0 ? 'pos' : '';
+}
+
+function simulateHtml(s) {
+  const sim = simulate(s, w.changes, new Date().toISOString());
+  const logged = w.simKey === keyOf(w.changes) && !!w.proposalId;
+  const rows = sim.channelRows.filter(r => w.showAll || r.deltaPerCyl || (r.beforePerCyl == null) !== (r.afterPerCyl == null));
+  const accName = id => byId(s.accounts, id)?.name ?? id;
+  const d = v => (v == null ? '—' : fmtSigned(v));
+
+  return `<p class="muted small">Objective: <b>${esc(w.objective)}</b>. Simulation writes nothing — prices stay as they are until Publish.</p>
+    ${changeList(s, false)}
+    <div class="strip">
+      <div><span>Estimated monthly peso impact</span><b class="${impactClass(sim.monthlyImpact)}">${fmtSigned(sim.monthlyImpact)}</b></div>
+      <div><span>Accounts excluded (no volume on record)</span><b>${sim.excludedNullVolume.length}</b></div>
+      <div><span>Newly below floor</span><b>${sim.newlyBelowFloor.length}</b></div>
+      <div><span>Cross above competitor</span><b>${sim.crossesCompetitor.length}</b></div>
+    </div>
+    ${sim.excludedNullVolume.length ? `<p class="small muted">Excluded from impact, not treated as zero: ${esc(sim.excludedNullVolume.map(accName).join(', '))}.</p>` : ''}
+    <div class="cols">
+      <div>
+        <h3>Accounts newly below floor</h3>
+        ${sim.newlyBelowFloor.length ? `<ul>${sim.newlyBelowFloor.map(x => `<li><b>${esc(accName(x.accountId))}</b> — ${fmt(-x.marginVsFloorPerKg)}/kg below floor</li>`).join('')}</ul>` : '<p class="muted small">None.</p>'}
+        <h3>Accounts crossing above the newest competitor reading</h3>
+        ${sim.crossesCompetitor.length ? `<ul>${sim.crossesCompetitor.map(x => { const r = s.competitorReadings.find(c => c.id === x.readingId); return `<li><b>${esc(accName(x.accountId))}</b> — ${fmt(x.afterGrossPerCyl)} vs ${esc(r.brand)} ${fmt(r.pricePerCyl)}</li>`; }).join('')}</ul>` : '<p class="muted small">None.</p>'}
+        <h3>Accounts</h3>
+        <div class="table-wrap"><table><thead><tr><th>Account</th><th class="num">Δ/kg</th><th class="num">Vol kg/mo</th><th class="num">Monthly</th></tr></thead><tbody>
+        ${sim.accountRows.map(r => `<tr><td>${esc(accName(r.accountId))}<br><span class="small muted">${esc(skuLabel(s, r.skuId))} ${fmt(r.beforePerKg)} → ${fmt(r.afterPerKg)}</span></td>
+          <td class="num">${d(r.deltaPerKg)}</td><td class="num">${r.volumeKg == null ? '<span class="muted">none</span>' : r.volumeKg.toLocaleString('en-PH')}</td>
+          <td class="num">${r.impact == null ? '<span class="muted">excluded</span>' : fmtSigned(r.impact)}</td></tr>`).join('')}
+        </tbody></table></div>
+      </div>
+      <div>
+        <div class="row"><h3 class="grow">Channel × product, before and after</h3>
+          <label class="toggle small"><input id="w-showall" type="checkbox" ${w.showAll ? 'checked' : ''}> Show unchanged</label></div>
+        <div class="table-wrap"><table><thead><tr><th>Channel · product</th><th class="num">Per kg</th><th class="num">Δ/kg</th><th class="num">Per cyl, net</th><th class="num">Δ/cyl</th></tr></thead><tbody>
+        ${rows.length ? rows.map(r => `<tr><td>${esc(channelLabel(s, r.channelId))}<br><span class="small muted">${esc(skuLabel(s, r.skuId))}</span></td>
+          <td class="num">${fmt(r.beforePerKg)}<br>${fmt(r.afterPerKg)}</td><td class="num">${d(r.deltaPerKg)}</td>
+          <td class="num">${fmt(r.beforePerCyl)}<br>${fmt(r.afterPerCyl)}</td><td class="num">${d(r.deltaPerCyl)}</td></tr>`).join('')
+          : '<tr><td colspan="5" class="muted">No channel list prices change.</td></tr>'}
+        </tbody></table></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button type="button" id="w-back-draft">Back to draft</button>
+      <button type="button" id="w-rerun">${w.proposalId ? 'Re-run simulation' : 'Save as my draft and simulate'}</button>
+      <button type="button" id="w-share">Copy share link</button>
+      <button type="button" id="w-to-review" class="primary" ${logged ? '' : 'disabled'}>Continue to review</button>
+    </div>
+    ${logged ? '' : '<p class="small muted">Run the simulation for this exact set of changes before continuing.</p>'}`;
+}
+
+function reviewHtml(s) {
+  const sim = simulate(s, w.changes, new Date().toISOString());
+  return `<p class="muted small">Objective: <b>${esc(w.objective)}</b></p>
+    <h3>What will change</h3>
+    ${sim.review.length ? `<ul class="stack">${sim.review.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : '<p class="muted">No prices change.</p>'}
+    <p>Estimated monthly impact <b>${fmtSigned(sim.monthlyImpact)}</b>${sim.excludedNullVolume.length ? `, excluding ${sim.excludedNullVolume.length} accounts with no volume` : ''}.</p>
+    <div class="row"><button type="button" id="w-back-sim">Back to simulation</button>
+      <button type="button" id="w-to-approve" class="primary">Continue to approval</button></div>`;
+}
+
+function approveHtml(s) {
+  const managers = s.users.filter(u => u.role === 'manager');
+  const clash = w.verifiedBy && w.verifiedBy === w.drafterId;
+  return `<p class="muted small">Objective: <b>${esc(w.objective)}</b> · drafted by <b>${esc(userName(s, w.drafterId))}</b></p>
+    <div class="row">
+      <label class="field grow"><span>Instructed by</span><select id="w-instr">${options(s.users.filter(u => u.role !== 'messenger'), w.instructedBy, { label: u => u.name, placeholder: 'Choose who instructed this' })}</select></label>
+      <label class="field grow"><span>Verified by</span><select id="w-verif">${options(managers, w.verifiedBy, { label: u => u.name + (u.canApprove ? ' — may approve' : ''), placeholder: 'Choose verifier' })}</select></label>
+    </div>
+    ${clash ? `<p class="err" role="alert">The verifier must be a different person from the drafter (${esc(userName(s, w.drafterId))}). Choose another verifier.</p>` : ''}
+    <div class="row" style="margin-top:10px"><button type="button" id="w-back-review">Back to review</button>
+      <button type="button" id="w-approve" class="primary">Approve</button></div>`;
+}
+
+function publishHtml(s, user) {
+  const pub = currentPublication(s);
+  return `<div class="card stack">
+    <div><b>${esc(w.objective)}</b></div>
+    ${changeList(s, false)}
+    <div class="table-wrap"><table><tbody>
+      <tr><td>Drafted by</td><td>${esc(userName(s, w.drafterId))}</td></tr>
+      <tr><td>Instructed by</td><td>${esc(userName(s, w.instructedBy))}</td></tr>
+      <tr><td>Verified by</td><td>${esc(userName(s, w.verifiedBy))}</td></tr>
+      <tr><td>Publishing as</td><td>${esc(user.name)}</td></tr>
+      <tr><td>Board</td><td>v${pub.version} → <b>v${pub.version + 1}</b>, effective now</td></tr>
+    </tbody></table></div>
+    <div class="row"><button type="button" id="w-publish" class="primary">Publish</button></div>
+  </div>`;
+}
+
+function doneHtml(s) {
+  return `<div class="banner green">Published — board v${w.published} is live on every board and the Quote Desk.</div>
+    <div class="row">${s.channels.map(c => `<a class="btn small" href="#/board/${esc(c.id)}">${esc(c.label)}</a>`).join('')}</div>`;
+}
+
+// ---------------- Behaviour ----------------
+
+export function bind(root, user, rerender) {
+  const $ = id => root.querySelector('#' + id);
+  const on = (id, ev, fn) => { const el = $(id); if (el) el[ev] = fn; };
+  const go = step => { w.error = ''; w.step = step; rerender(); };
+
+  on('w-new', 'onclick', () => { w = fresh(); setHash(null); rerender(); });
+  root.querySelectorAll('[data-open-prop]').forEach(b => b.onclick = () => {
+    const p = store.get().proposals.find(x => x.id === b.dataset.openProp);
+    if (p) { openProposal(p); rerender(); }
+  });
+
+  // Draft
+  on('w-obj', 'oninput', e => { w.objective = e.target.value; });
+  on('w-type', 'onchange', e => { w.add = { ...w.add, type: e.target.value, value: '', code: '', remove: false }; rerender(); });
+  on('w-ch', 'onchange', e => { w.add.channelId = e.target.value; rerender(); });
+  on('w-sku', 'onchange', e => { w.add.skuId = e.target.value; rerender(); });
+  on('w-acc', 'onchange', e => { w.add.accountId = e.target.value; rerender(); });
+  on('w-code', 'onchange', e => { w.add.code = e.target.value; rerender(); });
+  on('w-remove', 'onchange', e => { w.add.remove = e.target.checked; rerender(); });
+  on('w-val', 'oninput', e => { w.add.value = e.target.value; });
+  on('w-add', 'onclick', () => { addChange(); rerender(); });
+  root.querySelectorAll('[data-del-change]').forEach(b => b.onclick = () => { w.changes.splice(+b.dataset.delChange, 1); rerender(); });
+  on('w-sim', 'onclick', async () => { await saveDraftAndSimulate(user); rerender(); });
+
+  // Simulate
+  on('w-back-draft', 'onclick', () => go('draft'));
+  on('w-showall', 'onchange', e => { w.showAll = e.target.checked; rerender(); });
+  on('w-rerun', 'onclick', async () => { await saveDraftAndSimulate(user); rerender(); });
+  on('w-share', 'onclick', async () => {
+    const url = location.href.split('#')[0] + `#/priceroom?tab=change&sim=${encode({ proposalId: w.proposalId, objective: w.objective, changes: w.changes })}`;
+    try { await navigator.clipboard.writeText(url); toast('Share link copied'); } catch { prompt('Copy this link', url); }
+  });
+  on('w-to-review', 'onclick', () => { if (w.simKey === keyOf(w.changes) && w.proposalId) go('review'); });
+
+  // Review
+  on('w-back-sim', 'onclick', () => go('simulate'));
+  on('w-to-approve', 'onclick', () => go('approve'));
+
+  // Approve
+  on('w-instr', 'onchange', e => { w.instructedBy = e.target.value; rerender(); });
+  on('w-verif', 'onchange', e => { w.verifiedBy = e.target.value; w.error = ''; rerender(); });
+  on('w-back-review', 'onclick', () => go('review'));
+  on('w-approve', 'onclick', async () => { await approve(); rerender(); });
+
+  // Publish
+  on('w-publish', 'onclick', async () => { await publish(user); rerender(); });
+}
+
+function addChange() {
+  const s = store.get();
+  const a = w.add;
+  w.error = '';
+  const val = a.value.trim() === '' ? null : toCentavos(a.value);
+  let c;
+  if (a.type === 'ACQ' || a.type === 'HAULING') {
+    if (val == null || val <= 0) return (w.error = 'Enter the new per-kg amount, for example 67.00');
+    c = { type: a.type, perKg: val };
+  } else if (a.type === 'MARGIN') {
+    if (val == null || val < 0) return (w.error = 'Enter the new margin per kg, for example 18.50');
+    c = { type: 'MARGIN', channelId: a.channelId, skuId: a.skuId, perKg: val };
+  } else if (a.type === 'BUFFER') {
+    if (val == null) return (w.error = 'Enter the buffer per kg — use a minus sign for a negative buffer');
+    c = { type: 'BUFFER', channelId: a.channelId, perKg: val };
+  } else {
+    if (!a.accountId) return (w.error = 'Choose an account');
+    if (!a.code) return (w.error = `Choose a ${a.type === 'ACCOUNT_PREMIUM' ? 'premium' : 'discount'}`);
+    if (a.type === 'ACCOUNT_DISCOUNT' && !a.remove && (val == null || val <= 0)) return (w.error = 'Enter the discount per kg, for example 6.25');
+    if (val != null && val < 0) return (w.error = 'Enter a positive amount per kg');
+    c = { type: a.type, accountId: a.accountId, code: a.code, perKg: a.remove ? null : val, remove: a.remove };
+  }
+  const same = x => x.type === c.type && x.channelId === c.channelId && x.skuId === c.skuId && x.accountId === c.accountId && x.code === c.code;
+  w.changes = [...w.changes.filter(x => !same(x)), c];
+  w.add.value = '';
+  void s;
+}
+
+async function saveDraftAndSimulate(user) {
+  w.error = '';
+  if (!w.objective.trim()) { w.error = 'Write a one-line objective — it is required before simulating'; w.step = 'draft'; return; }
+  if (!w.changes.length) { w.error = 'Add at least one change before simulating'; w.step = 'draft'; return; }
+
+  const s = store.get();
+  const existing = w.proposalId ? s.proposals.find(p => p.id === w.proposalId) : null;
+  if (!existing) { w.proposalId = store.uid('prop'); w.drafterId = user.id; }
+  const changedSinceDraft = !existing || keyOf(existing.changes) !== keyOf(w.changes) || existing.objective !== w.objective;
+
+  // Put the share state in the URL before committing, so the re-render the commit triggers keeps this wizard.
+  w.sharedParam = encode({ proposalId: w.proposalId, objective: w.objective, changes: w.changes });
+  setHash(w.sharedParam);
+
+  const cause = w.changes.map(c => describeChange(s, c)).join('; ');
+  const now = new Date().toISOString();
+  if (changedSinceDraft) {
+    await store.commit({
+      action: 'DRAFT', entity: 'proposal', entityId: w.proposalId, proposalId: w.proposalId, objective: w.objective,
+      before: existing ? { changes: existing.changes } : null, after: { changes: w.changes, cause },
+    }, d => {
+      const p = d.proposals.find(x => x.id === w.proposalId);
+      const row = { id: w.proposalId, objective: w.objective, changes: w.changes, draftedBy: w.drafterId, status: 'draft', simKey: null, instructedBy: null, verifiedBy: null, updatedAt: now };
+      if (p) Object.assign(p, row); else d.proposals.push(row);
+    });
+  }
+
+  const sim = simulate(store.get(), w.changes, now);
+  const key = keyOf(w.changes);
+  await store.commit({
+    action: 'SIMULATE', entity: 'proposal', entityId: w.proposalId, proposalId: w.proposalId, objective: w.objective,
+    after: {
+      cause: sim.cause, monthlyImpact: sim.monthlyImpact, excludedCount: sim.excludedNullVolume.length,
+      newlyBelowFloor: sim.newlyBelowFloor.length, crossesCompetitor: sim.crossesCompetitor.length,
+      accountIds: sim.accountRows.filter(r => r.deltaPerKg).map(r => r.accountId),
+    },
+  }, d => {
+    const p = d.proposals.find(x => x.id === w.proposalId);
+    Object.assign(p, { status: 'simulated', simKey: key, instructedBy: null, verifiedBy: null, updatedAt: now });
+  });
+  w.simKey = key;
+  w.instructedBy = '';
+  w.verifiedBy = '';
+  w.step = 'simulate';
+}
+
+async function approve() {
+  const s = store.get();
+  const p = s.proposals.find(x => x.id === w.proposalId);
+  w.error = '';
+  if (!p || p.simKey !== keyOf(w.changes)) { w.error = 'This proposal has changed since it was simulated — simulate again first'; w.step = 'simulate'; return; }
+  if (!w.instructedBy) { w.error = 'Choose who instructed this change'; return; }
+  if (!w.verifiedBy) { w.error = 'Choose who verified this change'; return; }
+  if (w.verifiedBy === p.draftedBy) { w.error = `Approval blocked: the verifier must be a different person from the drafter (${userName(s, p.draftedBy)})`; return; }
+
+  await store.commit({
+    action: 'APPROVE', entity: 'proposal', entityId: p.id, proposalId: p.id, objective: p.objective,
+    instructedBy: w.instructedBy, verifiedBy: w.verifiedBy, after: { draftedBy: p.draftedBy, cause: p.changes.map(c => describeChange(s, c)).join('; ') },
+  }, d => {
+    Object.assign(d.proposals.find(x => x.id === p.id), { status: 'approved', instructedBy: w.instructedBy, verifiedBy: w.verifiedBy, updatedAt: new Date().toISOString() });
+  });
+  w.step = 'publish';
+  toast('Approved');
+}
+
+async function publish(user) {
+  const s = store.get();
+  const p = s.proposals.find(x => x.id === w.proposalId);
+  w.error = '';
+  if (!p || p.status !== 'approved') { w.error = 'This proposal is not approved — approve it before publishing'; w.step = 'approve'; return; }
+  if (keyOf(p.changes) !== keyOf(w.changes)) { w.error = 'The changes differ from what was approved — simulate and approve again'; w.step = 'draft'; return; }
+  if (p.verifiedBy === p.draftedBy) { w.error = 'The verifier must be a different person from the drafter'; w.step = 'approve'; return; }
+
+  const when = new Date().toISOString();
+  const sim = simulate(s, p.changes, when);
+  const cur = currentPublication(s);
+  const version = cur.version + 1;
+  const accountIds = [...new Set([
+    ...sim.accountRows.filter(r => r.deltaPerKg).map(r => r.accountId),
+    ...p.changes.filter(c => c.accountId).map(c => c.accountId),
+  ])];
+
+  await store.commit({
+    action: 'PUBLISH', entity: 'publication', entityId: `board_v${version}`, proposalId: p.id, objective: p.objective,
+    instructedBy: p.instructedBy, verifiedBy: p.verifiedBy,
+    before: { version: cur.version },
+    after: { version, cause: sim.cause, review: sim.review, changes: p.changes, accountIds, monthlyImpact: sim.monthlyImpact, draftedBy: p.draftedBy, publishedBy: user.id },
+    hashOf: { version, when, changes: p.changes, review: sim.review },
+  }, (d, ev) => {
+    const prev = currentPublication(d);
+    if (!prev.prices) prev.prices = allBoardPrices(d); // freeze the outgoing board before tables change
+    const next = applyChanges(d, p.changes, when, store.uid);
+    d.costBasis = next.costBasis;
+    d.marginRules = next.marginRules;
+    d.buffers = next.buffers;
+    d.accounts = next.accounts;
+    d.publications.push({
+      version, publishedAt: when, proposalId: p.id, objective: p.objective,
+      draftedBy: p.draftedBy, instructedBy: p.instructedBy, verifiedBy: p.verifiedBy, publishedBy: user.id,
+      snapshotHash: ev.snapshotHash, prices: allBoardPrices(d),
+    });
+    Object.assign(d.proposals.find(x => x.id === p.id), { status: 'published', publishedAt: when, version, updatedAt: when });
+  });
+
+  w = { ...fresh(), step: 'done', published: version };
+  setHash(null);
+  toast('Published');
+}

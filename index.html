@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MGC Pricing</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#/">MGC Pricing</a>
+  <nav id="nav" aria-label="Screens"></nav>
+  <div class="tools">
+    <label class="row small"><span class="muted">Acting as</span>
+      <select id="who" aria-label="Acting as (prototype role switcher)"></select></label>
+    <button id="export" class="small" type="button">Export JSON</button>
+    <label class="btn small" for="importFile">Import JSON</label>
+    <input id="importFile" type="file" accept="application/json,.json" hidden>
+    <button id="reset" class="small danger" type="button">Reset demo data</button>
+  </div>
+</header>
+<main id="app"><p class="muted">Loading…</p></main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script type="module">
+import * as store from './js/store.js';
+import * as router from './js/router.js';
+import { esc, toast, download } from './js/ui.js';
+
+const app = document.getElementById('app');
+
+try {
+  await store.init();
+} catch (e) {
+  app.innerHTML = `<section class="page narrow"><h1>Could not start</h1>
+    <p>${esc(e.message)}</p>
+    <p>Serve the folder over HTTP: <code>python3 -m http.server 8000</code>, then open <code>http://localhost:8000/</code>.</p></section>`;
+  throw e;
+}
+
+const who = document.getElementById('who');
+const nav = document.getElementById('nav');
+
+function paintHeader(route, user) {
+  const s = store.get();
+  who.innerHTML = s.users.map(u =>
+    `<option value="${esc(u.id)}"${u.id === user.id ? ' selected' : ''}>${esc(u.name)} — ${esc(u.role)}</option>`).join('');
+  nav.innerHTML = router.navFor(s, user).map(([href, label]) => {
+    const on = href.slice(2) === route.name;
+    return `<a href="${href}" class="${on ? 'on' : ''}"${on ? ' aria-current="page"' : ''}>${esc(label)}</a>`;
+  }).join('');
+}
+
+who.addEventListener('change', () => {
+  store.setCurrentUser(who.value);
+  location.hash = router.defaultHash(store.get(), store.currentUser());
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  if (!confirm('Reset demo data? This wipes every quote, reading, publish and log entry in this browser and reloads the seed.')) return;
+  store.reset();
+  toast('Demo data reset to seed');
+});
+
+document.getElementById('export').addEventListener('click', () => {
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+  download(`mgc-pricing-${stamp}.json`, new Blob([store.exportJson()], { type: 'application/json' }));
+  toast('Exported');
+});
+
+document.getElementById('importFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    store.importJson(await file.text());
+    toast('Imported');
+  } catch (err) {
+    toast(`Import failed — ${err.message}`, 'bad');
+  }
+  e.target.value = '';
+});
+
+router.start(app, paintHeader);
+</script>
+</body>
+</html>
