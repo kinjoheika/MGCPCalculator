@@ -52,6 +52,10 @@ export async function init() {
   const raw = lsGet(KEY);
   if (raw) {
     try { state = JSON.parse(raw); } catch { state = clone(seed); }
+    // Bring saved sessions up to date with channels added to the seed later.
+    for (const c of seed.channels) if (!state.channels.some(x => x.id === c.id)) state.channels.push(clone(c));
+    state.buffers ||= [];
+    for (const b of seed.buffers || []) if (!state.buffers.some(x => x.channelId === b.channelId)) state.buffers.push(clone(b));
   } else {
     state = clone(seed);
   }

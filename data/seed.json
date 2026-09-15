@@ -26,7 +26,8 @@
     { "id": "COMMERCIAL", "label": "Commercial delivery", "audience": "Commercial" },
     { "id": "RETAIL_OUTLET", "label": "Retail outlet / Semi-dealer", "audience": "Retail Cylinder" },
     { "id": "MGSA", "label": "MGSA", "audience": "Accounting" },
-    { "id": "END_USER", "label": "End user residential", "audience": "Contact Center" }
+    { "id": "END_USER", "label": "End user residential", "audience": "Contact Center" },
+    { "id": "BULK", "label": "Bulk", "audience": "Bulk" }
   ],
 
   "marginRules": [
@@ -78,7 +79,8 @@
     { "id": "buf_3", "channelId": "COMMERCIAL", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null },
     { "id": "buf_4", "channelId": "RETAIL_OUTLET", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null },
     { "id": "buf_5", "channelId": "MGSA", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "buf_6", "channelId": "END_USER", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null }
+    { "id": "buf_6", "channelId": "END_USER", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "buf_7", "channelId": "BULK", "perKg": 0, "effectiveFrom": "2026-08-11", "effectiveTo": null }
   ],
 
   "premiumComponents": [

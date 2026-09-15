@@ -14,6 +14,8 @@ import * as wizard from './priceroom-wizard.js';
 
 const DAY = 86400000;
 const MAX = 5;
+// Column order on PL notices: Bulk, Commercial, Dealer, Semi-dealer, CBK, MGSA; anything else after.
+const NOTICE_ORDER = ['BULK', 'COMMERCIAL', 'DEALER', 'RETAIL_OUTLET', 'COBANKIAT', 'MGSA'];
 const TABS = [['clients', 'Clients board'], ['products', 'Products board'], ['channels', 'Channels board'], ['notices', 'PL notices']];
 const ui = {
   tab: 'clients', open: true, panel: 'exceptions', wide: false, animate: false, lastSim: null, scrollTop: null,
@@ -374,11 +376,13 @@ function channelsBoard(s, proposed) {
 function noticesTab(s) {
   const pub = currentPublication(s);
   const people = s.users.filter(u => u.role !== 'messenger');
+  const rank = id => { const i = NOTICE_ORDER.indexOf(id); return i < 0 ? NOTICE_ORDER.length : i; };
+  const lists = [...s.channels].sort((a, b) => rank(a.id) - rank(b.id));
   let acked = 0, total = 0;
   const body = people.map(u => {
     const mine = userChannels(s, u);
     return `<tr><th scope="row"><div class="mh">${esc(u.name)}</div><div class="small muted">${esc(u.role)}</div></th>
-      ${s.channels.map(c => {
+      ${lists.map(c => {
         if (!mine.includes(c.id)) return '<td class="center muted">·</td>';
         total++;
         const a = s.acknowledgments.find(x => x.userId === u.id && x.channelId === c.id && x.boardVersion === pub.version);
@@ -395,7 +399,7 @@ function noticesTab(s) {
     </div>
     <div class="legend"><span class="lg green">Green: user acknowledged</span><span class="lg amber">Amber: not seen</span><span class="muted">· not on this user's price lists</span></div>
     <div class="table-wrap"><table class="matrix">
-      <thead><tr><th>User</th>${s.channels.map(c => `<th class="center"><span class="pl-badge">${esc(c.label)}</span><div class="small muted">${esc(c.audience)}</div></th>`).join('')}</tr></thead>
+      <thead><tr><th>User</th>${lists.map(c => `<th class="center"><span class="pl-badge">${esc(c.label)}</span><div class="small muted">${esc(c.audience)}</div></th>`).join('')}</tr></thead>
       <tbody>${body}</tbody></table></div></div>`;
 }
 
