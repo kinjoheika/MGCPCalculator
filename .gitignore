@@ -1,0 +1,10 @@
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Nothing is built or installed for this prototype, but keep these out if they appear
+node_modules/
+*.log
