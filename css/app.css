@@ -374,11 +374,15 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .grid-table { table-layout: fixed; width: 100%; }
 .grid-table th, .grid-table td { padding: 5px 6px; }
 .grid-table tbody th { min-width: 0; font-size: 12.5px; }
-.grid-table .col-client { width: 17%; }
-.grid-table .col-price { width: 13%; }
-.grid-table .col-total { width: 8%; }
-.grid-table .col-roi { width: 15%; }
-.grid-table .col-line { width: 11.6%; }
+.grid-table .col-client { width: 16%; }
+.grid-table .col-price { width: 12%; }
+.grid-table .col-total { width: 8.5%; }
+.grid-table .col-line { width: 11%; }
+.grid-table td.grp-disc-sub, .grid-table th.grp-disc-sub { background: var(--amber-bg); }
+.grid-table tbody tr:hover > td.grp-disc-sub { background: #FBE7C4; }
+.cellfields input[type=number] { -moz-appearance: textfield; }
+.cellfields input[type=number]::-webkit-outer-spin-button,
+.cellfields input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .grid-table thead th { font-size: 11.5px; line-height: 1.2; }
 .grid-table .cell-price { font-size: 13.5px; }
 .grid-table .fact { font-size: 10.5px; }

@@ -4,7 +4,7 @@
 import * as store from '../store.js';
 import { fmt } from '../money.js';
 import { esc, toast, options, download, preserveFocus } from '../ui.js';
-import { parseCsv, toCsv, ACCOUNT_COLUMNS, rowsToAccounts, accountsToRows, templateRows, newAccount } from '../csv.js';
+import { parseCsv, toCsv, rowsToAccounts, accountsToRows, templateRows, newAccount } from '../csv.js';
 import { channelLabel, skuLabel } from '../pricing.js';
 import { FIELDS, labelFor, inputValue, displayValue, parseValue, usableKg } from '../clientterms.js';
 
@@ -189,18 +189,11 @@ function clientsHtml(s) {
 
   return `<div class="card">
     <div class="card-head"><div><h2>Import clients from CSV</h2>
-      <p class="small muted">Required columns: Name, Channel, Status. Every other column is optional; a column left out keeps the client's current value. Rows pasted from Google Sheets work too.</p></div>
+      <p class="small muted">Required columns: Name, Channel, Status. Every other column is optional; a column left out keeps the client's current value. Download the template for the full set of columns.</p></div>
       <div class="row"><button type="button" id="c-template" class="small">Download template</button><button type="button" id="c-export" class="small">Export clients CSV</button></div></div>
     <div class="row"><label class="btn primary small" for="c-file">Choose CSV file</label><input id="c-file" type="file" accept=".csv,.tsv,.txt,text/csv" hidden>
       <span class="small muted">${esc(ui.fileName || 'No file chosen')}</span></div>
-    <details class="collapse"><summary>Paste rows instead</summary>
-      <textarea id="c-paste" rows="5" placeholder="Paste rows copied from the sheet, including the header row"></textarea>
-      <button type="button" id="c-paste-go" class="small" style="margin-top:8px">Preview pasted rows</button></details>
     ${ui.preview ? previewHtml(s) : ''}
-    <details class="collapse"><summary>Supported columns (${ACCOUNT_COLUMNS.length})</summary>
-      <div class="table-wrap"><table class="mini"><thead><tr><th>Column</th><th>Required</th><th>Format</th></tr></thead><tbody>
-      ${ACCOUNT_COLUMNS.map(c => `<tr><td><b>${esc(c.header)}</b></td><td>${c.required ? 'Yes' : ''}</td><td class="small">${esc(c.hint || '')}</td></tr>`).join('')}
-      </tbody></table></div></details>
   </div>
 
   ${ui.editClient ? termsEditor(s) : ''}
@@ -384,7 +377,6 @@ function bind(root, ctx) {
     rerender();
   };
   if ($('c-file')) $('c-file').onchange = async e => { const f = e.target.files[0]; if (f) preview(await f.text(), f.name); };
-  if ($('c-paste-go')) $('c-paste-go').onclick = () => { const t = $('c-paste').value; if (t.trim()) preview(t, 'pasted rows'); };
   root.querySelectorAll('[name=c-mode]').forEach(r => r.onchange = () => { ui.mode = r.value; rerender(); });
   if ($('c-import')) $('c-import').onclick = async () => {
     if (ui.mode === 'replace' && !confirm(`Replace all ${store.get().accounts.length} clients with this file?`)) return;

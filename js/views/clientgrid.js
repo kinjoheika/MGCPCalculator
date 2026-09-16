@@ -101,11 +101,12 @@ export function html(s) {
         <th rowspan="2" class="col-client">Client</th>
         <th rowspan="2" class="num col-price">Current price<div class="small muted">per cyl, VAT incl.</div></th>
         <th colspan="${PREMIUM_COLS.length + 1}" class="grp-prem">Premiums</th>
-        <th colspan="${DISCOUNT_COLS.length}" class="grp-disc">Discounts</th>
+        <th colspan="${DISCOUNT_COLS.length + 1}" class="grp-disc">Discounts</th>
       </tr>
       <tr>
-        <th class="num grp-prem-sub col-total">Total<div class="small muted">view only</div></th>
-        ${PREMIUM_COLS.map(c => `<th class="${c.roi ? 'col-roi' : 'col-line'}">${esc(c.title)}</th>`).join('')}
+        <th class="num grp-prem-sub col-total">Total premium</th>
+        ${PREMIUM_COLS.map(c => `<th class="col-line">${esc(c.title)}</th>`).join('')}
+        <th class="num grp-disc-sub col-total">Total discounts<div class="small muted">view only</div></th>
         ${DISCOUNT_COLS.map(c => `<th class="col-line">${esc(c.title)}</th>`).join('')}
       </tr></thead>
       <tbody>${clients.map(a => clientRow(s, a, cb)).join('')}</tbody>
@@ -132,9 +133,11 @@ function clientRow(s, a, cb) {
       </th>
       <td class="num">${price}</td>
       <td class="num grp-prem-sub" id="tp-${esc(a.id)}">${totalCell(s, a)}</td>
-      ${COLS.map(c => `<td>${cellRows(a, c)}</td>`).join('')}
+      ${PREMIUM_COLS.map(c => `<td>${cellRows(a, c)}</td>`).join('')}
+      <td class="num grp-disc-sub" id="td-${esc(a.id)}">${discountCell(a)}</td>
+      ${DISCOUNT_COLS.map(c => `<td>${cellRows(a, c)}</td>`).join('')}
     </tr>
-    ${open ? `<tr class="prof"><td colspan="${3 + COLS.length}">${profileBox(a)}</td></tr>` : ''}`;
+    ${open ? `<tr class="prof"><td colspan="${4 + COLS.length}">${profileBox(a)}</td></tr>` : ''}`;
 }
 
 function totalCell(s, a) {
@@ -143,15 +146,33 @@ function totalCell(s, a) {
     ${otherCount ? `<div class="small muted">incl. ${otherCount} other premium${otherCount === 1 ? '' : 's'} ${fmt(otherTotal)}</div>` : ''}`;
 }
 
+// Live total of the client's discounts, from the three columns plus anything else it carries.
+export function discountTotal(a) {
+  const gridCodes = DISCOUNT_COLS.map(c => c.code);
+  let total = 0;
+  for (const col of DISCOUNT_COLS) for (const r of draftRows(a, col.code)) total += toCentavos(r.perKg) ?? 0;
+  const other = (a.discounts || []).filter(d => !gridCodes.includes(d.code));
+  const otherTotal = other.reduce((t, d) => t + (d.perKg ?? 0), 0);
+  return { total: total + otherTotal, otherTotal, otherCount: other.length };
+}
+
+function discountCell(a) {
+  const { total, otherTotal, otherCount } = discountTotal(a);
+  return `<div class="cell-price">${total ? '−' : ''}${fmt(total)}</div><div class="small muted">per kg</div>
+    ${otherCount ? `<div class="small muted">incl. ${otherCount} other ${fmt(otherTotal)}</div>` : ''}`;
+}
+
 // One row of fields per client and line type. Any extra rows a client already carries are kept as they are.
+// Amounts are money: two decimals, never negative.
 function cellRows(a, col) {
   const rows = draftRows(a, col.code);
   const r = rows[0] || { perKg: '', investment: '', note: '' };
   const extra = Math.max(0, rows.length - 1);
-  const f = (field, ph, label) => `<input class="mini" inputmode="${field === 'note' ? 'text' : 'decimal'}" placeholder="${ph}" value="${esc(r[field])}" aria-label="${label}" data-cg="${esc(a.id)}|${col.code}|0|${field}">`;
+  const amount = `<input class="mini" type="number" min="0" step="0.01" inputmode="decimal" placeholder="₱/kg" value="${esc(r.perKg)}" aria-label="Per kg" data-cg="${esc(a.id)}|${col.code}|0|perKg">`;
+  const note = `<input class="mini" type="text" placeholder="Note" value="${esc(r.note)}" aria-label="Note" data-cg="${esc(a.id)}|${col.code}|0|note">`;
   return `<div class="cellfields">
-    ${col.roi ? `<div class="pair">${f('investment', 'Investment ₱', 'Investment')}${f('perKg', '₱/kg', 'Per kg')}</div>` : f('perKg', '₱/kg', 'Per kg')}
-    ${f('note', 'Note', 'Note')}
+    ${amount}${note}
+    ${col.roi && r.investment ? `<div class="small muted">Investment ${fmt(toCentavos(r.investment))} ÷ TRMV when ₱/kg is blank</div>` : ''}
     ${extra ? `<div class="small muted">+${extra} more row${extra === 1 ? '' : 's'} kept</div>` : ''}
   </div>`;
 }
@@ -196,14 +217,25 @@ async function saveAll(rerender) {
 export function bind(root, rerender) {
   root.querySelectorAll('[data-cg-ch]').forEach(b => b.onclick = () => { ui.channelId = b.dataset.cgCh; rerender(); });
   root.querySelectorAll('[data-cg-exp]').forEach(b => b.onclick = () => { const id = b.dataset.cgExp; ui.expanded[id] = !ui.expanded[id]; rerender(); });
-  root.querySelectorAll('[data-cg]').forEach(el => el.oninput = () => {
+  root.querySelectorAll('[data-cg]').forEach(el => {
     const [accId, code, i, field] = el.dataset.cg.split('|');
     const a = byId(store.get().accounts, accId);
     if (!a) return;
-    editRows(a, code)[+i][field] = el.value;
-    // The total premium follows every keystroke without redrawing the row being typed into.
-    const cell = root.querySelector(`#tp-${CSS.escape(accId)}`);
-    if (cell && PREMIUM_COLS.some(c => c.code === code)) cell.innerHTML = totalCell(store.get(), a);
+    el.oninput = () => {
+      if (field === 'perKg' && el.value.startsWith('-')) el.value = el.value.replace(/-/g, '');
+      editRows(a, code)[+i][field] = el.value;
+      // Totals follow every keystroke without redrawing the field being typed into.
+      const prem = root.querySelector(`#tp-${CSS.escape(accId)}`);
+      if (prem && PREMIUM_COLS.some(c => c.code === code)) prem.innerHTML = totalCell(store.get(), a);
+      const disc = root.querySelector(`#td-${CSS.escape(accId)}`);
+      if (disc && DISCOUNT_COLS.some(c => c.code === code)) disc.innerHTML = discountCell(a);
+    };
+    // Leave the field showing centavos, the way every other amount in the app reads.
+    if (field === 'perKg') el.onblur = () => {
+      const v = toCentavos(el.value);
+      el.value = v == null || v < 0 ? '' : toInput(v);
+      editRows(a, code)[+i].perKg = el.value;
+    };
   });
   const save = root.querySelector('#cg-save');
   if (save) save.onclick = () => saveAll(rerender);
