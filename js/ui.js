@@ -4,6 +4,15 @@ export function esc(v) {
   return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// The version-and-date stamp. Every screen that shows a price carries the same mark,
+// so a number can always be traced to the price list it came from.
+export function stamp(version, dateText, { size = '', note = '' } = {}) {
+  return `<span class="stamp ${size ? `stamp-${size}` : ''}" title="Price list v${version}, effective ${esc(dateText)}">
+    <span class="stamp-v">v${esc(version)}</span>
+    <span class="stamp-t"><b>Price list</b><span>${esc(dateText)}</span></span>
+    ${note ? `<span class="stamp-n">${esc(note)}</span>` : ''}</span>`;
+}
+
 export function toast(msg, kind = 'ok') {
   const el = document.getElementById('toast');
   if (!el) return;

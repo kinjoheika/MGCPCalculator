@@ -49,11 +49,24 @@ export async function renderDoc(d) {
   text('Prepared for', M, 292, { w: 600, px: 20, color: C.tiffanyDark });
   text(d.customer, M, 338, { w: 700, px: 34, max: 640 });
   text(d.subtitle, M, 376, { px: 22, color: C.muted, max: 640 });
-  const facts = [['Price list', `v${d.version}`], ['Effective', d.effective], ['Issued', d.issued], ['Valid until', d.validUntil]].filter(f => f[1]);
+  // The version stamp: the first thing the eye should land on, and the mark a forwarded copy carries.
+  const sw = 300, sh = 96, sx = W - M - sw, sy = 268;
+  g.lineWidth = 3;
+  g.strokeStyle = C.navy;
+  g.fillStyle = C.alt;
+  g.beginPath();
+  g.roundRect ? g.roundRect(sx, sy, sw, sh, 10) : g.rect(sx, sy, sw, sh);
+  g.fill();
+  g.stroke();
+  text(`v${d.version}`, sx + 22, sy + 66, { w: 800, px: 48 });
+  text('Price list', sx + 110, sy + 44, { w: 700, px: 17, color: C.tiffanyDark });
+  text(d.effective, sx + 110, sy + 72, { w: 700, px: 21, max: sw - 130 });
+
+  const facts = [['Issued', d.issued], ['Valid until', d.validUntil]].filter(f => f[1]);
   facts.forEach(([k, v], i) => {
-    const y = 292 + i * 40;
-    text(k, 790, y, { px: 20, color: C.muted });
-    text(v, W - M, y, { w: 600, px: 22, align: 'right' });
+    const y = sy + sh + 34 + i * 34;
+    text(k, sx, y, { px: 19, color: C.muted });
+    text(v, W - M, y, { w: 600, px: 20, align: 'right' });
   });
 
   // Table

@@ -117,7 +117,6 @@ export function render(root, { state: s }) {
   }
 
   root.innerHTML = `<section class="page wide"><h1>Log</h1>
-    <p class="muted small">${s.events.length} events. Append-only — written by the same action that made the change.</p>
     <div class="tabs">${tabs.map(([k, l]) => `<button type="button" data-tab="${k}" class="${ui.tab === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</div>
     ${body}</section>`;
 

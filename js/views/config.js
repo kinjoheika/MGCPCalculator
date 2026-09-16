@@ -34,7 +34,7 @@ export function render(root, ctx) {
 function usersHtml(s, me) {
   return `<div class="card">
     <div class="card-head"><div><h2>Users and roles</h2>
-      <p class="small muted">Sellers quote on their price lists. Managers reach everything. Messengers see only Competitor price watch. Viewers see their own price list.</p></div>
+</div>
       <div class="row"><button type="button" id="u-add" class="small">Add user</button>
         <button type="button" id="u-discard" class="small">Discard changes</button>
         <button type="button" id="u-save" class="primary small">Save users</button></div></div>
@@ -104,7 +104,7 @@ function channelsHtml(s) {
   });
   return `<div class="card">
     <div class="card-head"><div><h2>Channels and price lists</h2>
-      <p class="small muted">This order is the order used everywhere: price lists, the boards, PL notices, the client grid, pickers and the Quote desk.</p></div>
+</div>
       <div class="row"><button type="button" id="ch-add" class="small">Add channel</button>
         <button type="button" id="ch-discard" class="small">Discard changes</button>
         <button type="button" id="ch-save" class="primary small">Save channels</button></div></div>

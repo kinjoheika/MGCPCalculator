@@ -93,7 +93,6 @@ export function html(s) {
       <div class="row"><div class="chips grow" style="margin:0">${chips}</div>
         <span class="small muted">${clients.length} client${clients.length === 1 ? '' : 's'}${edits ? ` · ${edits} unsaved` : ''}</span>
         <button type="button" id="cg-save" class="primary" ${edits ? '' : 'disabled'}>Save all changes</button></div>
-      <p class="small muted" style="margin:8px 0 0">Fields hold the last saved amounts. Saving adds these premiums and discounts to the MPL proposal — they take effect on Publish. Client terms under each name are view only; edit them in Configuration → Clients.</p>
     </div>
     ${clients.length ? `<div class="table-wrap"><table class="matrix grid-table">
       <thead>

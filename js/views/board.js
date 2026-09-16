@@ -2,7 +2,7 @@
 
 import * as store from '../store.js';
 import { fmt } from '../money.js';
-import { esc, toast } from '../ui.js';
+import { esc, toast, stamp } from '../ui.js';
 import { printDoc, savePdf, slug } from '../pricedoc.js';
 import { byId, boardPrices, currentPublication, boardIsStale, userChannels, fmtDate, fmtDateTime } from '../pricing.js';
 
@@ -26,7 +26,7 @@ export function render(root, ctx) {
     ${!superseded && boardIsStale(s) ? '<div class="banner red">Cost basis has changed since this price list was published — republish before quoting.</div>' : ''}
     <div class="board-head">
       <div><div class="muted">${esc(channel.audience)} price list</div><h1 style="margin:2px 0 0">${esc(channel.label)}</h1></div>
-      <div style="text-align:right"><div class="version">v${shownPub.version}</div><div class="muted">Effective ${fmtDate(shownPub.publishedAt)}</div></div>
+      ${stamp(shownPub.version, fmtDate(shownPub.publishedAt), { size: 'lg', note: superseded ? 'Superseded' : '' })}
     </div>
     <hr class="hr">
     ${rows ? `<div class="table-wrap"><table>
@@ -60,7 +60,7 @@ export function render(root, ctx) {
 function index(s, user) {
   const pub = currentPublication(s);
   const mine = s.channels.filter(c => userChannels(s, user).includes(c.id));
-  return `<section class="page narrow"><h1>Price lists</h1><p class="muted">Current version v${pub.version}, effective ${fmtDate(pub.publishedAt)}</p>
+  return `<section class="page narrow"><div class="page-head"><h1>Price lists</h1>${stamp(pub.version, fmtDate(pub.publishedAt))}</div>
     <ul class="stack" style="list-style:none;padding:0">${mine.map(c => `<li><a class="btn" style="width:100%;justify-content:space-between" href="#/board/${esc(c.id)}">
       <span>${esc(c.label)}</span><span class="muted small">${esc(c.audience)}</span></a></li>`).join('')}</ul></section>`;
 }

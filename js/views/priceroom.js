@@ -3,7 +3,7 @@
 
 import * as store from '../store.js';
 import { fmt, fmtKg } from '../money.js';
-import { esc, toast, options } from '../ui.js';
+import { esc, toast, options, stamp } from '../ui.js';
 import { derivePremiumPerKg } from '../engine.js';
 import { parse } from '../router.js';
 import {
@@ -57,7 +57,6 @@ export function render(root, ctx) {
     <div><span>Acquisition</span><b>${fmtKg(cb.acqPerKg)}</b>${arrow(cb.acqPerKg, pcb.acqPerKg)}</div>
     <div><span>Hauling</span><b>${fmtKg(cb.haulingPerKg)}</b>${arrow(cb.haulingPerKg, pcb.haulingPerKg)}</div>
     <div><span>Cost basis total</span><b>${fmtKg(cb.acqPerKg + cb.haulingPerKg)}</b>${arrow(cb.acqPerKg + cb.haulingPerKg, pcb.acqPerKg + pcb.haulingPerKg)}</div>
-    <div><span>Price list version</span><b>v${pub.version}</b></div>
     <div><span>Days since publish</span><b>${daysSince(pub.publishedAt)}</b></div>
     ${boardIsStale(s) ? '<div><span>Price lists</span><b class="pos">Out of date</b></div>' : ''}
   </div>`;
@@ -67,6 +66,7 @@ export function render(root, ctx) {
 
   root.innerHTML = `<div class="pr ${shift ? 'pr-shift' : ''}"><section class="page wide">
       <div class="page-head"><div><div class="eyebrow">Management</div><h1>Price room</h1></div>
+        ${stamp(pub.version, fmtDate(pub.publishedAt), { note: boardIsStale(s) ? 'Out of date' : '' })}
         <button type="button" id="pr-toggle" class="${ui.open ? '' : 'primary'}">${ui.open ? 'Hide' : 'Open'} MPL calculator</button></div>
       ${strip}
       ${proposed ? `<div class="banner tiffany">Boards show proposed prices from ${changes.length} change${changes.length > 1 ? 's' : ''} in the MPL calculator — nothing is published until stage 05.</div>` : ''}
@@ -436,7 +436,7 @@ function noticesTab(s) {
   return `<div class="card">
     <div class="notice-head">
       <h2>Notice acknowledgement</h2>
-      <div class="muted">Price List v${pub.version} · Published ${fmtDate(pub.publishedAt)} · <b>${acked}/${total}</b> acknowledged</div>
+      <div class="row">${stamp(pub.version, fmtDate(pub.publishedAt))}<span class="muted"><b>${acked}/${total}</b> acknowledged</span></div>
     </div>
     <div class="legend"><span class="lg green">Green: user acknowledged</span><span class="lg amber">Amber: not seen</span><span class="muted">· not on this user's price lists</span></div>
     <div class="table-wrap"><table class="matrix">

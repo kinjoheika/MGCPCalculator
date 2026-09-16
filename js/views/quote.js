@@ -10,6 +10,7 @@ import {
   zoneOf, skuLabel, channelLabel, userName, fmtDate, fmtDateTime, daysSince, isStaleReading,
 } from '../pricing.js';
 import { printDoc, savePdf, previewUrl, slug } from '../pricedoc.js';
+import { stamp } from '../ui.js';
 
 const DAY = 86400000;
 const ALL = '__all';
@@ -113,7 +114,8 @@ function allProductsCard(s, account, channelId) {
   const held = lines.filter(p => lineStatus(s, p)).length;
   const canIssue = !stale && lines.length > held;
   return `<div class="card" style="margin-top:14px">
-    <div class="muted small">${esc(account ? account.name : 'Walk-in')} · ${esc(channelLabel(s, channelId))} · price list v${currentPublication(s).version}</div>
+    <div class="row"><div class="muted small grow">${esc(account ? account.name : 'Walk-in')} · ${esc(channelLabel(s, channelId))}</div>
+      ${stamp(currentPublication(s).version, fmtDate(currentPublication(s).publishedAt), { size: 'sm' })}</div>
     <div class="table-wrap"><table>
       <thead><tr><th>Product</th><th class="num">Per kg, net</th><th class="num">Per cylinder</th></tr></thead>
       <tbody>${lines.map(p => {
@@ -143,7 +145,8 @@ function singleCard(s, account, channelId) {
   const ok = !reasons.length;
 
   return `<div class="card" style="margin-top:14px">
-    <div class="muted small">${esc(p.sku.label)} · ${esc(p.channel.label)} · price list v${currentPublication(s).version}</div>
+    <div class="row"><div class="muted small grow">${esc(p.sku.label)} · ${esc(p.channel.label)}</div>
+      ${stamp(currentPublication(s).version, fmtDate(currentPublication(s).publishedAt), { size: 'sm' })}</div>
     <div class="price-hero">${fmt(r.grossPerCyl)}</div>
     <div class="muted small">per cylinder, VAT inclusive</div>
     <div class="price-sub"><span>Per kg <b>${fmt(r.netPerKg)}</b> <span class="small muted">net</span></span>
@@ -246,6 +249,7 @@ function sentPanel(s, q) {
   const valid = new Date(q.validUntil) >= new Date();
   return `<div class="card">
     <div class="row"><div class="grow"><b>${esc(q.snapshot.customerName)}</b><div class="small muted">${esc(q.quoteId)} · sent ${fmtDateTime(q.sentAt)}</div></div>
+      ${stamp(q.snapshot.boardVersion, fmtDate(q.sentAt), { size: 'sm' })}
       <span class="pill ${valid ? 'green' : 'grey'}">${valid ? 'Valid' : 'Expired'}</span></div>
     <img id="q-doc" class="doc-preview" alt="Quotation for ${esc(q.snapshot.customerName)}">
     <div class="row" style="margin-top:10px">
