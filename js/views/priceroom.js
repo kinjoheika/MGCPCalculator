@@ -15,8 +15,6 @@ import * as grid from './clientgrid.js';
 
 const DAY = 86400000;
 const MAX = 5;
-// Column order on PL notices: Bulk, Commercial, Dealer, Semi-dealer, CBK, MGSA; anything else after.
-const NOTICE_ORDER = ['BULK', 'COMMERCIAL', 'DEALER', 'RETAIL_OUTLET', 'COBANKIAT', 'MGSA'];
 const TABS = [['clients', 'Clients board'], ['products', 'Products board'], ['channels', 'Channels board'], ['grid', 'Client pricing'], ['notices', 'PL notices']];
 const ui = {
   tab: 'clients', open: true, panel: 'exceptions', wide: false, animate: false, lastSim: null, scrollTop: null, excAll: false,
@@ -420,8 +418,7 @@ function channelsBoard(s, proposed) {
 function noticesTab(s) {
   const pub = currentPublication(s);
   const people = s.users.filter(u => u.role !== 'messenger');
-  const rank = id => { const i = NOTICE_ORDER.indexOf(id); return i < 0 ? NOTICE_ORDER.length : i; };
-  const lists = [...s.channels].sort((a, b) => rank(a.id) - rank(b.id));
+  const lists = s.channels; // order comes from Configuration → Channels
   let acked = 0, total = 0;
   const body = people.map(u => {
     const mine = userChannels(s, u);

@@ -21,13 +21,13 @@
   ],
 
   "channels": [
-    { "id": "DEALER", "label": "Dealer (pick-up)", "audience": "CODO group" },
-    { "id": "COBANKIAT", "label": "Cobankiat CBK (pick-up)", "audience": "CBK" },
+    { "id": "BULK", "label": "Bulk", "audience": "Bulk" },
     { "id": "COMMERCIAL", "label": "Commercial delivery", "audience": "Commercial" },
+    { "id": "DEALER", "label": "Dealer (pick-up)", "audience": "CODO group" },
     { "id": "RETAIL_OUTLET", "label": "Retail outlet / Semi-dealer", "audience": "Retail Cylinder" },
+    { "id": "COBANKIAT", "label": "Cobankiat CBK (pick-up)", "audience": "CBK" },
     { "id": "MGSA", "label": "MGSA", "audience": "Accounting" },
-    { "id": "END_USER", "label": "End user residential", "audience": "Contact Center" },
-    { "id": "BULK", "label": "Bulk", "audience": "Bulk" }
+    { "id": "END_USER", "label": "End user residential", "audience": "Contact Center" }
   ],
 
   "marginRules": [

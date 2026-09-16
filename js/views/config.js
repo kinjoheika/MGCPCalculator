@@ -9,18 +9,21 @@ import { channelLabel, skuLabel } from '../pricing.js';
 import { FIELDS, labelFor, inputValue, displayValue, parseValue, usableKg } from '../clientterms.js';
 
 const ROLES = ['seller', 'manager', 'messenger', 'viewer'];
-const ui = { tab: 'users', users: null, base: null, userErr: '', preview: null, mode: 'merge', fileName: '', clientQuery: '', editClient: null, terms: {} };
+const ui = { tab: 'users', users: null, base: null, userErr: '', preview: null, mode: 'merge', fileName: '', clientQuery: '', editClient: null, terms: {}, channels: null, chanBase: null, chanErr: '' };
 
 export function render(root, ctx) {
   const { state: s } = ctx;
   const base = JSON.stringify(s.users);
   if (!ui.users || ui.base !== base) { ui.users = JSON.parse(base); ui.base = base; }
-  const tabs = [['users', 'Users'], ['clients', `Clients (${s.accounts.length})`]];
+  const chanBase = JSON.stringify(s.channels);
+  if (!ui.channels || ui.chanBase !== chanBase) { ui.channels = JSON.parse(chanBase); ui.chanBase = chanBase; }
+  const tabs = [['users', 'Users'], ['channels', `Channels (${s.channels.length})`], ['clients', `Clients (${s.accounts.length})`]];
+  const body = { users: () => usersHtml(s, ctx.user), channels: () => channelsHtml(s), clients: () => clientsHtml(s) };
   preserveFocus(root, () => {
     root.innerHTML = `<section class="page wide">
       <div class="page-head"><div><div class="eyebrow">Settings</div><h1>Configuration</h1></div></div>
       <div class="tabs">${tabs.map(([k, l]) => `<button type="button" data-tab="${k}" class="${ui.tab === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</div>
-      ${ui.tab === 'users' ? usersHtml(s, ctx.user) : clientsHtml(s)}
+      ${(body[ui.tab] || body.users)()}
     </section>`;
   });
   bind(root, ctx);
@@ -87,6 +90,91 @@ async function saveUsers(me) {
   }, d => { d.users = users; });
   ui.users = null;
   toast('Users saved');
+}
+
+// ---------------- Channels ----------------
+// The order of this list is the order every channel list in the app uses.
+
+const channelId = label => (label.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '') || 'CHANNEL').slice(0, 20);
+
+function channelsHtml(s) {
+  const usage = id => ({
+    clients: s.accounts.filter(a => a.channelId === id).length,
+    products: s.marginRules.filter(r => r.channelId === id && r.effectiveTo == null).length,
+  });
+  return `<div class="card">
+    <div class="card-head"><div><h2>Channels and price lists</h2>
+      <p class="small muted">This order is the order used everywhere: price lists, the boards, PL notices, the client grid, pickers and the Quote desk.</p></div>
+      <div class="row"><button type="button" id="ch-add" class="small">Add channel</button>
+        <button type="button" id="ch-discard" class="small">Discard changes</button>
+        <button type="button" id="ch-save" class="primary small">Save channels</button></div></div>
+    ${ui.chanErr ? `<div class="banner red" role="alert">${esc(ui.chanErr)}</div>` : ''}
+    <div class="table-wrap"><table class="matrix">
+      <thead><tr><th class="num">#</th><th>Name</th><th>Audience</th><th>ID</th><th class="num">Clients</th><th class="num">Priced products</th><th class="center">Move</th><th></th></tr></thead>
+      <tbody>${ui.channels.map((c, i) => {
+        const u = c._new ? { clients: 0, products: 0 } : usage(c.id);
+        const locked = u.clients || u.products;
+        return `<tr>
+          <td class="num">${i + 1}</td>
+          <td><input type="text" data-ch="${i}" data-f="label" value="${esc(c.label)}" aria-label="Channel name"></td>
+          <td><input type="text" data-ch="${i}" data-f="audience" value="${esc(c.audience ?? '')}" aria-label="Audience"></td>
+          <td class="small muted">${c._new ? '<i>set on save</i>' : esc(c.id)}</td>
+          <td class="num">${u.clients}</td>
+          <td class="num">${u.products}</td>
+          <td class="center nowrap"><button type="button" class="icon small" data-ch-move="${i}|-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">▲</button><button type="button" class="icon small" data-ch-move="${i}|1" ${i === ui.channels.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button></td>
+          <td><button type="button" class="small" data-ch-del="${i}" ${locked ? `disabled title="${u.clients} clients, ${u.products} priced products"` : ''}>Remove</button></td>
+        </tr>`;
+      }).join('')}</tbody></table></div>
+    <p class="small muted">A channel can only be removed once it has no clients and no priced products.</p></div>`;
+}
+
+async function saveChannels() {
+  const s = store.get();
+  ui.chanErr = '';
+  const next = ui.channels.map(c => ({ ...c, label: c.label.trim(), audience: (c.audience ?? '').trim() }));
+  if (!next.length) return (ui.chanErr = 'Keep at least one channel');
+  const blank = next.find(c => !c.label);
+  if (blank) return (ui.chanErr = 'Every channel needs a name');
+
+  // New rows get their id from the name; existing ids never change, because the data references them.
+  const taken = new Set(next.filter(c => !c._new).map(c => c.id));
+  for (const c of next) {
+    if (!c._new) continue;
+    let id = channelId(c.label), n = 2;
+    while (taken.has(id)) id = `${channelId(c.label)}_${n++}`;
+    taken.add(id);
+    c.id = id;
+    delete c._new;
+  }
+
+  const beforeIds = s.channels.map(c => c.id);
+  const afterIds = next.map(c => c.id);
+  const summary = [];
+  for (const c of next) {
+    const old = s.channels.find(x => x.id === c.id);
+    if (!old) { summary.push(`added ${c.label}`); continue; }
+    if (old.label !== c.label) summary.push(`renamed ${old.label} → ${c.label}`);
+    if ((old.audience ?? '') !== c.audience) summary.push(`${c.label} audience → ${c.audience || 'none'}`);
+  }
+  for (const id of beforeIds) if (!afterIds.includes(id)) summary.push(`removed ${s.channels.find(c => c.id === id).label}`);
+  if (beforeIds.join() !== afterIds.filter(id => beforeIds.includes(id)).join()) summary.push(`order: ${next.map(c => c.label).join(' › ')}`);
+  if (!summary.length) { toast('No changes to save'); return; }
+
+  await store.commit({
+    action: 'CONFIG_CHANGED', entity: 'channels', entityId: 'channels', field: 'channels',
+    before: s.channels, after: { summary: summary.join('; '), channels: next },
+  }, d => {
+    const gone = beforeIds.filter(id => !afterIds.includes(id));
+    d.channels = next;
+    d.buffers = (d.buffers || []).filter(b => !gone.includes(b.channelId));
+    for (const c of next) {
+      if (d.buffers.some(b => b.channelId === c.id && b.effectiveTo == null)) continue;
+      d.buffers.push({ id: store.uid('buf'), channelId: c.id, perKg: 0, effectiveFrom: new Date().toISOString(), effectiveTo: null });
+    }
+    for (const u of d.users) u.channels = u.channels.filter(ch => ch === '*' || !gone.includes(ch));
+  });
+  ui.channels = null;
+  toast('Channels saved');
 }
 
 // ---------------- Clients ----------------
@@ -269,6 +357,25 @@ function bind(root, ctx) {
   };
   if ($('u-discard')) $('u-discard').onclick = () => { ui.users = null; ui.userErr = ''; rerender(); };
   if ($('u-save')) $('u-save').onclick = async () => { await saveUsers(ctx.user); rerender(); };
+
+  // Channels
+  root.querySelectorAll('[data-ch][data-f]').forEach(el => el.oninput = () => { ui.channels[+el.dataset.ch][el.dataset.f] = el.value; });
+  root.querySelectorAll('[data-ch-move]').forEach(b => b.onclick = () => {
+    const [i, step] = b.dataset.chMove.split('|').map(Number);
+    const to = i + step;
+    if (to < 0 || to >= ui.channels.length) return;
+    const list = ui.channels;
+    [list[i], list[to]] = [list[to], list[i]];
+    rerender();
+  });
+  root.querySelectorAll('[data-ch-del]').forEach(b => b.onclick = () => { ui.channels.splice(+b.dataset.chDel, 1); rerender(); });
+  if ($('ch-add')) $('ch-add').onclick = () => {
+    ui.channels.push({ id: '', label: '', audience: '', _new: true });
+    rerender();
+    root.querySelector(`[data-ch="${ui.channels.length - 1}"][data-f="label"]`)?.focus();
+  };
+  if ($('ch-discard')) $('ch-discard').onclick = () => { ui.channels = null; ui.chanErr = ''; rerender(); };
+  if ($('ch-save')) $('ch-save').onclick = async () => { await saveChannels(); rerender(); };
 
   // Clients
   const preview = (text, name) => {

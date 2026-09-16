@@ -30,7 +30,9 @@ Serve it over HTTP. Browsers block ES modules and `fetch` on `file://`, and `cry
 | `#/market` | messenger | Competitor price watch: readings with a required photo. No MGC prices |
 | `#/board/:channelId` | manager, seller (own), viewer (own) | Price list: Acknowledge, Print, Save |
 | `#/log` | manager | Append-only event log, four views |
-| `#/config` | manager | Users and roles; clients list with CSV import / export |
+| `#/config` | manager | Users and roles; channels and their order; clients list with CSV import / export |
+
+**Channel order.** Configuration → Channels sets the sequence used by every channel list in the app — price lists, the Channels board, PL notices, the client pricing grid, pickers and the Quote desk. Names and audiences are editable there, channels can be added (the ID comes from the name and never changes afterwards), and one can be removed once it has no clients and no priced products. Changes are logged.
 
 ## Documents
 
