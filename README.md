@@ -1,5 +1,7 @@
 # MGC Pricing — HTML prototype
 
+> **Demo data.** Every figure in this repository is an illustrative placeholder — the cost basis, the margins, the premiums and discounts, and all 175 clients are made up. They are not MGC's costs, margins or customers, and no number here should be quoted or relied on.
+
 > **Still open: the floor definition.** The prototype uses
 > `floor_per_kg = acq + hauling + margin(channel, sku)` — net of premiums and buffer.
 > Discounts may not push the final price below it without an approved request.
@@ -88,7 +90,7 @@ serve.py            static server with no caching
 
 ## Seed data
 
-`data/seed.json` holds configuration only: the cost basis (₱65.50 acquisition, ₱2.25 hauling), channel × product margins, buffers, the premium and discount catalogue, zones and users. User names are placeholders — edit them in Configuration → Users, or in the file and then Reset demo data.
+`data/seed.json` holds configuration only: the cost basis (placeholder ₱60.00 acquisition, ₱2.00 hauling), channel × product margins, buffers, the premium and discount catalogue, zones and users. User names are placeholders — edit them in Configuration → Users, or in the file and then Reset demo data.
 
 `data/clients.mock.json` holds the made-up demo clients and competitor readings, loaded on top of the seed at start-up. Regenerate it with:
 
@@ -104,7 +106,7 @@ It also holds `settings` (VAT 12%, quote validity 7 days), per-channel `buffers`
 
 - Order: `(acq + hauling) + margin + premiums − discounts + buffer`, then VAT on the per-cylinder net.
 - All money is integer centavos. Each ladder step rounds half-up (away from zero) to a whole centavo; per-cylinder and VAT round once each.
-- The 11 kg MGas dealer price reproduces ₱943.25 per cylinder, net of VAT.
+- On the placeholder figures, the 11 kg MGas dealer price comes to ₱880.00 per cylinder, net of VAT.
 - An approved price request adds an "Approved price exception" discount for that customer and product for 7 days and allows sending below floor.
 
 ## Demo tools

@@ -2,7 +2,7 @@
   "settings": { "vatRate": 0.12, "vatInclusive": true, "quoteValidityDays": 7, "competitorStaleDays": 7 },
 
   "costBasis": [
-    { "id": "cb_2026_08_11", "acqPerKg": 6550, "haulingPerKg": 225, "effectiveFrom": "2026-08-11", "effectiveTo": null }
+    { "id": "cb_2026_08_11", "acqPerKg": 6000, "haulingPerKg": 200, "effectiveFrom": "2026-08-11", "effectiveTo": null }
   ],
 
   "skus": [
@@ -31,48 +31,48 @@
   ],
 
   "marginRules": [
-    { "id": "mr_1", "channelId": "DEALER", "skuId": "50KG_A", "perKg": 1700, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_2", "channelId": "DEALER", "skuId": "22KG_A", "perKg": 1800, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_1", "channelId": "DEALER", "skuId": "50KG_A", "perKg": 1500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_2", "channelId": "DEALER", "skuId": "22KG_A", "perKg": 1600, "effectiveFrom": "2026-08-11", "effectiveTo": null },
     { "id": "mr_3", "channelId": "DEALER", "skuId": "11KG_MGAS", "perKg": 1800, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_4", "channelId": "DEALER", "skuId": "11KG_SULIT", "perKg": 1250, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_5", "channelId": "DEALER", "skuId": "MINI9", "perKg": 1805, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_6", "channelId": "DEALER", "skuId": "5KG_SULIT", "perKg": 2005, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_4", "channelId": "DEALER", "skuId": "11KG_SULIT", "perKg": 1200, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_5", "channelId": "DEALER", "skuId": "MINI9", "perKg": 1800, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_6", "channelId": "DEALER", "skuId": "5KG_SULIT", "perKg": 2000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
     { "id": "mr_7", "channelId": "DEALER", "skuId": "2.7KG", "perKg": 2300, "effectiveFrom": "2026-08-11", "effectiveTo": null },
     { "id": "mr_8", "channelId": "DEALER", "skuId": "2.7KG_SULIT", "perKg": 2800, "effectiveFrom": "2026-08-11", "effectiveTo": null },
 
-    { "id": "mr_9", "channelId": "COBANKIAT", "skuId": "50KG_A", "perKg": 1650, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_10", "channelId": "COBANKIAT", "skuId": "22KG_A", "perKg": 1650, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_11", "channelId": "COBANKIAT", "skuId": "11KG_MGAS", "perKg": 1650, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_12", "channelId": "COBANKIAT", "skuId": "11KG_SULIT", "perKg": 1250, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_9", "channelId": "COBANKIAT", "skuId": "50KG_A", "perKg": 1400, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_10", "channelId": "COBANKIAT", "skuId": "22KG_A", "perKg": 1500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_11", "channelId": "COBANKIAT", "skuId": "11KG_MGAS", "perKg": 1600, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_12", "channelId": "COBANKIAT", "skuId": "11KG_SULIT", "perKg": 1200, "effectiveFrom": "2026-08-11", "effectiveTo": null },
 
-    { "id": "mr_13", "channelId": "COMMERCIAL", "skuId": "50KG_A", "perKg": 3400, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_14", "channelId": "COMMERCIAL", "skuId": "22KG_A", "perKg": 4800, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_13", "channelId": "COMMERCIAL", "skuId": "50KG_A", "perKg": 3000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_14", "channelId": "COMMERCIAL", "skuId": "22KG_A", "perKg": 4500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
     { "id": "mr_15", "channelId": "COMMERCIAL", "skuId": "22KG_FL_A", "perKg": 5000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_16", "channelId": "COMMERCIAL", "skuId": "11KG_MGAS", "perKg": 4950, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_17", "channelId": "COMMERCIAL", "skuId": "11KG_SULIT", "perKg": 4469, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_18", "channelId": "COMMERCIAL", "skuId": "MINI9", "perKg": 2483, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_19", "channelId": "COMMERCIAL", "skuId": "5KG_SULIT", "perKg": 4350, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_20", "channelId": "COMMERCIAL", "skuId": "2.7KG", "perKg": 7560, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_16", "channelId": "COMMERCIAL", "skuId": "11KG_MGAS", "perKg": 5000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_17", "channelId": "COMMERCIAL", "skuId": "11KG_SULIT", "perKg": 4500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_18", "channelId": "COMMERCIAL", "skuId": "MINI9", "perKg": 2500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_19", "channelId": "COMMERCIAL", "skuId": "5KG_SULIT", "perKg": 4000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_20", "channelId": "COMMERCIAL", "skuId": "2.7KG", "perKg": 7500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
 
-    { "id": "mr_21", "channelId": "RETAIL_OUTLET", "skuId": "11KG_MGAS", "perKg": 2750, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_22", "channelId": "RETAIL_OUTLET", "skuId": "11KG_SULIT", "perKg": 2200, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_23", "channelId": "RETAIL_OUTLET", "skuId": "2.7KG", "perKg": 3400, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_24", "channelId": "RETAIL_OUTLET", "skuId": "2.7KG_SULIT", "perKg": 3700, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_21", "channelId": "RETAIL_OUTLET", "skuId": "11KG_MGAS", "perKg": 2500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_22", "channelId": "RETAIL_OUTLET", "skuId": "11KG_SULIT", "perKg": 2000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_23", "channelId": "RETAIL_OUTLET", "skuId": "2.7KG", "perKg": 3500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_24", "channelId": "RETAIL_OUTLET", "skuId": "2.7KG_SULIT", "perKg": 3500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
 
-    { "id": "mr_25", "channelId": "MGSA", "skuId": "50KG_A", "perKg": 1100, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_26", "channelId": "MGSA", "skuId": "22KG_A", "perKg": 1100, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_27", "channelId": "MGSA", "skuId": "11KG_MGAS", "perKg": 1100, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_25", "channelId": "MGSA", "skuId": "50KG_A", "perKg": 1000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_26", "channelId": "MGSA", "skuId": "22KG_A", "perKg": 1000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_27", "channelId": "MGSA", "skuId": "11KG_MGAS", "perKg": 1000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
 
-    { "id": "mr_28", "channelId": "END_USER", "skuId": "50KG_A", "perKg": 3400, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_29", "channelId": "END_USER", "skuId": "22KG_A", "perKg": 5200, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_30", "channelId": "END_USER", "skuId": "11KG_MGAS", "perKg": 4400, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_31", "channelId": "END_USER", "skuId": "11KG_SULIT", "perKg": 3600, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_28", "channelId": "END_USER", "skuId": "50KG_A", "perKg": 3500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_29", "channelId": "END_USER", "skuId": "22KG_A", "perKg": 5000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_30", "channelId": "END_USER", "skuId": "11KG_MGAS", "perKg": 4500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_31", "channelId": "END_USER", "skuId": "11KG_SULIT", "perKg": 3500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
     { "id": "mr_32", "channelId": "END_USER", "skuId": "MINI9", "perKg": 4000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_33", "channelId": "END_USER", "skuId": "5KG_SULIT", "perKg": 6320, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_34", "channelId": "END_USER", "skuId": "2.7KG", "perKg": 6100, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_35", "channelId": "END_USER", "skuId": "2.7KG_SULIT", "perKg": 5900, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_33", "channelId": "END_USER", "skuId": "5KG_SULIT", "perKg": 6000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_34", "channelId": "END_USER", "skuId": "2.7KG", "perKg": 6000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_35", "channelId": "END_USER", "skuId": "2.7KG_SULIT", "perKg": 6000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
 
-    { "id": "mr_36", "channelId": "BULK", "skuId": "50KG_A", "perKg": 2600, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_36", "channelId": "BULK", "skuId": "50KG_A", "perKg": 2500, "effectiveFrom": "2026-08-11", "effectiveTo": null },
     { "id": "mr_37", "channelId": "BULK", "skuId": "22KG_A", "perKg": 2800, "effectiveFrom": "2026-08-11", "effectiveTo": null },
     { "id": "mr_38", "channelId": "BULK", "skuId": "11KG_MGAS", "perKg": 3000, "effectiveFrom": "2026-08-11", "effectiveTo": null }
   ],
@@ -88,13 +88,13 @@
   ],
 
   "premiumComponents": [
-    { "code": "TANK_RENTAL", "label": "Tank rental", "perKg": 90, "type": "fixed" },
+    { "code": "TANK_RENTAL", "label": "Tank rental", "perKg": 100, "type": "fixed" },
     { "code": "CREDIT_07", "label": "Credit term 7 days", "perKg": 50, "type": "fixed" },
     { "code": "CREDIT_15", "label": "Credit term 15 days", "perKg": 100, "type": "fixed" },
     { "code": "CREDIT_30", "label": "Credit term 30 days", "perKg": 150, "type": "fixed" },
     { "code": "CREDIT_RISK", "label": "Credit risk / bad debts", "type": "fixed" },
     { "code": "REPAIRS", "label": "Repairs and maintenance", "perKg": 100, "type": "fixed" },
-    { "code": "MARKETING", "label": "Marketing collateral", "perKg": 10, "type": "fixed" },
+    { "code": "MARKETING", "label": "Marketing collateral", "perKg": 25, "type": "fixed" },
     { "code": "ROI_INSTALL", "label": "ROI — installation", "type": "derived", "formula": "investmentCentavos / trmvKg" },
     { "code": "ENTRUSTED_CYL", "label": "Entrusted cylinders", "type": "derived", "formula": "(entrustedCylCount * cylCostCentavos) / trmvKg" }
   ],
