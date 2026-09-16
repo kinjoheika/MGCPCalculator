@@ -365,3 +365,7 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .grid-table tbody tr:hover > td.grp-prem-sub { background: #D9F2F0; }
 .prof-head { margin-bottom: 6px; }
 .prof-f .prof-v { display: block; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* ---- Fatal load error bar ---- */
+.fatal { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 16px; background: var(--red-bg); color: var(--red); border-bottom: 2px solid var(--red); position: sticky; top: 0; z-index: 100; }
+.fatal button { border-color: var(--red); color: var(--red); background: #fff; }

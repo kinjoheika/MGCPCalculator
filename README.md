@@ -12,10 +12,12 @@ A working calculator, logger and decision tool for LPG pricing. Static HTML and 
 
 ```bash
 cd mgc-pricing
-python3 -m http.server 8000
+python serve.py 8000
 ```
 
 Open http://localhost:8000/. Engine tests: http://localhost:8000/engine.test.html.
+
+`serve.py` is `http.server` with `Cache-Control: no-store`, so an edited file is never served from a stale browser cache. `python3 -m http.server 8000` also works, but after an update reload with Ctrl+Shift+R or you may run a mix of old and new files.
 
 Serve it over HTTP. Browsers block ES modules and `fetch` on `file://`, and `crypto.subtle` (SHA-256 snapshot hashes) needs `localhost` or HTTPS.
 

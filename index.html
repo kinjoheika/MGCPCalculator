@@ -31,6 +31,24 @@ import { esc, toast, download } from './js/ui.js';
 
 const app = document.getElementById('app');
 
+// A failed module or a render error would otherwise leave a blank screen.
+// Most often it is a half-cached set of files after an update, so offer the reload.
+let shownFatal = false;
+function showFatal(message) {
+  if (shownFatal) return;
+  shownFatal = true;
+  const bar = document.createElement('div');
+  bar.className = 'fatal';
+  bar.innerHTML = `<div><b>Something failed to load.</b> <span class="small"></span>
+    <div class="small">If the app was just updated, reload it fully with Ctrl+Shift+R (Cmd+Shift+R on Mac).</div></div>
+    <button type="button" class="small">Reload</button>`;
+  bar.querySelector('span').textContent = String(message || '').slice(0, 200);
+  bar.querySelector('button').onclick = () => location.reload();
+  document.body.prepend(bar);
+}
+window.addEventListener('error', e => showFatal(e.message));
+window.addEventListener('unhandledrejection', e => showFatal(e.reason?.message ?? e.reason));
+
 try {
   await store.init();
 } catch (e) {
