@@ -1,4 +1,4 @@
-// Configuration — manager. Users and roles; clients list with CSV import.
+// Configuration — manager. Users, channels, products, price watch zones and the clients list.
 // Every save goes through store.commit, so configuration changes are logged like price changes.
 
 import * as store from '../store.js';
@@ -9,7 +9,8 @@ import { channelLabel, skuLabel } from '../pricing.js';
 import { FIELDS, labelFor, inputValue, displayValue, parseValue, usableKg } from '../clientterms.js';
 
 const ROLES = ['seller', 'manager', 'messenger', 'viewer'];
-const ui = { tab: 'users', users: null, base: null, userErr: '', preview: null, mode: 'merge', fileName: '', clientQuery: '', editClient: null, terms: {}, channels: null, chanBase: null, chanErr: '' };
+const ui = { tab: 'users', users: null, base: null, userErr: '', preview: null, mode: 'merge', fileName: '', clientQuery: '', editClient: null, terms: {}, basic: {}, clientErr: '', channels: null, chanBase: null, chanErr: '',
+  skus: null, skuBase: null, skuErr: '', zones: null, zoneBase: null, zoneErr: '' };
 
 export function render(root, ctx) {
   const { state: s } = ctx;
@@ -17,8 +18,16 @@ export function render(root, ctx) {
   if (!ui.users || ui.base !== base) { ui.users = JSON.parse(base); ui.base = base; }
   const chanBase = JSON.stringify(s.channels);
   if (!ui.channels || ui.chanBase !== chanBase) { ui.channels = JSON.parse(chanBase); ui.chanBase = chanBase; }
-  const tabs = [['users', 'Users'], ['channels', `Channels (${s.channels.length})`], ['clients', `Clients (${s.accounts.length})`]];
-  const body = { users: () => usersHtml(s, ctx.user), channels: () => channelsHtml(s), clients: () => clientsHtml(s) };
+  const skuBase = JSON.stringify(s.skus);
+  if (!ui.skus || ui.skuBase !== skuBase) { ui.skus = JSON.parse(skuBase); ui.skuBase = skuBase; }
+  const zoneBase = JSON.stringify(s.zones);
+  if (!ui.zones || ui.zoneBase !== zoneBase) { ui.zones = s.zones.map(z => ({ name: z, from: z })); ui.zoneBase = zoneBase; }
+  const tabs = [['users', 'Users'], ['channels', `Channels (${s.channels.length})`], ['products', `Products (${s.skus.length})`],
+    ['zones', `Zones (${s.zones.length})`], ['clients', `Clients (${s.accounts.length})`]];
+  const body = {
+    users: () => usersHtml(s, ctx.user), channels: () => channelsHtml(s), products: () => productsHtml(s),
+    zones: () => zonesHtml(s), clients: () => clientsHtml(s),
+  };
   preserveFocus(root, () => {
     root.innerHTML = `<section class="page wide">
       <div class="page-head"><div><div class="eyebrow">Settings</div><h1>Configuration</h1></div></div>
@@ -96,6 +105,14 @@ async function saveUsers(me) {
 // The order of this list is the order every channel list in the app uses.
 
 const channelId = label => (label.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '') || 'CHANNEL').slice(0, 20);
+
+// "3|-1" — move the row at index 3 one place up.
+function move(list, spec) {
+  const [i, step] = spec.split('|').map(Number);
+  const to = i + step;
+  if (to < 0 || to >= list.length) return;
+  [list[i], list[to]] = [list[to], list[i]];
+}
 
 function channelsHtml(s) {
   const usage = id => ({
@@ -177,6 +194,153 @@ async function saveChannels() {
   toast('Channels saved');
 }
 
+// ---------------- Products ----------------
+// This order is the order products appear in every list and on every price list.
+
+function productUsage(s, id) {
+  return {
+    priced: s.marginRules.filter(r => r.skuId === id && r.effectiveTo == null).length,
+    clients: s.accounts.filter(a => a.primarySkuId === id).length,
+    quotes: s.quotes.filter(q => q.skuId === id).length + s.competitorReadings.filter(r => r.skuId === id).length,
+  };
+}
+
+function productsHtml(s) {
+  return `<div class="card">
+    <div class="card-head"><h2>Products</h2>
+      <div class="row"><button type="button" id="sk-add" class="small">Add product</button>
+        <button type="button" id="sk-discard" class="small">Discard changes</button>
+        <button type="button" id="sk-save" class="primary small">Save products</button></div></div>
+    ${ui.skuErr ? `<div class="banner red" role="alert">${esc(ui.skuErr)}</div>` : ''}
+    <div class="table-wrap"><table class="matrix">
+      <thead><tr><th class="num">#</th><th>Name</th><th class="num">Content kg</th><th class="center">Sold</th><th>ID</th><th class="num">Priced on</th><th class="num">Clients</th><th class="center">Move</th><th></th></tr></thead>
+      <tbody>${ui.skus.map((k, i) => {
+        const u = k._new ? { priced: 0, clients: 0, quotes: 0 } : productUsage(s, k.id);
+        const locked = u.priced || u.clients || u.quotes;
+        return `<tr>
+          <td class="num">${i + 1}</td>
+          <td><input type="text" data-sk="${i}" data-f="label" value="${esc(k.label)}" aria-label="Product name"></td>
+          <td><input type="number" min="0.1" step="0.1" data-sk="${i}" data-f="contentKg" value="${esc(k.contentKg ?? '')}" aria-label="Content kg"></td>
+          <td class="center"><input type="checkbox" data-sk="${i}" data-f="active" ${k.active ? 'checked' : ''} aria-label="Sold"></td>
+          <td class="small muted">${k._new ? '<i>set on save</i>' : esc(k.id)}</td>
+          <td class="num">${u.priced} channel${u.priced === 1 ? '' : 's'}</td>
+          <td class="num">${u.clients}</td>
+          <td class="center nowrap"><button type="button" class="icon small" data-sk-move="${i}|-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">▲</button><button type="button" class="icon small" data-sk-move="${i}|1" ${i === ui.skus.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button></td>
+          <td><button type="button" class="small" data-sk-del="${i}" ${locked ? `disabled title="Priced on ${u.priced} channels, ${u.clients} clients, ${u.quotes} quotes or readings"` : ''}>Remove</button></td>
+        </tr>`;
+      }).join('')}</tbody></table></div>
+    <p class="small muted">Untick <b>Sold</b> to take a product off the pickers and price lists without deleting it. A product can only be removed once nothing references it.</p></div>`;
+}
+
+async function saveProducts() {
+  const s = store.get();
+  ui.skuErr = '';
+  const next = ui.skus.map(k => ({ ...k, label: k.label.trim(), contentKg: Number(k.contentKg), active: !!k.active }));
+  if (!next.length) return (ui.skuErr = 'Keep at least one product');
+  const blank = next.find(k => !k.label);
+  if (blank) return (ui.skuErr = 'Every product needs a name');
+  const badKg = next.find(k => !Number.isFinite(k.contentKg) || k.contentKg <= 0);
+  if (badKg) return (ui.skuErr = `${badKg.label} needs a content in kilograms`);
+
+  const taken = new Set(next.filter(k => !k._new).map(k => k.id));
+  for (const k of next) {
+    if (!k._new) continue;
+    let id = channelId(k.label), n = 2;
+    while (taken.has(id)) id = `${channelId(k.label)}_${n++}`;
+    taken.add(id);
+    k.id = id;
+    delete k._new;
+  }
+
+  const summary = [];
+  for (const k of next) {
+    const old = s.skus.find(x => x.id === k.id);
+    if (!old) { summary.push(`added ${k.label}`); continue; }
+    if (old.label !== k.label) summary.push(`renamed ${old.label} → ${k.label}`);
+    if (old.contentKg !== k.contentKg) summary.push(`${k.label} content ${old.contentKg} → ${k.contentKg} kg`);
+    if (old.active !== k.active) summary.push(`${k.label} ${k.active ? 'sold again' : 'no longer sold'}`);
+  }
+  for (const old of s.skus) if (!next.some(k => k.id === old.id)) summary.push(`removed ${old.label}`);
+  if (s.skus.map(k => k.id).join() !== next.map(k => k.id).filter(id => s.skus.some(x => x.id === id)).join()) summary.push(`order: ${next.map(k => k.label).join(' › ')}`);
+  if (!summary.length) { toast('No changes to save'); return; }
+
+  await store.commit({
+    action: 'CONFIG_CHANGED', entity: 'skus', entityId: 'skus', field: 'skus',
+    before: s.skus, after: { summary: summary.join('; '), skus: next },
+  }, d => { d.skus = next; });
+  ui.skus = null;
+  toast('Products saved');
+}
+
+// ---------------- Price watch zones ----------------
+
+function zoneUsage(s, name) {
+  return {
+    readings: s.competitorReadings.filter(r => r.zone === name).length,
+    clients: s.accounts.filter(a => a.zone && (a.zone === name || a.zone.startsWith(name))).length,
+  };
+}
+
+function zonesHtml(s) {
+  return `<div class="card">
+    <div class="card-head"><h2>Price watch zones</h2>
+      <div class="row"><button type="button" id="z-add" class="small">Add zone</button>
+        <button type="button" id="z-discard" class="small">Discard changes</button>
+        <button type="button" id="z-save" class="primary small">Save zones</button></div></div>
+    ${ui.zoneErr ? `<div class="banner red" role="alert">${esc(ui.zoneErr)}</div>` : ''}
+    <div class="table-wrap"><table class="matrix">
+      <thead><tr><th class="num">#</th><th>Zone</th><th class="num">Readings</th><th class="num">Clients</th><th class="center">Move</th><th></th></tr></thead>
+      <tbody>${ui.zones.map((z, i) => {
+        const u = z.from ? zoneUsage(s, z.from) : { readings: 0, clients: 0 };
+        return `<tr>
+          <td class="num">${i + 1}</td>
+          <td><input type="text" data-z="${i}" value="${esc(z.name)}" aria-label="Zone name"></td>
+          <td class="num">${u.readings}</td>
+          <td class="num">${u.clients}</td>
+          <td class="center nowrap"><button type="button" class="icon small" data-z-move="${i}|-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">▲</button><button type="button" class="icon small" data-z-move="${i}|1" ${i === ui.zones.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button></td>
+          <td><button type="button" class="small" data-z-del="${i}" ${u.readings || u.clients ? `disabled title="${u.readings} readings, ${u.clients} clients"` : ''}>Remove</button></td>
+        </tr>`;
+      }).join('')}</tbody></table></div>
+    <p class="small muted">Zones drive the messenger's weekly checklist, the competitor readings and the "no reading this week" exceptions. Renaming one carries its readings and clients across.</p></div>`;
+}
+
+async function saveZones() {
+  const s = store.get();
+  ui.zoneErr = '';
+  const next = ui.zones.map(z => ({ ...z, name: z.name.trim() }));
+  if (!next.length) return (ui.zoneErr = 'Keep at least one zone');
+  if (next.some(z => !z.name)) return (ui.zoneErr = 'Every zone needs a name');
+  const names = next.map(z => z.name.toLowerCase());
+  const dupe = names.find((n, i) => names.indexOf(n) !== i);
+  if (dupe) return (ui.zoneErr = `Two zones are both called "${dupe}"`);
+
+  const renames = next.filter(z => z.from && z.from !== z.name);
+  const summary = [
+    ...next.filter(z => !z.from).map(z => `added ${z.name}`),
+    ...renames.map(z => `renamed ${z.from} → ${z.name}`),
+    ...s.zones.filter(z => !next.some(n => n.from === z)).map(z => `removed ${z}`),
+  ];
+  const order = next.map(z => z.name);
+  if (s.zones.join() !== order.filter(n => s.zones.includes(n)).join()) summary.push(`order: ${order.join(' › ')}`);
+  if (!summary.length) { toast('No changes to save'); return; }
+
+  await store.commit({
+    action: 'CONFIG_CHANGED', entity: 'zones', entityId: 'zones', field: 'zones',
+    before: s.zones, after: { summary: summary.join('; '), zones: order },
+  }, d => {
+    d.zones = order;
+    for (const { from, name } of renames) {
+      for (const r of d.competitorReadings) if (r.zone === from) r.zone = name;
+      for (const a of d.accounts) {
+        if (a.zone === from) a.zone = name;
+        else if (a.zone && a.zone.startsWith(from)) a.zone = name + a.zone.slice(from.length);
+      }
+    }
+  });
+  ui.zones = null;
+  toast('Zones saved');
+}
+
 // ---------------- Clients ----------------
 
 function clientsHtml(s) {
@@ -211,19 +375,53 @@ function clientsHtml(s) {
         <td class="num">${a.creditTermDays ?? '—'}</td>
         <td class="small">${esc(compOut(a.premiums, 'premiumComponents'))}</td>
         <td class="small">${esc(compOut(a.discounts, 'discountComponents'))}</td>
-        <td><button type="button" class="small" data-c-edit="${esc(a.id)}">Edit terms</button></td></tr>`).join('') || '<tr><td colspan="10" class="muted">No clients match.</td></tr>'}
+        <td><button type="button" class="small" data-c-edit="${esc(a.id)}">Edit</button></td></tr>`).join('') || '<tr><td colspan="10" class="muted">No clients match.</td></tr>'}
       </tbody></table></div></div>`;
 }
 
-// Client terms editor — the fields the pricing grid shows read-only.
+// The basic client record, edited alongside the terms below it.
+const BASIC = [
+  { key: 'name', label: 'Client name', type: 'text' },
+  { key: 'channelId', label: 'Channel', type: 'select', from: s => s.channels.map(c => [c.id, c.label]) },
+  { key: 'status', label: 'Status', type: 'select', from: () => [['Active', 'Active'], ['Inactive', 'Inactive']] },
+  { key: 'needsAttention', label: 'Needs attention', type: 'select', from: () => [['no', 'No'], ['yes', 'Yes']] },
+  { key: 'zone', label: 'Zone', type: 'zone' },
+  { key: 'primarySkuId', label: 'Main product', type: 'select', from: s => s.skus.filter(k => k.active).map(k => [k.id, k.label]) },
+  { key: 'avgMonthlyVolumeKg', label: 'Avg monthly volume (kg)', type: 'int' },
+  { key: 'creditTermDays', label: 'Credit term (days)', type: 'int' },
+  { key: 'competitorBrand', label: 'Competitor brand', type: 'text' },
+];
+
+const basicValue = (a, f) => {
+  if (ui.basic[f.key] !== undefined) return ui.basic[f.key];
+  if (f.key === 'needsAttention') return a.needsAttention ? 'yes' : 'no';
+  return a[f.key] == null ? '' : String(a[f.key]);
+};
+
+// Client editor — the basic record, then the terms the pricing grid shows read-only.
 function termsEditor(s) {
   const a = s.accounts.find(x => x.id === ui.editClient);
   if (!a) return '';
   const draft = ui.terms;
   return `<div class="card terms-editor" style="margin-top:16px">
-    <div class="card-head"><div><h2>Client terms — ${esc(a.name)}</h2>
-      <p class="small muted">${esc(channelLabel(s, a.channelId))} · ${esc(a.zone ?? '—')} · fields marked <span class="pill amber">price lever</span> change the price as soon as they are saved.</p></div>
-      <div class="row"><button type="button" id="ct-cancel" class="small">Cancel</button><button type="button" id="ct-save" class="primary small">Save terms</button></div></div>
+    <div class="card-head"><div><h2>${esc(a.name)}</h2>
+      <p class="small muted">${esc(a.id)} · fields marked <span class="pill amber">price lever</span> change the price as soon as they are saved.</p></div>
+      <div class="row"><button type="button" id="ct-cancel" class="small">Cancel</button><button type="button" id="ct-save" class="primary small">Save client</button></div></div>
+    ${ui.clientErr ? `<div class="banner red" role="alert">${esc(ui.clientErr)}</div>` : ''}
+    <div class="section-title">Client details</div>
+    <div class="prof-grid">
+      ${BASIC.map(f => {
+        const v = basicValue(a, f);
+        const input = f.type === 'select'
+          ? `<select data-cb="${f.key}">${f.key === 'primarySkuId' ? '<option value=""></option>' : ''}${f.from(s).map(([val, label]) => `<option value="${esc(val)}"${val === v ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select>`
+          : f.type === 'zone'
+            ? `<input data-cb="zone" type="text" list="cfg-zones" value="${esc(v)}">`
+            : `<input data-cb="${f.key}" type="${f.type === 'int' ? 'number' : 'text'}"${f.type === 'int' ? ' min="0" step="1"' : ''} value="${esc(v)}">`;
+        return `<label class="prof-f"><span>${esc(f.label)}</span>${input}</label>`;
+      }).join('')}
+    </div>
+    <datalist id="cfg-zones">${s.zones.map(z => `<option value="${esc(z)}"></option>`).join('')}</datalist>
+    <div class="section-title">Client terms</div>
     <div class="prof-grid">
       ${FIELDS.map(f => {
         const label = `${esc(labelFor(f))}${f.lever ? ' <span class="pill amber">price lever</span>' : ''}`;
@@ -242,6 +440,25 @@ async function saveTerms() {
   const a = s.accounts.find(x => x.id === ui.editClient);
   if (!a) return;
   const top = {}, terms = {}, changed = [];
+  ui.clientErr = '';
+
+  // Basic record first, so a bad value stops the whole save.
+  for (const f of BASIC) {
+    if (ui.basic[f.key] === undefined) continue;
+    const raw = String(ui.basic[f.key]).trim();
+    let value;
+    if (f.key === 'needsAttention') value = raw === 'yes';
+    else if (f.type === 'int') { value = raw === '' ? null : Math.round(Number(raw.replace(/[,\s]/g, ''))); if (value != null && (!Number.isFinite(value) || value < 0)) { ui.clientErr = `${f.label} must be a number of 0 or more`; return; } }
+    else value = raw === '' ? null : raw;
+    if (f.key === 'name' && !value) { ui.clientErr = 'The client needs a name'; return; }
+    if ((f.key === 'channelId' || f.key === 'status') && !value) { ui.clientErr = `${f.label} is required`; return; }
+    const before = a[f.key] ?? (f.key === 'needsAttention' ? false : null);
+    if (before === value) continue;
+    top[f.key] = value;
+    const show = v => (v == null || v === '' ? 'none' : f.key === 'channelId' ? channelLabel(s, v) : f.key === 'primarySkuId' ? skuLabel(s, v) : typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v);
+    changed.push(`${f.label} ${show(before)} → ${show(value)}`);
+  }
+
   for (const [key, raw] of Object.entries(ui.terms)) {
     const f = FIELDS.find(x => x.key === key);
     if (!f || f.type === 'computed') continue;
@@ -262,7 +479,8 @@ async function saveTerms() {
     acc.profile = { ...(acc.profile || {}), ...terms };
   });
   ui.terms = {};
-  toast('Client terms saved');
+  ui.basic = {};
+  toast('Client saved');
 }
 
 function previewHtml(s) {
@@ -353,14 +571,7 @@ function bind(root, ctx) {
 
   // Channels
   root.querySelectorAll('[data-ch][data-f]').forEach(el => el.oninput = () => { ui.channels[+el.dataset.ch][el.dataset.f] = el.value; });
-  root.querySelectorAll('[data-ch-move]').forEach(b => b.onclick = () => {
-    const [i, step] = b.dataset.chMove.split('|').map(Number);
-    const to = i + step;
-    if (to < 0 || to >= ui.channels.length) return;
-    const list = ui.channels;
-    [list[i], list[to]] = [list[to], list[i]];
-    rerender();
-  });
+  root.querySelectorAll('[data-ch-move]').forEach(b => b.onclick = () => { move(ui.channels, b.dataset.chMove); rerender(); });
   root.querySelectorAll('[data-ch-del]').forEach(b => b.onclick = () => { ui.channels.splice(+b.dataset.chDel, 1); rerender(); });
   if ($('ch-add')) $('ch-add').onclick = () => {
     ui.channels.push({ id: '', label: '', audience: '', _new: true });
@@ -369,6 +580,34 @@ function bind(root, ctx) {
   };
   if ($('ch-discard')) $('ch-discard').onclick = () => { ui.channels = null; ui.chanErr = ''; rerender(); };
   if ($('ch-save')) $('ch-save').onclick = async () => { await saveChannels(); rerender(); };
+
+  // Products
+  root.querySelectorAll('[data-sk][data-f]').forEach(el => {
+    const k = ui.skus[+el.dataset.sk];
+    if (el.type === 'checkbox') el.onchange = () => { k.active = el.checked; };
+    else el.oninput = () => { k[el.dataset.f] = el.value; };
+  });
+  root.querySelectorAll('[data-sk-move]').forEach(b => b.onclick = () => { move(ui.skus, b.dataset.skMove); rerender(); });
+  root.querySelectorAll('[data-sk-del]').forEach(b => b.onclick = () => { ui.skus.splice(+b.dataset.skDel, 1); rerender(); });
+  if ($('sk-add')) $('sk-add').onclick = () => {
+    ui.skus.push({ id: '', label: '', contentKg: '', active: true, _new: true });
+    rerender();
+    root.querySelector(`[data-sk="${ui.skus.length - 1}"][data-f="label"]`)?.focus();
+  };
+  if ($('sk-discard')) $('sk-discard').onclick = () => { ui.skus = null; ui.skuErr = ''; rerender(); };
+  if ($('sk-save')) $('sk-save').onclick = async () => { await saveProducts(); rerender(); };
+
+  // Zones
+  root.querySelectorAll('[data-z]').forEach(el => el.oninput = () => { ui.zones[+el.dataset.z].name = el.value; });
+  root.querySelectorAll('[data-z-move]').forEach(b => b.onclick = () => { move(ui.zones, b.dataset.zMove); rerender(); });
+  root.querySelectorAll('[data-z-del]').forEach(b => b.onclick = () => { ui.zones.splice(+b.dataset.zDel, 1); rerender(); });
+  if ($('z-add')) $('z-add').onclick = () => {
+    ui.zones.push({ name: '', from: null });
+    rerender();
+    root.querySelector(`[data-z="${ui.zones.length - 1}"]`)?.focus();
+  };
+  if ($('z-discard')) $('z-discard').onclick = () => { ui.zones = null; ui.zoneErr = ''; rerender(); };
+  if ($('z-save')) $('z-save').onclick = async () => { await saveZones(); rerender(); };
 
   // Clients
   const preview = (text, name) => {
@@ -391,6 +630,8 @@ function bind(root, ctx) {
   root.querySelectorAll('[data-c-edit]').forEach(b => b.onclick = () => {
     ui.editClient = b.dataset.cEdit;
     ui.terms = {};
+    ui.basic = {};
+    ui.clientErr = '';
     rerender();
     root.querySelector('[data-ct]')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   });
@@ -399,6 +640,11 @@ function bind(root, ctx) {
     el.oninput = write;
     el.onchange = () => { write(); rerender(); };
   });
-  if ($('ct-cancel')) $('ct-cancel').onclick = () => { ui.editClient = null; ui.terms = {}; rerender(); };
+  root.querySelectorAll('[data-cb]').forEach(el => {
+    const write = () => { ui.basic[el.dataset.cb] = el.value; };
+    el.oninput = write;
+    el.onchange = () => { write(); rerender(); };
+  });
+  if ($('ct-cancel')) $('ct-cancel').onclick = () => { ui.editClient = null; ui.terms = {}; ui.basic = {}; ui.clientErr = ''; rerender(); };
   if ($('ct-save')) $('ct-save').onclick = async () => { await saveTerms(); rerender(); };
 }

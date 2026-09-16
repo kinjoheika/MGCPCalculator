@@ -34,6 +34,8 @@ Serve it over HTTP. Browsers block ES modules and `fetch` on `file://`, and `cry
 | `#/log` | manager | Append-only event log, four views |
 | `#/config` | manager | Users and roles; channels and their order; clients list with CSV import / export |
 
+**Configuration holds the lists the rest of the app reads:** Users, Channels, Products, Price watch zones and Clients. Each list can be reordered, and that order is the order used everywhere. Renaming is safe — IDs never change — and a row can only be removed once nothing references it. Every save is logged. In Clients, **Edit** opens one client's basic record (name, channel, status, needs attention, zone, main product, average monthly volume, credit term, competitor brand) above its terms; renaming a zone carries its readings and clients across.
+
 **Channel order.** Configuration → Channels sets the sequence used by every channel list in the app — price lists, the Channels board, PL notices, the client pricing grid, pickers and the Quote desk. Names and audiences are editable there, channels can be added (the ID comes from the name and never changes afterwards), and one can be removed once it has no clients and no priced products. Changes are logged.
 
 ## Documents
