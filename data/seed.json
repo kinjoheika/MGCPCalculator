@@ -70,7 +70,11 @@
     { "id": "mr_32", "channelId": "END_USER", "skuId": "MINI9", "perKg": 4000, "effectiveFrom": "2026-08-11", "effectiveTo": null },
     { "id": "mr_33", "channelId": "END_USER", "skuId": "5KG_SULIT", "perKg": 6320, "effectiveFrom": "2026-08-11", "effectiveTo": null },
     { "id": "mr_34", "channelId": "END_USER", "skuId": "2.7KG", "perKg": 6100, "effectiveFrom": "2026-08-11", "effectiveTo": null },
-    { "id": "mr_35", "channelId": "END_USER", "skuId": "2.7KG_SULIT", "perKg": 5900, "effectiveFrom": "2026-08-11", "effectiveTo": null }
+    { "id": "mr_35", "channelId": "END_USER", "skuId": "2.7KG_SULIT", "perKg": 5900, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+
+    { "id": "mr_36", "channelId": "BULK", "skuId": "50KG_A", "perKg": 2600, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_37", "channelId": "BULK", "skuId": "22KG_A", "perKg": 2800, "effectiveFrom": "2026-08-11", "effectiveTo": null },
+    { "id": "mr_38", "channelId": "BULK", "skuId": "11KG_MGAS", "perKg": 3000, "effectiveFrom": "2026-08-11", "effectiveTo": null }
   ],
 
   "buffers": [
@@ -101,78 +105,9 @@
     { "code": "CASH_ZERO", "label": "Cash / zero-rated (short term)" }
   ],
 
-  "accounts": [
-    { "id": "acc_alta", "name": "ALTA D' TAGAYTAY HOTEL", "status": "Active",
-      "needsAttention": true, "channelId": "COMMERCIAL", "zone": "Tagaytay City", "primarySkuId": "50KG_A",
-      "contractStart": "2024-03-19", "contractEnd": "2029-03-19",
-      "trmvKg": 135000, "volumeGeneratedKg": 81250, "avgMonthlyVolumeKg": null,
-      "creditTermDays": 30, "floorOverridePerKg": null,
-      "premiums": [{ "code": "TANK_RENTAL" }, { "code": "CREDIT_30" }],
-      "discounts": [{ "code": "DUAL_SUPPLIER", "perKg": 625 }],
-      "competitorBrand": "DC Starr" },
+  "accounts": [],
 
-    { "id": "acc_kja", "name": "KJA SUMMIT FOOD CORP.", "status": "Active",
-      "needsAttention": false, "channelId": "COMMERCIAL", "zone": "Plaridel, Bulacan", "primarySkuId": "50KG_A",
-      "contractStart": null, "contractEnd": null,
-      "trmvKg": null, "volumeGeneratedKg": null, "avgMonthlyVolumeKg": 6000,
-      "creditTermDays": 15, "floorOverridePerKg": null,
-      "premiums": [{ "code": "TANK_RENTAL" }],
-      "discounts": [{ "code": "DUAL_SUPPLIER", "perKg": 400 }],
-      "competitorBrand": "Petron" },
-
-    { "id": "acc_silca", "name": "SILCA COFFEE ROASTING COMPANY", "status": "Active",
-      "needsAttention": true, "channelId": "COMMERCIAL", "zone": "Silang", "primarySkuId": "11KG_MGAS",
-      "trmvKg": null, "volumeGeneratedKg": null, "avgMonthlyVolumeKg": 2000,
-      "creditTermDays": 30, "floorOverridePerKg": null,
-      "premiums": [{ "code": "CREDIT_30" }],
-      "discounts": [{ "code": "DUAL_SUPPLIER", "perKg": 400 }],
-      "competitorBrand": "Solane" },
-
-    { "id": "acc_ifp", "name": "IFP MANUFACTURING CORPORATION", "status": "Inactive",
-      "needsAttention": false, "channelId": "COMMERCIAL", "zone": "Caloocan", "primarySkuId": "50KG_A",
-      "avgMonthlyVolumeKg": 3050, "creditTermDays": 30,
-      "premiums": [], "discounts": [] },
-
-    { "id": "acc_leslies", "name": "LESLIE'S CORPORATION (CANLUBANG)", "status": "Active",
-      "needsAttention": false, "channelId": "COMMERCIAL", "zone": "Canlubang", "primarySkuId": "22KG_FL_A",
-      "trmvKg": null, "avgMonthlyVolumeKg": 8000, "creditTermDays": 30,
-      "premiums": [{ "code": "REPAIRS" }, { "code": "CREDIT_30" }],
-      "discounts": [{ "code": "DUAL_SUPPLIER", "perKg": 675 }] },
-
-    { "id": "acc_jmr", "name": "JMR LPG TRADING", "status": "Active",
-      "needsAttention": false, "channelId": "DEALER", "zone": "Dasmariñas", "primarySkuId": "11KG_MGAS",
-      "avgMonthlyVolumeKg": 12000, "creditTermDays": 7, "floorOverridePerKg": null,
-      "premiums": [{ "code": "CREDIT_07" }], "discounts": [] },
-
-    { "id": "acc_sanroque", "name": "SAN ROQUE GAS CENTER", "status": "Active",
-      "needsAttention": false, "channelId": "DEALER", "zone": "Silang", "primarySkuId": "11KG_SULIT",
-      "avgMonthlyVolumeKg": 9000, "creditTermDays": 0, "floorOverridePerKg": null,
-      "premiums": [], "discounts": [{ "code": "CASH_ZERO", "perKg": 50 }] },
-
-    { "id": "acc_cbk_makati", "name": "COBANKIAT HARDWARE — MAKATI", "status": "Active",
-      "needsAttention": false, "channelId": "COBANKIAT", "zone": "Makati", "primarySkuId": "50KG_A",
-      "avgMonthlyVolumeKg": 15000, "creditTermDays": 30, "floorOverridePerKg": null,
-      "premiums": [{ "code": "CREDIT_30" }], "discounts": [] },
-
-    { "id": "acc_nena", "name": "ALING NENA SARI-SARI STORE", "status": "Active",
-      "needsAttention": false, "channelId": "RETAIL_OUTLET", "zone": "Tagaytay City", "primarySkuId": "11KG_MGAS",
-      "avgMonthlyVolumeKg": null, "creditTermDays": 7, "floorOverridePerKg": null,
-      "premiums": [{ "code": "CREDIT_07" }, { "code": "MARKETING" }], "discounts": [] },
-
-    { "id": "acc_bayview", "name": "BAYVIEW LPG REFILLING STATION", "status": "Inactive",
-      "needsAttention": true, "channelId": "RETAIL_OUTLET", "zone": "Plaridel, Bulacan", "primarySkuId": "11KG_MGAS",
-      "avgMonthlyVolumeKg": 1500, "creditTermDays": 15,
-      "premiums": [], "discounts": [] }
-  ],
-
-  "competitorReadings": [
-    { "id": "cr_1", "brand": "Solane", "zone": "Silang", "skuId": "11KG_MGAS",
-      "pricePerCyl": 105500, "capturedAt": "2026-09-09", "capturedBy": "u_msgr_1", "photoUrl": "placeholder.jpg" },
-    { "id": "cr_2", "brand": "Petron Gasul", "zone": "Plaridel", "skuId": "11KG_MGAS",
-      "pricePerCyl": 102000, "capturedAt": "2026-09-08", "capturedBy": "u_msgr_1", "photoUrl": "placeholder.jpg" },
-    { "id": "cr_3", "brand": "Island Gas", "zone": "Tagaytay City", "skuId": "11KG_MGAS",
-      "pricePerCyl": 88000, "capturedAt": "2026-07-02", "capturedBy": "u_msgr_2", "photoUrl": "placeholder.jpg" }
-  ],
+  "competitorReadings": [],
 
   "trackedBrands": ["Solane", "Petron Gasul", "Island Gas"],
 

@@ -19,7 +19,7 @@ const MAX = 5;
 const NOTICE_ORDER = ['BULK', 'COMMERCIAL', 'DEALER', 'RETAIL_OUTLET', 'COBANKIAT', 'MGSA'];
 const TABS = [['clients', 'Clients board'], ['products', 'Products board'], ['channels', 'Channels board'], ['grid', 'Client pricing'], ['notices', 'PL notices']];
 const ui = {
-  tab: 'clients', open: true, panel: 'exceptions', wide: false, animate: false, lastSim: null, scrollTop: null,
+  tab: 'clients', open: true, panel: 'exceptions', wide: false, animate: false, lastSim: null, scrollTop: null, excAll: false,
   clients: ['acc_alta', 'acc_kja', 'acc_silca'], clientQuery: '', clientSku: '', clientOpen: false, clientScroll: 0,
   products: ['11KG_MGAS', '50KG_A', '22KG_A'], prodOpen: false, channels: ['DEALER', 'COMMERCIAL', 'END_USER'],
   reasons: {}, errors: {},
@@ -144,12 +144,19 @@ function label(kind) {
 function exceptionsPanel(s, rows) {
   const pending = s.priceRequests.filter(r => r.status === 'pending');
   const readings = [...s.competitorReadings].sort((a, b) => (a.capturedAt < b.capturedAt ? 1 : -1)).slice(0, 15);
+  // With a full client list this can run to hundreds; show the worst first and open the rest on demand.
+  const order = { red: 0, amber: 1 };
+  const sorted = [...rows].sort((a, b) => (order[a.severity] ?? 2) - (order[b.severity] ?? 2));
+  const shown = ui.excAll ? sorted : sorted.slice(0, 25);
+  const counts = rows.reduce((m, r) => ({ ...m, [r.kind]: (m[r.kind] || 0) + 1 }), {});
   return `<h2 style="margin-top:0">Exceptions <span class="muted">(${rows.length})</span></h2>
-    ${rows.length ? rows.map(r => `<div class="exc"><span class="pill ${r.severity}">${esc(label(r.kind))}</span>
+    ${rows.length ? `<div class="row small" style="gap:6px;margin-bottom:8px">${Object.entries(counts).map(([k, n]) => `<span class="pill grey">${esc(label(k))} ${n}</span>`).join('')}</div>` : ''}
+    ${shown.map(r => `<div class="exc"><span class="pill ${r.severity}">${esc(label(r.kind))}</span>
       <div><div class="subject">${esc(r.subject)}</div><div class="small">${esc(r.text)}</div>
       ${r.requestId ? `<button type="button" class="link small" data-jump="${esc(r.requestId)}">Decide</button>`
-        : byId(s.accounts, r.entityId) ? `<button type="button" class="link small" data-compare="${esc(r.entityId)}">Compare on Clients board</button>` : ''}</div></div>`).join('')
-      : '<p class="muted">Nothing needs attention.</p>'}
+        : byId(s.accounts, r.entityId) ? `<button type="button" class="link small" data-compare="${esc(r.entityId)}">Compare on Clients board</button>` : ''}</div></div>`).join('')}
+    ${rows.length === 0 ? '<p class="muted">Nothing needs attention.</p>' : ''}
+    ${rows.length > shown.length || ui.excAll ? `<button type="button" id="pr-exc-all" class="small" style="margin-top:8px">${ui.excAll ? 'Show fewer' : `Show all ${rows.length}`}</button>` : ''}
     <h2>Pending price requests <span class="muted">(${pending.length})</span></h2>
     ${pending.length ? pending.map(r => requestCard(s, r)).join('') : '<p class="muted">None pending.</p>'}
     <details class="collapse"><summary>Latest competitor readings (${readings.length})</summary>
@@ -195,6 +202,8 @@ async function decide(id, status) {
 }
 
 function bindExceptions(root, rerender) {
+  const all = root.querySelector('#pr-exc-all');
+  if (all) all.onclick = () => { ui.excAll = !ui.excAll; rerender(); };
   root.querySelectorAll('[data-reason]').forEach(t => t.oninput = e => { ui.reasons[t.dataset.reason] = e.target.value; });
   root.querySelectorAll('[data-decide]').forEach(b => b.onclick = async () => { await decide(b.dataset.req, b.dataset.decide); rerender(); });
   root.querySelectorAll('[data-jump]').forEach(b => b.onclick = () => {

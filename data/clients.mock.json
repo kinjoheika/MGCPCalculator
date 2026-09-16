@@ -1,0 +1,7151 @@
+{
+  "generatedAt": "2026-09-16",
+  "note": "Demo clients and competitor readings. Regenerate with: node tools/make-mock-clients.mjs",
+  "accounts": [
+    {
+      "contractStart": "2024-03-19",
+      "contractEnd": "2029-03-19",
+      "trmvKg": 135000,
+      "volumeGeneratedKg": 81250,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "competitorBrand": "DC Starr",
+      "profile": {},
+      "id": "acc_alta",
+      "name": "ALTA D' TAGAYTAY HOTEL",
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "status": "Active",
+      "needsAttention": true,
+      "primarySkuId": "50KG_A",
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 30,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 625
+        }
+      ]
+    },
+    {
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "competitorBrand": "Petron",
+      "profile": {},
+      "id": "acc_kja",
+      "name": "KJA SUMMIT FOOD CORP.",
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel, Bulacan",
+      "status": "Active",
+      "needsAttention": false,
+      "primarySkuId": "50KG_A",
+      "avgMonthlyVolumeKg": 6000,
+      "creditTermDays": 15,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 400
+        }
+      ]
+    },
+    {
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "competitorBrand": "Solane",
+      "profile": {},
+      "id": "acc_silca",
+      "name": "SILCA COFFEE ROASTING COMPANY",
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "status": "Active",
+      "needsAttention": true,
+      "primarySkuId": "11KG_MGAS",
+      "avgMonthlyVolumeKg": 2000,
+      "creditTermDays": 30,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 400
+        }
+      ]
+    },
+    {
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "competitorBrand": null,
+      "profile": {},
+      "id": "acc_ifp",
+      "name": "IFP MANUFACTURING CORPORATION",
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "status": "Inactive",
+      "needsAttention": false,
+      "primarySkuId": "50KG_A",
+      "avgMonthlyVolumeKg": 3050,
+      "creditTermDays": 30,
+      "premiums": [],
+      "discounts": []
+    },
+    {
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "competitorBrand": null,
+      "profile": {},
+      "id": "acc_leslies",
+      "name": "LESLIE'S CORPORATION (CANLUBANG)",
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "status": "Active",
+      "needsAttention": false,
+      "primarySkuId": "22KG_FL_A",
+      "avgMonthlyVolumeKg": 8000,
+      "creditTermDays": 30,
+      "premiums": [
+        {
+          "code": "REPAIRS"
+        },
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 675
+        }
+      ]
+    },
+    {
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "competitorBrand": null,
+      "profile": {},
+      "id": "acc_jmr",
+      "name": "JMR LPG TRADING",
+      "channelId": "DEALER",
+      "zone": "Dasmariñas",
+      "status": "Active",
+      "needsAttention": false,
+      "primarySkuId": "11KG_MGAS",
+      "avgMonthlyVolumeKg": 12000,
+      "creditTermDays": 7,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        }
+      ],
+      "discounts": []
+    },
+    {
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "competitorBrand": null,
+      "profile": {},
+      "id": "acc_sanroque",
+      "name": "SAN ROQUE GAS CENTER",
+      "channelId": "DEALER",
+      "zone": "Silang",
+      "status": "Active",
+      "needsAttention": false,
+      "primarySkuId": "11KG_SULIT",
+      "avgMonthlyVolumeKg": 9000,
+      "creditTermDays": 0,
+      "premiums": [],
+      "discounts": [
+        {
+          "code": "CASH_ZERO",
+          "perKg": 50
+        }
+      ]
+    },
+    {
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "competitorBrand": null,
+      "profile": {},
+      "id": "acc_cbk_makati",
+      "name": "COBANKIAT HARDWARE — MAKATI",
+      "channelId": "COBANKIAT",
+      "zone": "Makati",
+      "status": "Active",
+      "needsAttention": false,
+      "primarySkuId": "50KG_A",
+      "avgMonthlyVolumeKg": 15000,
+      "creditTermDays": 30,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": []
+    },
+    {
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "competitorBrand": null,
+      "profile": {},
+      "id": "acc_nena",
+      "name": "ALING NENA SARI-SARI STORE",
+      "channelId": "RETAIL_OUTLET",
+      "zone": "Tagaytay City",
+      "status": "Active",
+      "needsAttention": false,
+      "primarySkuId": "11KG_MGAS",
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 7,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "MARKETING"
+        }
+      ],
+      "discounts": []
+    },
+    {
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "competitorBrand": null,
+      "profile": {},
+      "id": "acc_bayview",
+      "name": "BAYVIEW LPG REFILLING STATION",
+      "channelId": "RETAIL_OUTLET",
+      "zone": "Plaridel, Bulacan",
+      "status": "Inactive",
+      "needsAttention": true,
+      "primarySkuId": "11KG_MGAS",
+      "avgMonthlyVolumeKg": 1500,
+      "creditTermDays": 15,
+      "premiums": [],
+      "discounts": []
+    },
+    {
+      "id": "acc_bulk_001",
+      "name": "ASIA STEEL MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "BULK",
+      "zone": "Tagaytay City",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2026-08-04",
+      "contractEnd": "2031-08-18",
+      "trmvKg": 648000,
+      "volumeGeneratedKg": 214000,
+      "avgMonthlyVolumeKg": 18000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": 2500,
+      "investmentCentavos": 134500000,
+      "reqVolPerMonthKg": 20000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 134500000,
+          "note": "Installation 2026"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 300
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": "2026-08-02",
+        "lpgContentBilling": "By weight",
+        "factorRate": "2.06",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 1,
+        "minKgPerDrop": 1250
+      }
+    },
+    {
+      "id": "acc_bulk_002",
+      "name": "METRO CERAMICS MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2024-07-06",
+      "contractEnd": "2029-07-21",
+      "trmvKg": 1034000,
+      "volumeGeneratedKg": 857000,
+      "avgMonthlyVolumeKg": 19500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 21500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 50
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.04",
+        "tankOwnership": "Client-owned",
+        "tank20000": 1,
+        "tank2000": 2,
+        "minKgPerDrop": 3750
+      }
+    },
+    {
+      "id": "acc_bulk_003",
+      "name": "GOLDEN HARVEST MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "BULK",
+      "zone": "Makati",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2025-04-12",
+      "contractEnd": "2028-04-14",
+      "trmvKg": 1865000,
+      "volumeGeneratedKg": 1200000,
+      "avgMonthlyVolumeKg": 56500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 110000000,
+      "reqVolPerMonthKg": 62000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 110000000,
+          "note": "Installation 2025"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 250
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2025-04-23",
+        "lpgContentBilling": "By meter",
+        "factorRate": "2.01",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 1,
+        "tank2000": 1,
+        "minKgPerDrop": 3500
+      }
+    },
+    {
+      "id": "acc_bulk_004",
+      "name": "PACIFIC GLASSWORKS MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2023-04-14",
+      "contractEnd": "2028-04-10",
+      "trmvKg": 192000,
+      "volumeGeneratedKg": 152500,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 192000000,
+      "reqVolPerMonthKg": 6500,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 192000000,
+          "note": "Installation 2023"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-04-14",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.82",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 2,
+        "tank4000": 2,
+        "minKgPerDrop": 1500
+      }
+    },
+    {
+      "id": "acc_bulk_005",
+      "name": "EVERGREEN TEXTILE MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Dasmariñas",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-02-24",
+      "contractEnd": "2027-02-08",
+      "trmvKg": 615000,
+      "volumeGeneratedKg": 218500,
+      "avgMonthlyVolumeKg": 20500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": 3075,
+      "investmentCentavos": 209500000,
+      "reqVolPerMonthKg": 22500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 209500000,
+          "note": "Installation 2022"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-02-26",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.94",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 1,
+        "minKgPerDrop": 2250
+      }
+    },
+    {
+      "id": "acc_bulk_006",
+      "name": "SUNRISE POULTRY MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Tagaytay City",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2022-03-08",
+      "contractEnd": "2025-03-17",
+      "trmvKg": 435000,
+      "volumeGeneratedKg": 223000,
+      "avgMonthlyVolumeKg": 14500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 16000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 150
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": "2022-03-08",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.84",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 1,
+        "tank4000": 2,
+        "tank2000": 1,
+        "minKgPerDrop": 3750
+      }
+    },
+    {
+      "id": "acc_bulk_007",
+      "name": "NORTHPOINT PAPER MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-09-23",
+      "contractEnd": "2025-09-05",
+      "trmvKg": 2090000,
+      "volumeGeneratedKg": 1029500,
+      "avgMonthlyVolumeKg": 38000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 208500000,
+      "reqVolPerMonthKg": 42000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 208500000,
+          "note": "Installation 2022"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 25,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 250
+        }
+      ],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": "2022-09-07",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.76",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 1250
+      }
+    },
+    {
+      "id": "acc_bulk_008",
+      "name": "SILVERCREST FOODS MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Makati",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 35000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 72500000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-12-27",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.01",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 1,
+        "tank4000": 3,
+        "minKgPerDrop": 1500
+      }
+    },
+    {
+      "id": "acc_bulk_009",
+      "name": "MABUHAY RUBBER MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Plaridel",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2023-05-20",
+      "contractEnd": "2026-05-11",
+      "trmvKg": 1216000,
+      "volumeGeneratedKg": 668000,
+      "avgMonthlyVolumeKg": 38000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 42000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 45,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-05-04",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.71",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 1,
+        "tank4000": 3,
+        "tank2000": 2,
+        "minKgPerDrop": 4000
+      }
+    },
+    {
+      "id": "acc_bulk_010",
+      "name": "CRYSTAL BOTTLING MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Tagaytay City",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 35000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.60",
+        "tankOwnership": "Client-owned",
+        "tank4000": 2,
+        "tank2000": 1,
+        "minKgPerDrop": 4000
+      }
+    },
+    {
+      "id": "acc_bulk_011",
+      "name": "GRANDEUR TILES MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Tagaytay City",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-01-10",
+      "contractEnd": "2025-01-18",
+      "trmvKg": 280000,
+      "volumeGeneratedKg": 116000,
+      "avgMonthlyVolumeKg": 8000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 9000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-01-09",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.72",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 2,
+        "tank4000": 3,
+        "tank2000": 1,
+        "minKgPerDrop": 1250
+      }
+    },
+    {
+      "id": "acc_bulk_012",
+      "name": "PRIME AGGREGATES MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "BULK",
+      "zone": "Plaridel",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2023-03-12",
+      "contractEnd": "2028-03-06",
+      "trmvKg": 1534000,
+      "volumeGeneratedKg": 455000,
+      "avgMonthlyVolumeKg": 26000,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 28500,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 125
+        }
+      ],
+      "competitorBrand": "DC Starr",
+      "profile": {
+        "installedAt": "2023-03-23",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.72",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 2,
+        "minKgPerDrop": 1000
+      }
+    },
+    {
+      "id": "acc_bulk_013",
+      "name": "LIBERTY NOODLES MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Canlubang",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 9500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2024-12-15",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.84",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 2,
+        "tank2000": 2,
+        "minKgPerDrop": 1500
+      }
+    },
+    {
+      "id": "acc_bulk_014",
+      "name": "SEAWIND CANNERY MANUFACTURING CORP.",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Tagaytay City",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2025-03-21",
+      "contractEnd": "2030-03-28",
+      "trmvKg": 2423000,
+      "volumeGeneratedKg": 1633500,
+      "avgMonthlyVolumeKg": 47500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 168000000,
+      "reqVolPerMonthKg": 52500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 168000000,
+          "note": "Installation 2025"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 325
+        }
+      ],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": "2025-03-08",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.09",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 2,
+        "tank2000": 1,
+        "minKgPerDrop": 2250
+      }
+    },
+    {
+      "id": "acc_bulk_015",
+      "name": "HIGHLAND DAIRY MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "BULK",
+      "zone": "Silang",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2023-09-14",
+      "contractEnd": "2028-09-04",
+      "trmvKg": 1920000,
+      "volumeGeneratedKg": 693500,
+      "avgMonthlyVolumeKg": 48000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 141500000,
+      "reqVolPerMonthKg": 53000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 141500000,
+          "note": "Installation 2023"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-09-16",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.10",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 3,
+        "minKgPerDrop": 1500
+      }
+    },
+    {
+      "id": "acc_bulk_016",
+      "name": "FORTUNE PLASTICS MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Silang",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2025-03-26",
+      "contractEnd": "2030-03-06",
+      "trmvKg": 1242000,
+      "volumeGeneratedKg": 723500,
+      "avgMonthlyVolumeKg": 23000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 74500000,
+      "reqVolPerMonthKg": 25500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 74500000,
+          "note": "Installation 2025"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 85,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2025-03-16",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.07",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 2000
+      }
+    },
+    {
+      "id": "acc_bulk_017",
+      "name": "BAYANI MILLING MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Makati",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2024-12-25",
+      "contractEnd": "2027-12-11",
+      "trmvKg": 598000,
+      "volumeGeneratedKg": 368500,
+      "avgMonthlyVolumeKg": 13000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 14500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.60",
+        "tankOwnership": "Leased",
+        "tank20000": 2,
+        "tank4000": 2,
+        "minKgPerDrop": 3250
+      }
+    },
+    {
+      "id": "acc_bulk_018",
+      "name": "ORIENT LAUNDRY SYSTEMS MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Dasmariñas",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2024-05-08",
+      "contractEnd": "2029-05-23",
+      "trmvKg": 1586000,
+      "volumeGeneratedKg": 895500,
+      "avgMonthlyVolumeKg": 30500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 33500,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 50
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.88",
+        "tankOwnership": "Client-owned",
+        "tank20000": 2,
+        "tank4000": 1,
+        "tank2000": 2,
+        "minKgPerDrop": 2000
+      }
+    },
+    {
+      "id": "acc_bulk_019",
+      "name": "SUMMIT PACKAGING MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 51000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.73",
+        "tankOwnership": "Leased",
+        "tank20000": 1,
+        "tank4000": 1,
+        "minKgPerDrop": 1250
+      }
+    },
+    {
+      "id": "acc_bulk_020",
+      "name": "CORDILLERA COFFEE MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Canlubang",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2026-03-08",
+      "contractEnd": "2029-03-15",
+      "trmvKg": 740000,
+      "volumeGeneratedKg": 155000,
+      "avgMonthlyVolumeKg": 14500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 41500000,
+      "reqVolPerMonthKg": 16000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 41500000,
+          "note": "Installation 2026"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 225
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2026-03-09",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.99",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 2,
+        "minKgPerDrop": 2250
+      }
+    },
+    {
+      "id": "acc_bulk_021",
+      "name": "PEARL GARMENTS MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Silang",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2023-09-01",
+      "contractEnd": "2028-09-12",
+      "trmvKg": 228000,
+      "volumeGeneratedKg": 112000,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 6500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-09-08",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.77",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 2,
+        "tank4000": 1,
+        "minKgPerDrop": 1250
+      }
+    },
+    {
+      "id": "acc_bulk_022",
+      "name": "VANGUARD METALS MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Plaridel",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-02-06",
+      "contractEnd": "2025-02-17",
+      "trmvKg": 2729000,
+      "volumeGeneratedKg": 1903000,
+      "avgMonthlyVolumeKg": 53500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 165000000,
+      "reqVolPerMonthKg": 59000,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 165000000,
+          "note": "Installation 2022"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 250
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": "2022-02-21",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.63",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 1,
+        "tank4000": 3,
+        "tank2000": 2,
+        "minKgPerDrop": 3000
+      }
+    },
+    {
+      "id": "acc_bulk_023",
+      "name": "ROYALE BAKESHOP COMMISSARY MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Dasmariñas",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-08-28",
+      "contractEnd": "2027-08-04",
+      "trmvKg": 1785000,
+      "volumeGeneratedKg": 447500,
+      "avgMonthlyVolumeKg": 42500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 47000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-08-04",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.93",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 2,
+        "tank4000": 1,
+        "minKgPerDrop": 1250
+      }
+    },
+    {
+      "id": "acc_bulk_024",
+      "name": "MARIPOSA CHEMICALS MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Silang",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 39500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 234000000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-12-10",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.84",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 2,
+        "tank4000": 3,
+        "tank2000": 1,
+        "minKgPerDrop": 3750
+      }
+    },
+    {
+      "id": "acc_bulk_025",
+      "name": "TANGLAW GLASS MANUFACTURING CORP.",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "BULK",
+      "zone": "Plaridel",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2023-02-12",
+      "contractEnd": "2028-02-06",
+      "trmvKg": 1998000,
+      "volumeGeneratedKg": 604000,
+      "avgMonthlyVolumeKg": 55500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 61000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 45,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-02-16",
+        "lpgContentBilling": "By weight",
+        "factorRate": "2.06",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 1,
+        "minKgPerDrop": 3000
+      }
+    },
+    {
+      "id": "acc_bulk_026",
+      "name": "ASIA STEEL INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Canlubang",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2024-12-10",
+      "contractEnd": "2029-12-19",
+      "trmvKg": 3334000,
+      "volumeGeneratedKg": 926000,
+      "avgMonthlyVolumeKg": 56500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 239500000,
+      "reqVolPerMonthKg": 62000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 239500000,
+          "note": "Installation 2024"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 175
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": "2024-12-02",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.86",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 1,
+        "minKgPerDrop": 2750
+      }
+    },
+    {
+      "id": "acc_bulk_027",
+      "name": "METRO CERAMICS INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "BULK",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2023-12-11",
+      "contractEnd": "2026-12-16",
+      "trmvKg": 1220000,
+      "volumeGeneratedKg": 396500,
+      "avgMonthlyVolumeKg": 30500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 33500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 100
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.60",
+        "tankOwnership": "Leased",
+        "tank4000": 1,
+        "minKgPerDrop": 1500
+      }
+    },
+    {
+      "id": "acc_bulk_028",
+      "name": "GOLDEN HARVEST INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Silang",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2023-09-20",
+      "contractEnd": "2026-09-22",
+      "trmvKg": 2317000,
+      "volumeGeneratedKg": 1810500,
+      "avgMonthlyVolumeKg": 56500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 237500000,
+      "reqVolPerMonthKg": 62000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 237500000,
+          "note": "Installation 2023"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-09-12",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.88",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 2,
+        "tank4000": 3,
+        "minKgPerDrop": 1500
+      }
+    },
+    {
+      "id": "acc_bulk_029",
+      "name": "PACIFIC GLASSWORKS INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Silang",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 27500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 100
+        }
+      ],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.69",
+        "tankOwnership": "Client-owned",
+        "minKgPerDrop": 3000
+      }
+    },
+    {
+      "id": "acc_bulk_030",
+      "name": "EVERGREEN TEXTILE INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "BULK",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 50500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 54000000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-02-18",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.02",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 1,
+        "tank4000": 1,
+        "tank2000": 1,
+        "minKgPerDrop": 3500
+      }
+    },
+    {
+      "id": "acc_bulk_031",
+      "name": "SUNRISE POULTRY INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Makati",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2026-08-19",
+      "contractEnd": "2031-08-28",
+      "trmvKg": 2178000,
+      "volumeGeneratedKg": 834000,
+      "avgMonthlyVolumeKg": 49500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 54500,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 175
+        },
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 50
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2026-08-01",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.65",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 1,
+        "tank2000": 2,
+        "minKgPerDrop": 4000
+      }
+    },
+    {
+      "id": "acc_bulk_032",
+      "name": "NORTHPOINT PAPER INDUSTRIES INC.",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2023-07-19",
+      "contractEnd": "2028-07-14",
+      "trmvKg": 899000,
+      "volumeGeneratedKg": 504500,
+      "avgMonthlyVolumeKg": 29000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 71500000,
+      "reqVolPerMonthKg": 32000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 71500000,
+          "note": "Installation 2023"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 175
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-07-05",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.06",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 1,
+        "tank4000": 2,
+        "tank2000": 2,
+        "minKgPerDrop": 2250
+      }
+    },
+    {
+      "id": "acc_bulk_033",
+      "name": "SILVERCREST FOODS INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Tagaytay City",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2025-08-16",
+      "contractEnd": "2030-08-27",
+      "trmvKg": 1314000,
+      "volumeGeneratedKg": 707000,
+      "avgMonthlyVolumeKg": 35500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 207500000,
+      "reqVolPerMonthKg": 39000,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 207500000,
+          "note": "Installation 2025"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 90,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 250
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2025-08-08",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.91",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 2750
+      }
+    },
+    {
+      "id": "acc_bulk_034",
+      "name": "MABUHAY RUBBER INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Silang",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2026-03-21",
+      "contractEnd": "2029-03-07",
+      "trmvKg": 780000,
+      "volumeGeneratedKg": 340000,
+      "avgMonthlyVolumeKg": 19500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 161500000,
+      "reqVolPerMonthKg": 21500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 161500000,
+          "note": "Installation 2026"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2026-03-20",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.89",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 1,
+        "minKgPerDrop": 1000
+      }
+    },
+    {
+      "id": "acc_bulk_035",
+      "name": "CRYSTAL BOTTLING INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Tagaytay City",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2026-03-28",
+      "contractEnd": "2029-03-19",
+      "trmvKg": 660000,
+      "volumeGeneratedKg": 202500,
+      "avgMonthlyVolumeKg": 16500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 18000,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 50
+        }
+      ],
+      "competitorBrand": "DC Starr",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.78",
+        "tankOwnership": "Leased",
+        "tank20000": 2,
+        "minKgPerDrop": 1500
+      }
+    },
+    {
+      "id": "acc_bulk_036",
+      "name": "GRANDEUR TILES INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Makati",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2024-10-19",
+      "contractEnd": "2027-10-15",
+      "trmvKg": 1173000,
+      "volumeGeneratedKg": 987500,
+      "avgMonthlyVolumeKg": 25500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 28000,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 30,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 125
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2024-10-01",
+        "lpgContentBilling": "By meter",
+        "factorRate": "2.08",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 3000
+      }
+    },
+    {
+      "id": "acc_bulk_037",
+      "name": "PRIME AGGREGATES INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Plaridel",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 16500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 175
+        }
+      ],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": "2024-10-25",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.99",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 2,
+        "minKgPerDrop": 3750
+      }
+    },
+    {
+      "id": "acc_bulk_038",
+      "name": "LIBERTY NOODLES INDUSTRIES INC.",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Makati",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 44500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 200
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-05-25",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.63",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 3,
+        "tank2000": 1,
+        "minKgPerDrop": 3000
+      }
+    },
+    {
+      "id": "acc_bulk_039",
+      "name": "SEAWIND CANNERY INDUSTRIES INC.",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Plaridel",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2025-09-20",
+      "contractEnd": "2028-09-02",
+      "trmvKg": 792000,
+      "volumeGeneratedKg": 244500,
+      "avgMonthlyVolumeKg": 18000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 20000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 65,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.64",
+        "tankOwnership": "Client-owned",
+        "tank20000": 1,
+        "tank4000": 3,
+        "minKgPerDrop": 3750
+      }
+    },
+    {
+      "id": "acc_bulk_040",
+      "name": "HIGHLAND DAIRY INDUSTRIES INC.",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Dasmariñas",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2023-11-09",
+      "contractEnd": "2026-11-22",
+      "trmvKg": 552000,
+      "volumeGeneratedKg": 223000,
+      "avgMonthlyVolumeKg": 12000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 220500000,
+      "reqVolPerMonthKg": 13000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 220500000,
+          "note": "Installation 2023"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-11-18",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.71",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 3000
+      }
+    },
+    {
+      "id": "acc_bulk_041",
+      "name": "FORTUNE PLASTICS INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Canlubang",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-04-24",
+      "contractEnd": "2025-04-03",
+      "trmvKg": 527000,
+      "volumeGeneratedKg": 173000,
+      "avgMonthlyVolumeKg": 17000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 18500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-04-02",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.87",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 1,
+        "minKgPerDrop": 2750
+      }
+    },
+    {
+      "id": "acc_bulk_042",
+      "name": "BAYANI MILLING INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Canlubang",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-11-18",
+      "contractEnd": "2027-11-10",
+      "trmvKg": 348000,
+      "volumeGeneratedKg": 81500,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 159500000,
+      "reqVolPerMonthKg": 6500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 159500000,
+          "note": "Installation 2022"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 400
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-11-09",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.70",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 1,
+        "minKgPerDrop": 2500
+      }
+    },
+    {
+      "id": "acc_bulk_043",
+      "name": "ORIENT LAUNDRY SYSTEMS INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Plaridel",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 39500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 156000000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-02-20",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.76",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 2,
+        "tank4000": 2,
+        "tank2000": 2,
+        "minKgPerDrop": 1500
+      }
+    },
+    {
+      "id": "acc_bulk_044",
+      "name": "SUMMIT PACKAGING INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "BULK",
+      "zone": "Makati",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 46000000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 100
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2023-02-24",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.70",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 2,
+        "tank4000": 3,
+        "tank2000": 2,
+        "minKgPerDrop": 3500
+      }
+    },
+    {
+      "id": "acc_bulk_045",
+      "name": "CORDILLERA COFFEE INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Plaridel",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2026-04-16",
+      "contractEnd": "2031-04-11",
+      "trmvKg": 480000,
+      "volumeGeneratedKg": 270500,
+      "avgMonthlyVolumeKg": 12000,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 159000000,
+      "reqVolPerMonthKg": 13000,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 159000000,
+          "note": "Installation 2026"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 475
+        }
+      ],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": "2026-04-09",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.68",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 1250
+      }
+    },
+    {
+      "id": "acc_bulk_046",
+      "name": "PEARL GARMENTS INDUSTRIES INC.",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Silang",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 20500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2026-06-21",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.75",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 3,
+        "minKgPerDrop": 2500
+      }
+    },
+    {
+      "id": "acc_bulk_047",
+      "name": "VANGUARD METALS INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Canlubang",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 37500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 201500000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2026-05-09",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.75",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 2,
+        "tank4000": 3,
+        "minKgPerDrop": 2000
+      }
+    },
+    {
+      "id": "acc_bulk_048",
+      "name": "ROYALE BAKESHOP COMMISSARY INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Silang",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2025-04-15",
+      "contractEnd": "2028-04-18",
+      "trmvKg": 2363000,
+      "volumeGeneratedKg": 1828500,
+      "avgMonthlyVolumeKg": 52500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 178500000,
+      "reqVolPerMonthKg": 58000,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 178500000,
+          "note": "Installation 2025"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2025-04-12",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.86",
+        "tankOwnership": "MGC-owned",
+        "tank4000": 1,
+        "minKgPerDrop": 3750
+      }
+    },
+    {
+      "id": "acc_bulk_049",
+      "name": "MARIPOSA CHEMICALS INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "BULK",
+      "zone": "Makati",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2024-06-18",
+      "contractEnd": "2029-06-05",
+      "trmvKg": 2020000,
+      "volumeGeneratedKg": 961000,
+      "avgMonthlyVolumeKg": 50500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 228500000,
+      "reqVolPerMonthKg": 55500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 228500000,
+          "note": "Installation 2024"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2024-06-21",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.66",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 1500
+      }
+    },
+    {
+      "id": "acc_bulk_050",
+      "name": "TANGLAW GLASS INDUSTRIES INC.",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "BULK",
+      "zone": "Dasmariñas",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2024-06-24",
+      "contractEnd": "2027-06-28",
+      "trmvKg": 294000,
+      "volumeGeneratedKg": 200500,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 64500000,
+      "reqVolPerMonthKg": 6500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 64500000,
+          "note": "Installation 2024"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2024-06-07",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.86",
+        "tankOwnership": "MGC-owned",
+        "tank20000": 2,
+        "tank4000": 2,
+        "minKgPerDrop": 1250
+      }
+    },
+    {
+      "id": "acc_com_001",
+      "name": "KUSINA NI ALING ROSA RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2026-05-25",
+      "contractEnd": "2031-05-15",
+      "trmvKg": 42000,
+      "volumeGeneratedKg": 9000,
+      "avgMonthlyVolumeKg": 1400,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 1500,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 100
+        },
+        {
+          "code": "CASH_ZERO",
+          "perKg": 50
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": "2026-05-05",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.80",
+        "tankOwnership": "MGC-owned",
+        "tank600": 1,
+        "minKgPerDrop": 1150
+      }
+    },
+    {
+      "id": "acc_com_002",
+      "name": "CAFE MARIPOSA RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2025-09-09",
+      "contractEnd": "2030-09-07",
+      "trmvKg": 367000,
+      "volumeGeneratedKg": 310000,
+      "avgMonthlyVolumeKg": 9400,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 10500,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 65,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 100
+        },
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2025-09-03",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.65",
+        "tankOwnership": "MGC-owned",
+        "tank600": 4,
+        "minKgPerDrop": 1200
+      }
+    },
+    {
+      "id": "acc_com_003",
+      "name": "ALOHA GRILL RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 3300,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 55,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 125
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": "2025-12-16",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.92",
+        "tankOwnership": "MGC-owned",
+        "tank600": 4,
+        "minKgPerDrop": 400
+      }
+    },
+    {
+      "id": "acc_com_004",
+      "name": "LOLA CONSING RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2025-03-28",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.72",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "tank600": 2,
+        "minKgPerDrop": 200
+      }
+    },
+    {
+      "id": "acc_com_005",
+      "name": "MANANG'S KITCHEN RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-08-10",
+      "contractEnd": "2027-08-22",
+      "trmvKg": 496000,
+      "volumeGeneratedKg": 333500,
+      "avgMonthlyVolumeKg": 11800,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 13000,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "DC Starr",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.94",
+        "tankOwnership": "Client-owned",
+        "minKgPerDrop": 1100
+      }
+    },
+    {
+      "id": "acc_com_006",
+      "name": "BAGONG SILANG RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 5600,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 90,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 125
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.67",
+        "tankOwnership": "Client-owned",
+        "tank2000": 2,
+        "tank600": 2,
+        "minKgPerDrop": 700
+      }
+    },
+    {
+      "id": "acc_com_007",
+      "name": "CASA VERDE RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 11100,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 35,
+          "note": "Slow payer"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "CASH_ZERO",
+          "perKg": 275
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2024-01-21",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.03",
+        "tankOwnership": "MGC-owned",
+        "tank600": 3,
+        "minKgPerDrop": 1000
+      }
+    },
+    {
+      "id": "acc_com_008",
+      "name": "MILKY WAY DINER RESTAURANT",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 8300,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [],
+      "discounts": [],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.90",
+        "tankOwnership": "Client-owned",
+        "tank2000": 1,
+        "tank600": 2,
+        "minKgPerDrop": 500
+      }
+    },
+    {
+      "id": "acc_com_009",
+      "name": "SAN MIGUEL BISTRO RESTAURANT",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 5800,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 110500000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 175
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": "2026-05-25",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.67",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 500
+      }
+    },
+    {
+      "id": "acc_com_010",
+      "name": "PANADERIA DE ORO RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": "2026-02-01",
+      "contractEnd": "2031-02-26",
+      "trmvKg": 71000,
+      "volumeGeneratedKg": 52500,
+      "avgMonthlyVolumeKg": 1700,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 38000000,
+      "reqVolPerMonthKg": 2000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 38000000,
+          "note": "Installation 2026"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 60,
+          "note": "Slow payer"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 625
+        }
+      ],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": "2026-02-11",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.84",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 1100
+      }
+    },
+    {
+      "id": "acc_com_011",
+      "name": "TITA BABY RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-06-09",
+      "contractEnd": "2027-06-26",
+      "trmvKg": 494000,
+      "volumeGeneratedKg": 123500,
+      "avgMonthlyVolumeKg": 10300,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 175000000,
+      "reqVolPerMonthKg": 11500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 175000000,
+          "note": "Installation 2022"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 375
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": "2022-06-25",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.89",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 600
+      }
+    },
+    {
+      "id": "acc_com_012",
+      "name": "GOLDEN SPOON RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 3500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 25,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-02-03",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.71",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 600
+      }
+    },
+    {
+      "id": "acc_com_013",
+      "name": "HAPAG IHAW RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        },
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.83",
+        "tankOwnership": "Leased",
+        "minKgPerDrop": 1100
+      }
+    },
+    {
+      "id": "acc_com_014",
+      "name": "CAFE DE LUNA RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 8400,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.09",
+        "tankOwnership": "Client-owned",
+        "tank600": 3,
+        "minKgPerDrop": 600
+      }
+    },
+    {
+      "id": "acc_com_015",
+      "name": "BAHAY KUBO RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2024-06-12",
+      "contractEnd": "2027-06-26",
+      "trmvKg": 336000,
+      "volumeGeneratedKg": 102500,
+      "avgMonthlyVolumeKg": 8200,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 9000,
+      "premiums": [],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.77",
+        "tankOwnership": "Client-owned",
+        "tank3_2mt": 1,
+        "minKgPerDrop": 400
+      }
+    },
+    {
+      "id": "acc_com_016",
+      "name": "PUNTO CENTRAL RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2026-08-27",
+      "contractEnd": "2031-08-16",
+      "trmvKg": 244000,
+      "volumeGeneratedKg": 185500,
+      "avgMonthlyVolumeKg": 6600,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 103500000,
+      "reqVolPerMonthKg": 7500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 103500000,
+          "note": "Installation 2026"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 425
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": "2026-08-16",
+        "lpgContentBilling": "By meter",
+        "factorRate": "2.00",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 250
+      }
+    },
+    {
+      "id": "acc_com_017",
+      "name": "MASARAP EATERY RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 1700,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 80,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "CASH_ZERO",
+          "perKg": 50
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.71",
+        "tankOwnership": "Leased",
+        "tank600": 4,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 350
+      }
+    },
+    {
+      "id": "acc_com_018",
+      "name": "RIVERSIDE INN RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2025-01-03",
+      "contractEnd": "2028-01-12",
+      "trmvKg": 274000,
+      "volumeGeneratedKg": 164500,
+      "avgMonthlyVolumeKg": 7400,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 36500000,
+      "reqVolPerMonthKg": 8000,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 36500000,
+          "note": "Installation 2025"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2025-01-09",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.78",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "tank600": 1,
+        "minKgPerDrop": 1050
+      }
+    },
+    {
+      "id": "acc_com_019",
+      "name": "BULALOHAN SA KANTO RESTAURANT",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 11100,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.87",
+        "tankOwnership": "Leased",
+        "tank2000": 1,
+        "tank600": 4,
+        "minKgPerDrop": 700
+      }
+    },
+    {
+      "id": "acc_com_020",
+      "name": "SEASIDE VERANDA RESTAURANT",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.06",
+        "tankOwnership": "Client-owned",
+        "tank600": 2,
+        "minKgPerDrop": 250
+      }
+    },
+    {
+      "id": "acc_com_021",
+      "name": "PINOY LUTONG BAHAY RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 10300,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 83000000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "CASH_ZERO",
+          "perKg": 100
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2024-10-09",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.89",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 600
+      }
+    },
+    {
+      "id": "acc_com_022",
+      "name": "THE BREAD STATION RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": "2025-08-09",
+      "contractEnd": "2028-08-06",
+      "trmvKg": 428000,
+      "volumeGeneratedKg": 88000,
+      "avgMonthlyVolumeKg": 9300,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 10000,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2025-08-17",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.63",
+        "tankOwnership": "MGC-owned",
+        "tank600": 4,
+        "minKgPerDrop": 600
+      }
+    },
+    {
+      "id": "acc_com_023",
+      "name": "CRAVINGS CORNER RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 10200,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 150
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": "2025-10-25",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.90",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 400
+      }
+    },
+    {
+      "id": "acc_com_024",
+      "name": "NANAY LUISA RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2023-06-22",
+      "contractEnd": "2028-06-05",
+      "trmvKg": 342000,
+      "volumeGeneratedKg": 238000,
+      "avgMonthlyVolumeKg": 9000,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 115000000,
+      "reqVolPerMonthKg": 10000,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 115000000,
+          "note": "Installation 2023"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 350
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": "2023-06-28",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.02",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "tank600": 1,
+        "minKgPerDrop": 450
+      }
+    },
+    {
+      "id": "acc_com_025",
+      "name": "SIZZLING PLATE RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 5400,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2026-04-18",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.79",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 650
+      }
+    },
+    {
+      "id": "acc_com_026",
+      "name": "GRANDVIEW SUITES RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 2700,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 93000000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 80,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "CASH_ZERO",
+          "perKg": 125
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2026-05-03",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.66",
+        "tankOwnership": "MGC-owned",
+        "tank600": 4,
+        "minKgPerDrop": 300
+      }
+    },
+    {
+      "id": "acc_com_027",
+      "name": "LUTONG MACAO RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": "2026-08-25",
+      "contractEnd": "2029-08-11",
+      "trmvKg": 252000,
+      "volumeGeneratedKg": 140500,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 164000000,
+      "reqVolPerMonthKg": 6500,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 164000000,
+          "note": "Installation 2026"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 550
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": "2026-08-25",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.00",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 1050
+      }
+    },
+    {
+      "id": "acc_com_028",
+      "name": "FIESTA CARINDERIA RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 6700,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 50
+        },
+        {
+          "code": "CASH_ZERO",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2022-12-13",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.76",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 1,
+        "tank600": 4,
+        "minKgPerDrop": 1050
+      }
+    },
+    {
+      "id": "acc_com_029",
+      "name": "CAFE ESCOLTA RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 11800,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "2.10",
+        "tankOwnership": "Client-owned",
+        "tank2000": 1,
+        "minKgPerDrop": 450
+      }
+    },
+    {
+      "id": "acc_com_030",
+      "name": "BALAI SILANGAN RESTAURANT",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "DC Starr",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.86",
+        "tankOwnership": "Leased",
+        "tank600": 1,
+        "minKgPerDrop": 800
+      }
+    },
+    {
+      "id": "acc_com_031",
+      "name": "KUSINA NI ALING ROSA BAKERY",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 10000,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 50
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-09-02",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.93",
+        "tankOwnership": "MGC-owned",
+        "tank600": 4,
+        "minKgPerDrop": 650
+      }
+    },
+    {
+      "id": "acc_com_032",
+      "name": "CAFE MARIPOSA BAKERY",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 10600,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": "2026-08-09",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.66",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 800
+      }
+    },
+    {
+      "id": "acc_com_033",
+      "name": "ALOHA GRILL BAKERY",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 8000,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 25
+        },
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.92",
+        "tankOwnership": "Client-owned",
+        "tank2000": 1,
+        "minKgPerDrop": 700
+      }
+    },
+    {
+      "id": "acc_com_034",
+      "name": "LOLA CONSING BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2023-04-02",
+      "contractEnd": "2028-04-24",
+      "trmvKg": 542000,
+      "volumeGeneratedKg": 359500,
+      "avgMonthlyVolumeKg": 9500,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 184500000,
+      "reqVolPerMonthKg": 10500,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 184500000,
+          "note": "Installation 2023"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "CASH_ZERO",
+          "perKg": 375
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-04-25",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.84",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "tank600": 1,
+        "minKgPerDrop": 850
+      }
+    },
+    {
+      "id": "acc_com_035",
+      "name": "MANANG'S KITCHEN BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 2400,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 71000000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2024-09-15",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.61",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 1,
+        "tank600": 3,
+        "minKgPerDrop": 500
+      }
+    },
+    {
+      "id": "acc_com_036",
+      "name": "BAGONG SILANG BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 11300,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 209000000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-04-11",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.99",
+        "tankOwnership": "MGC-owned",
+        "tank600": 4,
+        "minKgPerDrop": 450
+      }
+    },
+    {
+      "id": "acc_com_037",
+      "name": "CASA VERDE BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 10900,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [],
+      "discounts": [],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.64",
+        "tankOwnership": "Client-owned",
+        "tank2000": 1,
+        "tank600": 1,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 700
+      }
+    },
+    {
+      "id": "acc_com_038",
+      "name": "MILKY WAY DINER BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 7200,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 235000000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-02-17",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.69",
+        "tankOwnership": "MGC-owned",
+        "tank600": 2,
+        "minKgPerDrop": 950
+      }
+    },
+    {
+      "id": "acc_com_039",
+      "name": "SAN MIGUEL BISTRO BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 12000,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 235500000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-11-18",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.80",
+        "tankOwnership": "MGC-owned",
+        "tank600": 4,
+        "minKgPerDrop": 300
+      }
+    },
+    {
+      "id": "acc_com_040",
+      "name": "PANADERIA DE ORO BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": "2024-12-07",
+      "contractEnd": "2029-12-27",
+      "trmvKg": 245000,
+      "volumeGeneratedKg": 123500,
+      "avgMonthlyVolumeKg": 5100,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 5500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 30,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 150
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.78",
+        "tankOwnership": "Client-owned",
+        "minKgPerDrop": 750
+      }
+    },
+    {
+      "id": "acc_com_041",
+      "name": "TITA BABY BAKERY",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 8500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.89",
+        "tankOwnership": "Client-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 600
+      }
+    },
+    {
+      "id": "acc_com_042",
+      "name": "GOLDEN SPOON BAKERY",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 7100,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-11-01",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.73",
+        "tankOwnership": "MGC-owned",
+        "tank600": 4,
+        "minKgPerDrop": 550
+      }
+    },
+    {
+      "id": "acc_com_043",
+      "name": "HAPAG IHAW BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 5200,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 25
+        },
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.92",
+        "tankOwnership": "Leased",
+        "minKgPerDrop": 250
+      }
+    },
+    {
+      "id": "acc_com_044",
+      "name": "CAFE DE LUNA BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 2300,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 175
+        }
+      ],
+      "competitorBrand": "DC Starr",
+      "profile": {
+        "installedAt": "2023-09-18",
+        "lpgContentBilling": "By meter",
+        "factorRate": "2.00",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 700
+      }
+    },
+    {
+      "id": "acc_com_045",
+      "name": "BAHAY KUBO BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 1700,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2025-11-17",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.84",
+        "tankOwnership": "MGC-owned",
+        "tank3_2mt": 1,
+        "minKgPerDrop": 1000
+      }
+    },
+    {
+      "id": "acc_com_046",
+      "name": "PUNTO CENTRAL BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 7600,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [],
+      "discounts": [],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.00",
+        "tankOwnership": "Client-owned",
+        "tank2000": 1,
+        "minKgPerDrop": 700
+      }
+    },
+    {
+      "id": "acc_com_047",
+      "name": "MASARAP EATERY BAKERY",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 4200,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.81",
+        "tankOwnership": "Client-owned",
+        "tank2000": 1,
+        "tank600": 4,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 300
+      }
+    },
+    {
+      "id": "acc_com_048",
+      "name": "RIVERSIDE INN BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 6300,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 40500000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "CASH_ZERO",
+          "perKg": 100
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-11-26",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.78",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 550
+      }
+    },
+    {
+      "id": "acc_com_049",
+      "name": "BULALOHAN SA KANTO BAKERY",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-11-02",
+      "contractEnd": "2025-11-18",
+      "trmvKg": 56000,
+      "volumeGeneratedKg": 47000,
+      "avgMonthlyVolumeKg": 1200,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 1500,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "CASH_ZERO",
+          "perKg": 50
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-11-08",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.95",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 1,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 950
+      }
+    },
+    {
+      "id": "acc_com_050",
+      "name": "SEASIDE VERANDA BAKERY",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 4100,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 150
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.70",
+        "tankOwnership": "Client-owned",
+        "tank600": 4,
+        "minKgPerDrop": 700
+      }
+    },
+    {
+      "id": "acc_com_051",
+      "name": "PINOY LUTONG BAHAY BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 7300,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        },
+        {
+          "code": "CASH_ZERO",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.63",
+        "tankOwnership": "Leased",
+        "tank2000": 1,
+        "tank600": 2,
+        "minKgPerDrop": 1050
+      }
+    },
+    {
+      "id": "acc_com_052",
+      "name": "THE BREAD STATION BAKERY",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 7000,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 225
+        },
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 50
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2024-04-15",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.95",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 650
+      }
+    },
+    {
+      "id": "acc_com_053",
+      "name": "CRAVINGS CORNER BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": "2026-01-05",
+      "contractEnd": "2031-01-22",
+      "trmvKg": 189000,
+      "volumeGeneratedKg": 135500,
+      "avgMonthlyVolumeKg": 4100,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 4500,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.92",
+        "tankOwnership": "Leased",
+        "tank600": 4,
+        "minKgPerDrop": 550
+      }
+    },
+    {
+      "id": "acc_com_054",
+      "name": "NANAY LUISA BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 5800,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2025-09-13",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.96",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "tank600": 2,
+        "minKgPerDrop": 450
+      }
+    },
+    {
+      "id": "acc_com_055",
+      "name": "SIZZLING PLATE BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 4000,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 50,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "CASH_ZERO",
+          "perKg": 300
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2025-12-10",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.61",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 1,
+        "tank600": 3,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 1000
+      }
+    },
+    {
+      "id": "acc_com_056",
+      "name": "GRANDVIEW SUITES BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 11800,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 70,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.95",
+        "tankOwnership": "Leased",
+        "tank2000": 2,
+        "tank600": 3,
+        "minKgPerDrop": 750
+      }
+    },
+    {
+      "id": "acc_com_057",
+      "name": "LUTONG MACAO BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": "2023-01-02",
+      "contractEnd": "2026-01-16",
+      "trmvKg": 330000,
+      "volumeGeneratedKg": 272000,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 6500,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.79",
+        "tankOwnership": "Leased",
+        "minKgPerDrop": 1150
+      }
+    },
+    {
+      "id": "acc_com_058",
+      "name": "FIESTA CARINDERIA BAKERY",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 100
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-08-21",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.86",
+        "tankOwnership": "MGC-owned",
+        "tank600": 2,
+        "minKgPerDrop": 400
+      }
+    },
+    {
+      "id": "acc_com_059",
+      "name": "CAFE ESCOLTA BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2024-11-23",
+      "contractEnd": "2027-11-06",
+      "trmvKg": 214000,
+      "volumeGeneratedKg": 129500,
+      "avgMonthlyVolumeKg": 5100,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 5500,
+      "premiums": [],
+      "discounts": [],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.81",
+        "tankOwnership": "Client-owned",
+        "minKgPerDrop": 550
+      }
+    },
+    {
+      "id": "acc_com_060",
+      "name": "BALAI SILANGAN BAKERY",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 5900,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2024-11-20",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.97",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 250
+      }
+    },
+    {
+      "id": "acc_com_061",
+      "name": "KUSINA NI ALING ROSA GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": "2026-06-15",
+      "contractEnd": "2029-06-28",
+      "trmvKg": 220000,
+      "volumeGeneratedKg": 83000,
+      "avgMonthlyVolumeKg": 5000,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 5500,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "2.00",
+        "tankOwnership": "Leased",
+        "tank600": 3,
+        "minKgPerDrop": 400
+      }
+    },
+    {
+      "id": "acc_com_062",
+      "name": "CAFE MARIPOSA GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2026-06-17",
+      "contractEnd": "2029-06-10",
+      "trmvKg": 168000,
+      "volumeGeneratedKg": 61500,
+      "avgMonthlyVolumeKg": 2800,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 3000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 70,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 200
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2026-06-21",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.78",
+        "tankOwnership": "MGC-owned",
+        "tank600": 1,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 300
+      }
+    },
+    {
+      "id": "acc_com_063",
+      "name": "ALOHA GRILL GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 7500,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "2.10",
+        "tankOwnership": "Client-owned",
+        "tank600": 2,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 1050
+      }
+    },
+    {
+      "id": "acc_com_064",
+      "name": "LOLA CONSING GRILL HOUSE",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 8900,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "2.05",
+        "tankOwnership": "Leased",
+        "tank2000": 1,
+        "tank600": 2,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 350
+      }
+    },
+    {
+      "id": "acc_com_065",
+      "name": "MANANG'S KITCHEN GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 8800,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 65,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 250
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": "2025-02-01",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.10",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 750
+      }
+    },
+    {
+      "id": "acc_com_066",
+      "name": "BAGONG SILANG GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 5900,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.01",
+        "tankOwnership": "Leased",
+        "tank2000": 1,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 450
+      }
+    },
+    {
+      "id": "acc_com_067",
+      "name": "CASA VERDE GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 10600,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.83",
+        "tankOwnership": "Client-owned",
+        "tank2000": 1,
+        "tank600": 4,
+        "minKgPerDrop": 1000
+      }
+    },
+    {
+      "id": "acc_com_068",
+      "name": "MILKY WAY DINER GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": "2024-03-10",
+      "contractEnd": "2027-03-07",
+      "trmvKg": 48000,
+      "volumeGeneratedKg": 40500,
+      "avgMonthlyVolumeKg": 1200,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 1500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "2.05",
+        "tankOwnership": "Leased",
+        "tank2000": 1,
+        "tank600": 3,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 1100
+      }
+    },
+    {
+      "id": "acc_com_069",
+      "name": "SAN MIGUEL BISTRO GRILL HOUSE",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-07-12",
+      "contractEnd": "2025-07-06",
+      "trmvKg": 252000,
+      "volumeGeneratedKg": 223500,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 6500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.70",
+        "tankOwnership": "Client-owned",
+        "tank2000": 2,
+        "tank600": 1,
+        "minKgPerDrop": 500
+      }
+    },
+    {
+      "id": "acc_com_070",
+      "name": "PANADERIA DE ORO GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 8100,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.62",
+        "tankOwnership": "Client-owned",
+        "tank600": 3,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 1050
+      }
+    },
+    {
+      "id": "acc_com_071",
+      "name": "TITA BABY GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 3800,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.62",
+        "tankOwnership": "Leased",
+        "tank600": 2,
+        "minKgPerDrop": 800
+      }
+    },
+    {
+      "id": "acc_com_072",
+      "name": "GOLDEN SPOON GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 10600,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.87",
+        "tankOwnership": "Client-owned",
+        "tank2000": 2,
+        "tank600": 1,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 850
+      }
+    },
+    {
+      "id": "acc_com_073",
+      "name": "HAPAG IHAW GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 8300,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-11-26",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.63",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "tank600": 4,
+        "minKgPerDrop": 400
+      }
+    },
+    {
+      "id": "acc_com_074",
+      "name": "CAFE DE LUNA GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2024-08-27",
+      "contractEnd": "2027-08-14",
+      "trmvKg": 67000,
+      "volumeGeneratedKg": 58500,
+      "avgMonthlyVolumeKg": 1400,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 1500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.77",
+        "tankOwnership": "Client-owned",
+        "tank2000": 1,
+        "minKgPerDrop": 300
+      }
+    },
+    {
+      "id": "acc_com_075",
+      "name": "BAHAY KUBO GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 7000,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "2.08",
+        "tankOwnership": "Leased",
+        "tank2000": 1,
+        "minKgPerDrop": 250
+      }
+    },
+    {
+      "id": "acc_com_076",
+      "name": "PUNTO CENTRAL GRILL HOUSE",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": "2023-04-07",
+      "contractEnd": "2028-04-10",
+      "trmvKg": 294000,
+      "volumeGeneratedKg": 71000,
+      "avgMonthlyVolumeKg": 6400,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 7000,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-04-28",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.94",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 950
+      }
+    },
+    {
+      "id": "acc_com_077",
+      "name": "MASARAP EATERY GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 8500,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-02-23",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.87",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 1200
+      }
+    },
+    {
+      "id": "acc_com_078",
+      "name": "RIVERSIDE INN GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": "2022-12-25",
+      "contractEnd": "2027-12-07",
+      "trmvKg": 304000,
+      "volumeGeneratedKg": 210000,
+      "avgMonthlyVolumeKg": 6600,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 7500,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 75,
+          "note": "Slow payer"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 225
+        }
+      ],
+      "competitorBrand": "DC Starr",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.94",
+        "tankOwnership": "Leased",
+        "tank2000": 1,
+        "tank600": 3,
+        "minKgPerDrop": 800
+      }
+    },
+    {
+      "id": "acc_com_079",
+      "name": "BULALOHAN SA KANTO GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2024-07-21",
+      "contractEnd": "2029-07-22",
+      "trmvKg": 331000,
+      "volumeGeneratedKg": 191500,
+      "avgMonthlyVolumeKg": 5700,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 6500,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 200
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.93",
+        "tankOwnership": "Client-owned",
+        "minKgPerDrop": 850
+      }
+    },
+    {
+      "id": "acc_com_080",
+      "name": "SEASIDE VERANDA GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 5000,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 65,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.90",
+        "tankOwnership": "Client-owned",
+        "minKgPerDrop": 850
+      }
+    },
+    {
+      "id": "acc_com_081",
+      "name": "PINOY LUTONG BAHAY GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 7900,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.05",
+        "tankOwnership": "Leased",
+        "tank2000": 1,
+        "tank600": 3,
+        "minKgPerDrop": 1100
+      }
+    },
+    {
+      "id": "acc_com_082",
+      "name": "THE BREAD STATION GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 900,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 35500000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 175
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": "2023-09-08",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.91",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "tank600": 1,
+        "minKgPerDrop": 850
+      }
+    },
+    {
+      "id": "acc_com_083",
+      "name": "CRAVINGS CORNER GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": "2026-01-04",
+      "contractEnd": "2031-01-01",
+      "trmvKg": 304000,
+      "volumeGeneratedKg": 210000,
+      "avgMonthlyVolumeKg": 8000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 9000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2026-01-28",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.79",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 950
+      }
+    },
+    {
+      "id": "acc_com_084",
+      "name": "NANAY LUISA GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2022-09-11",
+      "contractEnd": "2027-09-01",
+      "trmvKg": 49000,
+      "volumeGeneratedKg": 13500,
+      "avgMonthlyVolumeKg": 1200,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 203500000,
+      "reqVolPerMonthKg": 1500,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 203500000,
+          "note": "Installation 2022"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 2525
+        },
+        {
+          "code": "CASH_ZERO",
+          "perKg": 1700
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-09-15",
+        "lpgContentBilling": "By weight",
+        "factorRate": "2.02",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 1050
+      }
+    },
+    {
+      "id": "acc_com_085",
+      "name": "SIZZLING PLATE GRILL HOUSE",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-07-11",
+      "contractEnd": "2025-07-12",
+      "trmvKg": 222000,
+      "volumeGeneratedKg": 64000,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 57500000,
+      "reqVolPerMonthKg": 6500,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 57500000,
+          "note": "Installation 2022"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 225
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2022-07-04",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.63",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 700
+      }
+    },
+    {
+      "id": "acc_com_086",
+      "name": "GRANDVIEW SUITES GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": "2026-04-22",
+      "contractEnd": "2031-04-14",
+      "trmvKg": 385000,
+      "volumeGeneratedKg": 284500,
+      "avgMonthlyVolumeKg": 10700,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 215500000,
+      "reqVolPerMonthKg": 12000,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 215500000,
+          "note": "Installation 2026"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 425
+        },
+        {
+          "code": "CASH_ZERO",
+          "perKg": 175
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": "2026-04-15",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.78",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 900
+      }
+    },
+    {
+      "id": "acc_com_087",
+      "name": "LUTONG MACAO GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 5500,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 58000000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": "2023-05-08",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.84",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 800
+      }
+    },
+    {
+      "id": "acc_com_088",
+      "name": "FIESTA CARINDERIA GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 5800,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 137000000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2026-08-02",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.83",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 300
+      }
+    },
+    {
+      "id": "acc_com_089",
+      "name": "CAFE ESCOLTA GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": "2022-01-17",
+      "contractEnd": "2027-01-21",
+      "trmvKg": 389000,
+      "volumeGeneratedKg": 322500,
+      "avgMonthlyVolumeKg": 6700,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 7500,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 175
+        },
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 50
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2022-01-08",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.88",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 600
+      }
+    },
+    {
+      "id": "acc_com_090",
+      "name": "BALAI SILANGAN GRILL HOUSE",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2026-05-16",
+      "contractEnd": "2031-05-15",
+      "trmvKg": 79000,
+      "volumeGeneratedKg": 41000,
+      "avgMonthlyVolumeKg": 2200,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 2500,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "CASH_ZERO",
+          "perKg": 100
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2026-05-15",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.72",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 2,
+        "minKgPerDrop": 600
+      }
+    },
+    {
+      "id": "acc_com_091",
+      "name": "KUSINA NI ALING ROSA HOTEL",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 11200,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.83",
+        "tankOwnership": "Leased",
+        "tank2000": 2,
+        "tank600": 1,
+        "minKgPerDrop": 1100
+      }
+    },
+    {
+      "id": "acc_com_092",
+      "name": "CAFE MARIPOSA HOTEL",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": "2022-10-14",
+      "contractEnd": "2025-10-07",
+      "trmvKg": 204000,
+      "volumeGeneratedKg": 143000,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 6500,
+      "premiums": [],
+      "discounts": [],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.66",
+        "tankOwnership": "Leased",
+        "tank600": 4,
+        "minKgPerDrop": 900
+      }
+    },
+    {
+      "id": "acc_com_093",
+      "name": "ALOHA GRILL HOTEL",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Makati",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 11000,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "2.09",
+        "tankOwnership": "Client-owned",
+        "tank2000": 2,
+        "tank600": 1,
+        "minKgPerDrop": 650
+      }
+    },
+    {
+      "id": "acc_com_094",
+      "name": "LOLA CONSING HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 5000,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-04-24",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.84",
+        "tankOwnership": "MGC-owned",
+        "tank3_2mt": 1,
+        "minKgPerDrop": 900
+      }
+    },
+    {
+      "id": "acc_com_095",
+      "name": "MANANG'S KITCHEN HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 1000,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        },
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": "2022-01-09",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.92",
+        "tankOwnership": "MGC-owned",
+        "tank600": 1,
+        "minKgPerDrop": 1150
+      }
+    },
+    {
+      "id": "acc_com_096",
+      "name": "BAGONG SILANG HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2024-04-27",
+      "contractEnd": "2029-04-15",
+      "trmvKg": 357000,
+      "volumeGeneratedKg": 104500,
+      "avgMonthlyVolumeKg": 11500,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 12500,
+      "premiums": [
+        {
+          "code": "CREDIT_RISK",
+          "perKg": 40,
+          "note": "Slow payer"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.05",
+        "tankOwnership": "Leased",
+        "minKgPerDrop": 500
+      }
+    },
+    {
+      "id": "acc_com_097",
+      "name": "CASA VERDE HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 3500,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.02",
+        "tankOwnership": "Client-owned",
+        "minKgPerDrop": 300
+      }
+    },
+    {
+      "id": "acc_com_098",
+      "name": "MILKY WAY DINER HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 168500000,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-11-16",
+        "lpgContentBilling": "By weight",
+        "factorRate": "2.05",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 500
+      }
+    },
+    {
+      "id": "acc_com_099",
+      "name": "SAN MIGUEL BISTRO HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-01-23",
+      "contractEnd": "2027-01-14",
+      "trmvKg": 391000,
+      "volumeGeneratedKg": 250500,
+      "avgMonthlyVolumeKg": 9300,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 10000,
+      "premiums": [],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.72",
+        "tankOwnership": "Leased",
+        "minKgPerDrop": 1050
+      }
+    },
+    {
+      "id": "acc_com_100",
+      "name": "PANADERIA DE ORO HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 6600,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Regasco",
+      "profile": {
+        "installedAt": "2024-11-25",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.63",
+        "tankOwnership": "MGC-owned",
+        "tank600": 1,
+        "minKgPerDrop": 750
+      }
+    },
+    {
+      "id": "acc_com_101",
+      "name": "TITA BABY HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": "2026-06-14",
+      "contractEnd": "2029-06-25",
+      "trmvKg": 661000,
+      "volumeGeneratedKg": 504500,
+      "avgMonthlyVolumeKg": 11400,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 216000000,
+      "reqVolPerMonthKg": 12500,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 216000000,
+          "note": "Installation 2026"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2026-06-06",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.71",
+        "tankOwnership": "MGC-owned",
+        "tank600": 4,
+        "minKgPerDrop": 500
+      }
+    },
+    {
+      "id": "acc_com_102",
+      "name": "GOLDEN SPOON HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "50KG_A",
+      "contractStart": "2022-03-11",
+      "contractEnd": "2027-03-15",
+      "trmvKg": 348000,
+      "volumeGeneratedKg": 238000,
+      "avgMonthlyVolumeKg": 8100,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 9000,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 150
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": "2022-03-12",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.89",
+        "tankOwnership": "MGC-owned",
+        "tank600": 2,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 450
+      }
+    },
+    {
+      "id": "acc_com_103",
+      "name": "HAPAG IHAW HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2022-04-22",
+      "contractEnd": "2027-04-19",
+      "trmvKg": 275000,
+      "volumeGeneratedKg": 175500,
+      "avgMonthlyVolumeKg": 6100,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": 184000000,
+      "reqVolPerMonthKg": 6500,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "ROI_INSTALL",
+          "investmentCentavos": 184000000,
+          "note": "Installation 2022"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "CASH_ZERO",
+          "perKg": 750
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2022-04-25",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.78",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 1,
+        "tank600": 1,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 350
+      }
+    },
+    {
+      "id": "acc_com_104",
+      "name": "CAFE DE LUNA HOTEL",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": "2026-04-28",
+      "contractEnd": "2031-04-18",
+      "trmvKg": 469000,
+      "volumeGeneratedKg": 256500,
+      "avgMonthlyVolumeKg": 10900,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 12000,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 150
+        }
+      ],
+      "competitorBrand": "Island Gas",
+      "profile": {
+        "installedAt": "2026-04-05",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.77",
+        "tankOwnership": "MGC-owned",
+        "tank600": 1,
+        "minKgPerDrop": 500
+      }
+    },
+    {
+      "id": "acc_com_105",
+      "name": "BAHAY KUBO HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Canlubang",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 6900,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-02-07",
+        "lpgContentBilling": "By meter",
+        "factorRate": "2.02",
+        "tankOwnership": "MGC-owned",
+        "tank600": 3,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 350
+      }
+    },
+    {
+      "id": "acc_com_106",
+      "name": "PUNTO CENTRAL HOTEL",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 6600,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 75
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.80",
+        "tankOwnership": "Client-owned",
+        "tank2000": 2,
+        "tank600": 3,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 400
+      }
+    },
+    {
+      "id": "acc_com_107",
+      "name": "MASARAP EATERY HOTEL",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "2.09",
+        "tankOwnership": "Leased",
+        "tank2000": 2,
+        "tank600": 4,
+        "minKgPerDrop": 850
+      }
+    },
+    {
+      "id": "acc_com_108",
+      "name": "RIVERSIDE INN HOTEL",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "22KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 8600,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 125
+        }
+      ],
+      "competitorBrand": "Petron Gasul",
+      "profile": {
+        "installedAt": "2024-04-18",
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.98",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 700
+      }
+    },
+    {
+      "id": "acc_com_109",
+      "name": "BULALOHAN SA KANTO HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "22KG_FL_A",
+      "contractStart": "2024-07-22",
+      "contractEnd": "2029-07-03",
+      "trmvKg": 383000,
+      "volumeGeneratedKg": 332000,
+      "avgMonthlyVolumeKg": 11600,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 13000,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "DUAL_SUPPLIER",
+          "perKg": 100
+        },
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 25
+        }
+      ],
+      "competitorBrand": "Solane",
+      "profile": {
+        "installedAt": "2024-07-22",
+        "lpgContentBilling": "By meter",
+        "factorRate": "2.01",
+        "tankOwnership": "MGC-owned",
+        "minKgPerDrop": 300
+      }
+    },
+    {
+      "id": "acc_com_110",
+      "name": "SEASIDE VERANDA HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Plaridel",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        },
+        {
+          "code": "TANK_RENTAL"
+        },
+        {
+          "code": "REPAIRS"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-01-10",
+        "lpgContentBilling": "By meter",
+        "factorRate": "1.67",
+        "tankOwnership": "MGC-owned",
+        "tank600": 1,
+        "minKgPerDrop": 900
+      }
+    },
+    {
+      "id": "acc_com_111",
+      "name": "PINOY LUTONG BAHAY HOTEL",
+      "status": "Inactive",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": "2024-09-27",
+      "contractEnd": "2027-09-28",
+      "trmvKg": 437000,
+      "volumeGeneratedKg": 162500,
+      "avgMonthlyVolumeKg": 9300,
+      "creditTermDays": 15,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 10000,
+      "premiums": [
+        {
+          "code": "CREDIT_15"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By weight",
+        "factorRate": "1.92",
+        "tankOwnership": "Leased",
+        "minKgPerDrop": 700
+      }
+    },
+    {
+      "id": "acc_com_112",
+      "name": "THE BREAD STATION HOTEL",
+      "status": "Active",
+      "needsAttention": true,
+      "channelId": "COMMERCIAL",
+      "zone": "Dasmariñas",
+      "primarySkuId": "22KG_A",
+      "contractStart": "2025-09-06",
+      "contractEnd": "2030-09-21",
+      "trmvKg": 280000,
+      "volumeGeneratedKg": 137500,
+      "avgMonthlyVolumeKg": 8000,
+      "creditTermDays": 7,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": 9000,
+      "premiums": [
+        {
+          "code": "CREDIT_07"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "2.05",
+        "tankOwnership": "Client-owned",
+        "minKgPerDrop": 600
+      }
+    },
+    {
+      "id": "acc_com_113",
+      "name": "CRAVINGS CORNER HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Tagaytay City",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 9700,
+      "creditTermDays": 30,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "CREDIT_30"
+        },
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2025-04-06",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.65",
+        "tankOwnership": "MGC-owned",
+        "tank3_2mt": 1,
+        "minKgPerDrop": 700
+      }
+    },
+    {
+      "id": "acc_com_114",
+      "name": "NANAY LUISA HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Caloocan",
+      "primarySkuId": "11KG_MGAS",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": 9400,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [],
+      "discounts": [],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": null,
+        "lpgContentBilling": "By meter",
+        "factorRate": "2.06",
+        "tankOwnership": "Leased",
+        "tank2000": 1,
+        "tank600": 2,
+        "minKgPerDrop": 850
+      }
+    },
+    {
+      "id": "acc_com_115",
+      "name": "SIZZLING PLATE HOTEL",
+      "status": "Active",
+      "needsAttention": false,
+      "channelId": "COMMERCIAL",
+      "zone": "Silang",
+      "primarySkuId": "50KG_A",
+      "contractStart": null,
+      "contractEnd": null,
+      "trmvKg": null,
+      "volumeGeneratedKg": null,
+      "avgMonthlyVolumeKg": null,
+      "creditTermDays": 0,
+      "floorOverridePerKg": null,
+      "fixedMarginPerKg": null,
+      "investmentCentavos": null,
+      "reqVolPerMonthKg": null,
+      "premiums": [
+        {
+          "code": "TANK_RENTAL"
+        }
+      ],
+      "discounts": [
+        {
+          "code": "SUPPLY_ONLY",
+          "perKg": 50
+        }
+      ],
+      "competitorBrand": null,
+      "profile": {
+        "installedAt": "2023-06-03",
+        "lpgContentBilling": "By delivery receipt",
+        "factorRate": "1.93",
+        "tankOwnership": "MGC-owned",
+        "tank2000": 1,
+        "tank3_2mt": 1,
+        "minKgPerDrop": 250
+      }
+    }
+  ],
+  "competitorReadings": [
+    {
+      "id": "cr_1",
+      "brand": "Solane",
+      "zone": "Silang",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 105500,
+      "capturedAt": "2026-09-09",
+      "capturedBy": "u_msgr_1",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_2",
+      "brand": "Petron Gasul",
+      "zone": "Plaridel",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 102000,
+      "capturedAt": "2026-09-08",
+      "capturedBy": "u_msgr_1",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_3",
+      "brand": "Island Gas",
+      "zone": "Tagaytay City",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 88000,
+      "capturedAt": "2026-07-02",
+      "capturedBy": "u_msgr_2",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_4",
+      "brand": "Petron Gasul",
+      "zone": "Silang",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 110000,
+      "capturedAt": "2026-09-15",
+      "capturedBy": "u_msgr_2",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_5",
+      "brand": "Island Gas",
+      "zone": "Silang",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 109500,
+      "capturedAt": "2026-09-11",
+      "capturedBy": "u_msgr_1",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_6",
+      "brand": "Solane",
+      "zone": "Tagaytay City",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 99000,
+      "capturedAt": "2026-09-10",
+      "capturedBy": "u_msgr_1",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_7",
+      "brand": "Petron Gasul",
+      "zone": "Tagaytay City",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 101000,
+      "capturedAt": "2026-09-11",
+      "capturedBy": "u_msgr_2",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_8",
+      "brand": "Island Gas",
+      "zone": "Plaridel",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 111000,
+      "capturedAt": "2026-09-12",
+      "capturedBy": "u_msgr_2",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_9",
+      "brand": "Solane",
+      "zone": "Caloocan",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 96500,
+      "capturedAt": "2026-09-14",
+      "capturedBy": "u_msgr_2",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_10",
+      "brand": "Petron Gasul",
+      "zone": "Caloocan",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 102500,
+      "capturedAt": "2026-09-15",
+      "capturedBy": "u_msgr_2",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_11",
+      "brand": "Island Gas",
+      "zone": "Caloocan",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 105500,
+      "capturedAt": "2026-09-12",
+      "capturedBy": "u_msgr_1",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_12",
+      "brand": "Solane",
+      "zone": "Canlubang",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 99000,
+      "capturedAt": "2026-09-15",
+      "capturedBy": "u_msgr_2",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_13",
+      "brand": "Petron Gasul",
+      "zone": "Canlubang",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 105000,
+      "capturedAt": "2026-09-10",
+      "capturedBy": "u_msgr_2",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_14",
+      "brand": "Petron Gasul",
+      "zone": "Dasmariñas",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 102000,
+      "capturedAt": "2026-09-10",
+      "capturedBy": "u_msgr_1",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_15",
+      "brand": "Island Gas",
+      "zone": "Dasmariñas",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 107000,
+      "capturedAt": "2026-09-14",
+      "capturedBy": "u_msgr_2",
+      "photoUrl": "placeholder.jpg"
+    },
+    {
+      "id": "cr_16",
+      "brand": "Island Gas",
+      "zone": "Makati",
+      "skuId": "11KG_MGAS",
+      "pricePerCyl": 97000,
+      "capturedAt": "2026-09-15",
+      "capturedBy": "u_msgr_2",
+      "photoUrl": "placeholder.jpg"
+    }
+  ]
+}

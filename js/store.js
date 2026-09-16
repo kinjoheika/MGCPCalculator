@@ -49,6 +49,18 @@ export async function init() {
   const res = await fetch('data/seed.json', { cache: 'no-store' });
   if (!res.ok) throw new Error(`Could not load data/seed.json (${res.status})`);
   seed = await res.json();
+
+  // The seed holds configuration; the demo client list is generated separately
+  // (tools/make-mock-clients.mjs). Drop the file and the app still runs, with no clients.
+  try {
+    const mock = await fetch('data/clients.mock.json', { cache: 'no-store' });
+    if (mock.ok) {
+      const data = await mock.json();
+      seed.accounts = [...(seed.accounts || []), ...(data.accounts || [])];
+      seed.competitorReadings = [...(seed.competitorReadings || []), ...(data.competitorReadings || [])];
+    }
+  } catch { /* no mock data file */ }
+
   const raw = lsGet(KEY);
   if (raw) {
     try { state = JSON.parse(raw); } catch { state = clone(seed); }

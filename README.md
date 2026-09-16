@@ -76,13 +76,25 @@ js/pricing.js    store-aware selectors: effective-dated lookups, account pricing
 js/router.js     hash router and role gate
 js/ui.js         small DOM helpers
 js/views/*       one module per screen (priceroom-wizard.js holds the five-step change flow)
-data/seed.json   seed data
-engine.test.html browser test page for the engine
+js/clientterms.js   client term fields, shared by the grid (read) and Configuration (edit)
+data/seed.json      configuration: costs, margins, components, channels, users
+data/clients.mock.json  generated demo clients and competitor readings
+tools/make-mock-clients.mjs  generator for the file above
+engine.test.html    browser test page for the engine
+serve.py            static server with no caching
 ```
 
 ## Seed data
 
-The seed holds the cost basis (₱65.50 acquisition, ₱2.25 hauling), channel × product margins, the premium and discount catalogue, 10 sample clients and 3 competitor readings. User names are placeholders — edit them in Configuration → Users, or in `data/seed.json` and then Reset demo data.
+`data/seed.json` holds configuration only: the cost basis (₱65.50 acquisition, ₱2.25 hauling), channel × product margins, buffers, the premium and discount catalogue, zones and users. User names are placeholders — edit them in Configuration → Users, or in the file and then Reset demo data.
+
+`data/clients.mock.json` holds the made-up demo clients and competitor readings, loaded on top of the seed at start-up. Regenerate it with:
+
+```bash
+node tools/make-mock-clients.mjs
+```
+
+It writes 175 clients — **50 Bulk, 120 Commercial** and 5 named ones on the other channels — plus competitor readings, from a fixed random seed, so the same command always produces the same file. Roughly 12% of active clients sit below the floor and a tenth have no volume on record, so the exceptions panel and the "excluded from impact" count have something real to show. Delete the file and the app still runs, with no clients.
 
 It also holds `settings` (VAT 12%, quote validity 7 days), per-channel `buffers`, `primarySkuId` on each client (used for exceptions and monthly impact), `trackedBrands` (drives the weekly competitor checklist), and empty `publications`, `proposals`, `quotes`, `priceRequests`, `acknowledgments`, `events` collections.
 
