@@ -50,6 +50,7 @@ function draftRows(a, code) {
 function editRows(a, code) {
   const k = rowKey(a.id, code);
   if (!ui.rows[k]) ui.rows[k] = currentRows(a, code);
+  if (!ui.rows[k].length) ui.rows[k] = [{ perKg: '', investment: '', note: '' }];
   return ui.rows[k];
 }
 
@@ -97,15 +98,15 @@ export function html(s) {
     ${clients.length ? `<div class="table-wrap"><table class="matrix grid-table">
       <thead>
       <tr class="grp">
-        <th rowspan="2" style="min-width:180px">Client</th>
-        <th rowspan="2" class="num" style="min-width:140px">Current price offered<div class="small muted">view only</div></th>
+        <th rowspan="2" class="col-client">Client</th>
+        <th rowspan="2" class="num col-price">Current price<div class="small muted">per cyl, VAT incl.</div></th>
         <th colspan="${PREMIUM_COLS.length + 1}" class="grp-prem">Premiums</th>
         <th colspan="${DISCOUNT_COLS.length}" class="grp-disc">Discounts</th>
       </tr>
       <tr>
-        <th class="num grp-prem-sub" style="min-width:110px">Total premium<div class="small muted">view only</div></th>
-        ${PREMIUM_COLS.map(c => `<th style="min-width:240px">${esc(c.title)}<div class="small muted">${esc(c.note)}</div></th>`).join('')}
-        ${DISCOUNT_COLS.map(c => `<th style="min-width:210px">${esc(c.title)}<div class="small muted">${esc(c.note)}</div></th>`).join('')}
+        <th class="num grp-prem-sub col-total">Total<div class="small muted">view only</div></th>
+        ${PREMIUM_COLS.map(c => `<th class="${c.roi ? 'col-roi' : 'col-line'}">${esc(c.title)}</th>`).join('')}
+        ${DISCOUNT_COLS.map(c => `<th class="col-line">${esc(c.title)}</th>`).join('')}
       </tr></thead>
       <tbody>${clients.map(a => clientRow(s, a, cb)).join('')}</tbody>
     </table></div>` : '<p class="muted">No clients on this channel yet.</p>'}`;
@@ -119,8 +120,8 @@ function clientRow(s, a, cb) {
     const margin = p.input.marginPerKg;
     const buffer = p.input.bufferPerKg || 0;
     price = `<div class="cell-price">${fmt(p.result.grossPerCyl)}</div>
-      <div class="small muted">${esc(skuLabel(s, a.primarySkuId))} · per cyl, VAT incl.</div>
-      <div class="fact"><b>MPL ${fmt(cb.acqPerKg + margin)}</b><span>Acq cost + margin</span></div>
+      <div class="small muted">${esc(skuLabel(s, a.primarySkuId))}</div>
+      <div class="fact"><b>MPL ${fmt(cb.acqPerKg + margin)}</b><span>Acq + margin</span></div>
       <div class="fact"><b>Margin ${fmt(margin + buffer)}</b><span>Margin + buffer</span></div>`;
   } else if (p?.error) price = `<span class="muted small">${esc(p.error)}</span>`;
 
@@ -142,27 +143,25 @@ function totalCell(s, a) {
     ${otherCount ? `<div class="small muted">incl. ${otherCount} other premium${otherCount === 1 ? '' : 's'} ${fmt(otherTotal)}</div>` : ''}`;
 }
 
+// One row of fields per client and line type. Any extra rows a client already carries are kept as they are.
 function cellRows(a, col) {
   const rows = draftRows(a, col.code);
-  return `<div class="rowlines">
-    ${rows.map((r, i) => `<div class="rowline">
-      ${col.roi ? `<input class="mini" style="width:92px" inputmode="decimal" placeholder="Investment ₱" value="${esc(r.investment)}" aria-label="Investment" data-cg="${esc(a.id)}|${col.code}|${i}|investment">` : ''}
-      <input class="mini" style="width:74px" inputmode="decimal" placeholder="₱/kg" value="${esc(r.perKg)}" aria-label="Per kg" data-cg="${esc(a.id)}|${col.code}|${i}|perKg">
-      <input class="mini grow" placeholder="Note" value="${esc(r.note)}" aria-label="Note" data-cg="${esc(a.id)}|${col.code}|${i}|note">
-      <button type="button" class="icon small" data-cg-rm="${esc(a.id)}|${col.code}|${i}" aria-label="Remove row">✕</button>
-    </div>`).join('')}
-    <button type="button" class="small" data-cg-add="${esc(a.id)}|${col.code}">+ Add row</button>
-    ${col.roi && !a.trmvKg ? '<div class="small muted">Blank ₱/kg needs a TRMV on the client to divide the investment.</div>' : ''}
+  const r = rows[0] || { perKg: '', investment: '', note: '' };
+  const extra = Math.max(0, rows.length - 1);
+  const f = (field, ph, label) => `<input class="mini" inputmode="${field === 'note' ? 'text' : 'decimal'}" placeholder="${ph}" value="${esc(r[field])}" aria-label="${label}" data-cg="${esc(a.id)}|${col.code}|0|${field}">`;
+  return `<div class="cellfields">
+    ${col.roi ? `<div class="pair">${f('investment', 'Investment ₱', 'Investment')}${f('perKg', '₱/kg', 'Per kg')}</div>` : f('perKg', '₱/kg', 'Per kg')}
+    ${f('note', 'Note', 'Note')}
+    ${extra ? `<div class="small muted">+${extra} more row${extra === 1 ? '' : 's'} kept</div>` : ''}
   </div>`;
 }
 
-// View only. These are maintained in Configuration → Clients.
+// View only, and kept tight. These are maintained in Configuration → Clients.
 function profileBox(a) {
-  return `<div class="prof-head small muted">Client terms — view only. Edit them in <a href="#/config">Configuration → Clients</a>.</div>
-    <div class="prof-grid">
-      ${FIELDS.map(f => `<div class="prof-f"><span>${esc(labelFor(f))}${f.lever ? ' <span class="pill tiffany">price lever</span>' : ''}</span>
-        <b class="prof-v">${esc(displayValue(a, f))}</b></div>`).join('')}
-    </div>`;
+  return `<div class="terms-line">
+    ${FIELDS.map(f => `<span class="term"><i>${esc(labelFor(f))}</i>${esc(displayValue(a, f))}</span>`).join('')}
+    <a class="term-edit small" href="#/config">Edit terms</a>
+  </div>`;
 }
 
 // ---- Save ----
@@ -177,7 +176,7 @@ async function saveAll(rerender) {
     const a = byId(s.accounts, accId);
     if (!a) continue;
     const next = rows
-      .map(r => ({ perKg: toCentavos(r.perKg), investmentCentavos: toCentavos(r.investment), note: r.note.trim() }))
+      .map(r => ({ perKg: toCentavos(r.perKg), investmentCentavos: toCentavos(r.investment), note: (r.note || '').trim() }))
       .filter(r => r.perKg != null || r.investmentCentavos != null || r.note)
       .map(r => ({ ...(r.perKg == null ? {} : { perKg: r.perKg }), ...(r.investmentCentavos ? { investmentCentavos: r.investmentCentavos } : {}), ...(r.note ? { note: r.note } : {}) }));
     const before = listFor(a, code).filter(p => p.code === code).map(({ code: _c, ...rest }) => rest);
@@ -205,18 +204,6 @@ export function bind(root, rerender) {
     // The total premium follows every keystroke without redrawing the row being typed into.
     const cell = root.querySelector(`#tp-${CSS.escape(accId)}`);
     if (cell && PREMIUM_COLS.some(c => c.code === code)) cell.innerHTML = totalCell(store.get(), a);
-  });
-  root.querySelectorAll('[data-cg-add]').forEach(b => b.onclick = () => {
-    const [accId, code] = b.dataset.cgAdd.split('|');
-    const a = byId(store.get().accounts, accId);
-    if (a) editRows(a, code).push({ perKg: '', investment: '', note: '' });
-    rerender();
-  });
-  root.querySelectorAll('[data-cg-rm]').forEach(b => b.onclick = () => {
-    const [accId, code, i] = b.dataset.cgRm.split('|');
-    const a = byId(store.get().accounts, accId);
-    if (a) editRows(a, code).splice(+i, 1);
-    rerender();
   });
   const save = root.querySelector('#cg-save');
   if (save) save.onclick = () => saveAll(rerender);

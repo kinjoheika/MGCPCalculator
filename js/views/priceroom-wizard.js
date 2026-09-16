@@ -123,8 +123,10 @@ export function html(s, user) {
   }).join('')}</ol>`;
   const body = { draft: draftHtml, simulate: simulateHtml, review: reviewHtml, approve: approveHtml, publish: publishHtml, done: doneHtml }[w.step](s, user);
   const open = s.proposals.filter(p => p.status !== 'published').sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
-  return `<div class="row"><h2 class="grow" style="margin:0">MPL calculator</h2><button type="button" id="w-new" class="small">New proposal</button></div>
-    ${bar}
+  return `<div class="wiz-head">
+      <div class="row"><h2 class="grow" style="margin:0">MPL calculator</h2><button type="button" id="w-new" class="small">New proposal</button></div>
+      ${bar}
+    </div>
     ${w.error ? `<div class="banner red" role="alert">${esc(w.error)}</div>` : ''}
     ${body}
     <hr class="hr">

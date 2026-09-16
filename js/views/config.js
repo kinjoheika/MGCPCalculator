@@ -139,9 +139,9 @@ function termsEditor(s) {
   const a = s.accounts.find(x => x.id === ui.editClient);
   if (!a) return '';
   const draft = ui.terms;
-  return `<div class="card" style="margin-top:16px">
+  return `<div class="card terms-editor" style="margin-top:16px">
     <div class="card-head"><div><h2>Client terms — ${esc(a.name)}</h2>
-      <p class="small muted">${esc(channelLabel(s, a.channelId))} · ${esc(a.zone ?? '—')}. Fields marked as a price lever change this client's price as soon as they are saved.</p></div>
+      <p class="small muted">${esc(channelLabel(s, a.channelId))} · ${esc(a.zone ?? '—')} · fields marked <span class="pill amber">price lever</span> change the price as soon as they are saved.</p></div>
       <div class="row"><button type="button" id="ct-cancel" class="small">Cancel</button><button type="button" id="ct-save" class="primary small">Save terms</button></div></div>
     <div class="prof-grid">
       ${FIELDS.map(f => {

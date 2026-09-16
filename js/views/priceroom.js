@@ -92,9 +92,11 @@ export function render(root, ctx) {
   root.querySelector('#pr-drawer').scrollTop = prevScroll;
   if (ui.animate) {
     ui.animate = false;
+    // The user may navigate away before these frames run.
     requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (!aside.isConnected) return;
       aside.classList.add('open');
-      if (!ui.wide) root.querySelector('.pr').classList.add('pr-shift');
+      if (!ui.wide) root.querySelector('.pr')?.classList.add('pr-shift');
     }));
   }
 
@@ -106,8 +108,11 @@ export function render(root, ctx) {
   };
   const closePanel = () => {
     aside.classList.remove('open');
-    root.querySelector('.pr').classList.remove('pr-shift');
-    setTimeout(() => { ui.open = false; rerender(); }, 250);
+    root.querySelector('.pr')?.classList.remove('pr-shift');
+    setTimeout(() => {
+      ui.open = false;
+      if (document.getElementById('pr-aside')) rerender(); // still on the Price room
+    }, 250);
   };
   root.querySelector('#pr-toggle').onclick = () => (ui.open ? closePanel() : openPanel('mpl'));
   root.querySelector('#pr-close').onclick = closePanel;
