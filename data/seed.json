@@ -98,7 +98,7 @@
   "discountComponents": [
     { "code": "SUPPLY_ONLY", "label": "Supply only" },
     { "code": "DUAL_SUPPLIER", "label": "Competition (dual supplier)" },
-    { "code": "CASH_ZERO", "label": "Cash / zero-rated" }
+    { "code": "CASH_ZERO", "label": "Cash / zero-rated (short term)" }
   ],
 
   "accounts": [

@@ -356,3 +356,12 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .prof-f > span { display: block; font-size: 11.5px; color: var(--muted); margin-bottom: 2px; }
 .prof-f input, .prof-f select { min-height: 34px; padding: 4px 8px; font-size: 12.5px; }
 .prof-f input[readonly] { background: #EEF1F5; color: var(--muted); }
+
+/* ---- Grid column groups and read-only client terms ---- */
+.grid-table tr.grp th { text-align: center; font-size: 12px; letter-spacing: .02em; }
+.grid-table .grp-prem { background: var(--tiffany-50); color: var(--tiffany-600); border-bottom: 2px solid var(--tiffany); }
+.grid-table .grp-disc { background: var(--amber-bg); color: var(--amber); border-bottom: 2px solid #E0A33A; }
+.grid-table td.grp-prem-sub, .grid-table th.grp-prem-sub { background: var(--tiffany-50); }
+.grid-table tbody tr:hover > td.grp-prem-sub { background: #D9F2F0; }
+.prof-head { margin-bottom: 6px; }
+.prof-f .prof-v { display: block; font-size: 13px; font-variant-numeric: tabular-nums; }

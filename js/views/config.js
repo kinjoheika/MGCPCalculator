@@ -6,9 +6,10 @@ import { fmt } from '../money.js';
 import { esc, toast, options, download, preserveFocus } from '../ui.js';
 import { parseCsv, toCsv, ACCOUNT_COLUMNS, rowsToAccounts, accountsToRows, templateRows, newAccount } from '../csv.js';
 import { channelLabel, skuLabel } from '../pricing.js';
+import { FIELDS, labelFor, inputValue, displayValue, parseValue, usableKg } from '../clientterms.js';
 
 const ROLES = ['seller', 'manager', 'messenger', 'viewer'];
-const ui = { tab: 'users', users: null, base: null, userErr: '', preview: null, mode: 'merge', fileName: '', clientQuery: '' };
+const ui = { tab: 'users', users: null, base: null, userErr: '', preview: null, mode: 'merge', fileName: '', clientQuery: '', editClient: null, terms: {} };
 
 export function render(root, ctx) {
   const { state: s } = ctx;
@@ -114,11 +115,13 @@ function clientsHtml(s) {
       </tbody></table></div></details>
   </div>
 
+  ${ui.editClient ? termsEditor(s) : ''}
+
   <div class="card" style="margin-top:16px">
     <div class="card-head"><h2>Clients (${s.accounts.length})</h2>
       <input id="c-q" type="search" placeholder="Filter by name" value="${esc(ui.clientQuery)}" style="max-width:280px" aria-label="Filter clients"></div>
     <div class="table-wrap"><table class="matrix">
-      <thead><tr><th>Name</th><th>Channel</th><th>Status</th><th>Zone</th><th>Main product</th><th class="num">Avg monthly kg</th><th class="num">Credit days</th><th>Premiums</th><th>Discounts</th></tr></thead>
+      <thead><tr><th>Name</th><th>Channel</th><th>Status</th><th>Zone</th><th>Main product</th><th class="num">Avg monthly kg</th><th class="num">Credit days</th><th>Premiums</th><th>Discounts</th><th></th></tr></thead>
       <tbody>${list.map(a => `<tr><td><b>${esc(a.name)}</b><div class="small muted">${esc(a.id)}</div></td>
         <td>${esc(channelLabel(s, a.channelId))}</td>
         <td><span class="pill ${a.status === 'Active' ? 'green' : 'grey'}">${esc(a.status)}</span>${a.needsAttention ? ' <span class="pill amber">Attention</span>' : ''}</td>
@@ -126,8 +129,59 @@ function clientsHtml(s) {
         <td class="num">${a.avgMonthlyVolumeKg == null ? '—' : a.avgMonthlyVolumeKg.toLocaleString('en-PH')}</td>
         <td class="num">${a.creditTermDays ?? '—'}</td>
         <td class="small">${esc(compOut(a.premiums, 'premiumComponents'))}</td>
-        <td class="small">${esc(compOut(a.discounts, 'discountComponents'))}</td></tr>`).join('') || '<tr><td colspan="9" class="muted">No clients match.</td></tr>'}
+        <td class="small">${esc(compOut(a.discounts, 'discountComponents'))}</td>
+        <td><button type="button" class="small" data-c-edit="${esc(a.id)}">Edit terms</button></td></tr>`).join('') || '<tr><td colspan="10" class="muted">No clients match.</td></tr>'}
       </tbody></table></div></div>`;
+}
+
+// Client terms editor — the fields the pricing grid shows read-only.
+function termsEditor(s) {
+  const a = s.accounts.find(x => x.id === ui.editClient);
+  if (!a) return '';
+  const draft = ui.terms;
+  return `<div class="card" style="margin-top:16px">
+    <div class="card-head"><div><h2>Client terms — ${esc(a.name)}</h2>
+      <p class="small muted">${esc(channelLabel(s, a.channelId))} · ${esc(a.zone ?? '—')}. Fields marked as a price lever change this client's price as soon as they are saved.</p></div>
+      <div class="row"><button type="button" id="ct-cancel" class="small">Cancel</button><button type="button" id="ct-save" class="primary small">Save terms</button></div></div>
+    <div class="prof-grid">
+      ${FIELDS.map(f => {
+        const label = `${esc(labelFor(f))}${f.lever ? ' <span class="pill amber">price lever</span>' : ''}`;
+        if (f.type === 'computed') return `<label class="prof-f"><span>${label}</span><input value="${usableKg(a, draft).toLocaleString('en-PH')} kg" readonly aria-readonly="true"></label>`;
+        const v = inputValue(a, f, draft);
+        const input = f.type === 'select'
+          ? `<select data-ct="${esc(f.key)}"><option value=""></option>${f.choices.map(c => `<option${c === v ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select>`
+          : `<input data-ct="${esc(f.key)}" type="${f.type === 'date' ? 'date' : 'text'}"${f.type === 'money' || f.type === 'int' ? ' inputmode="decimal"' : ''} value="${esc(v)}">`;
+        return `<label class="prof-f"><span>${label}</span>${input}</label>`;
+      }).join('')}
+    </div></div>`;
+}
+
+async function saveTerms() {
+  const s = store.get();
+  const a = s.accounts.find(x => x.id === ui.editClient);
+  if (!a) return;
+  const top = {}, terms = {}, changed = [];
+  for (const [key, raw] of Object.entries(ui.terms)) {
+    const f = FIELDS.find(x => x.key === key);
+    if (!f || f.type === 'computed') continue;
+    const value = parseValue(f, raw);
+    const before = (f.top ? a[key] : a.profile?.[key]) ?? null;
+    if (before === value) continue;
+    (f.top ? top : terms)[key] = value;
+    changed.push(`${f.label} ${displayValue(a, f)} → ${displayValue(a, f, { [key]: value })}`);
+  }
+  if (!changed.length) { toast('Nothing changed'); return; }
+  await store.commit({
+    action: 'CLIENT_TERMS_SAVED', entity: 'account', entityId: a.id, field: 'terms',
+    before: { profile: a.profile ?? null },
+    after: { count: 1, accountId: a.id, accountIds: [a.id], summary: `${a.name}: ${changed.join('; ')}`, top, terms },
+  }, d => {
+    const acc = d.accounts.find(x => x.id === a.id);
+    Object.assign(acc, top);
+    acc.profile = { ...(acc.profile || {}), ...terms };
+  });
+  ui.terms = {};
+  toast('Client terms saved');
 }
 
 function previewHtml(s) {
@@ -233,4 +287,19 @@ function bind(root, ctx) {
   if ($('c-template')) $('c-template').onclick = () => download('mgc-clients-template.csv', new Blob(['﻿' + toCsv(templateRows())], { type: 'text/csv' }));
   if ($('c-export')) $('c-export').onclick = () => download('mgc-clients.csv', new Blob(['﻿' + toCsv(accountsToRows(store.get().accounts))], { type: 'text/csv' }));
   if ($('c-q')) $('c-q').oninput = e => { ui.clientQuery = e.target.value; rerender(); };
+
+  // Client terms
+  root.querySelectorAll('[data-c-edit]').forEach(b => b.onclick = () => {
+    ui.editClient = b.dataset.cEdit;
+    ui.terms = {};
+    rerender();
+    root.querySelector('[data-ct]')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
+  root.querySelectorAll('[data-ct]').forEach(el => {
+    const write = () => { ui.terms[el.dataset.ct] = el.value; };
+    el.oninput = write;
+    el.onchange = () => { write(); rerender(); };
+  });
+  if ($('ct-cancel')) $('ct-cancel').onclick = () => { ui.editClient = null; ui.terms = {}; rerender(); };
+  if ($('ct-save')) $('ct-save').onclick = async () => { await saveTerms(); rerender(); };
 }

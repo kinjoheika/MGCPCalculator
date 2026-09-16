@@ -39,9 +39,10 @@ Print, Save price list and Send quote all use one template (`js/pricedoc.js`): s
 Price room → **Client pricing**, or the channel buttons inside the MPL calculator. One page per channel: clients down the side, line types across the top.
 
 - **Current price offered** is view only, with MPL (acquisition + margin) and Margin (margin + buffer) underneath.
-- **Installation cost for ROI** and **Credit risk / bad debts** take several rows per client — an investment amount, a ₱/kg, and a note. A blank ₱/kg on an ROI row divides the investment by the client's TRMV. Fields open with the last saved amounts.
-- **The client name expands** a box of terms: install date, LPG content billing, factor rate, tank ownership, tank counts by size (with 60% of 90% capacity computed), minimum kilograms per drop, fixed margin, total investment, required volume per month, start date and total generated volume.
-- **One Save button.** Price levers — premiums, discounts, fixed margin, total investment — are added to the open MPL proposal and take effect only on Publish. The remaining terms are saved immediately and logged as `CLIENT_TERMS_SAVED`.
+- **Two column groups.** *Premiums*: Total premium (view only, updating as you type), Installation cost for ROI, Credit risk / bad debts. *Discounts*: Supply only, Competition (dual supplier), Cash / zero-rated (short term).
+- Every cell takes **several rows per client** — an investment amount (ROI only), a ₱/kg and a note. A blank ₱/kg on an ROI row divides the investment by the client's TRMV. Fields open with the last saved amounts.
+- **The client name expands** its terms, **view only**: install date, LPG content billing, factor rate, tank ownership, tank counts by size (with 60% of 90% capacity computed), minimum kilograms per drop, fixed margin, total investment, required volume per month, start date and total generated volume. Edit them in **Configuration → Clients → Edit terms**, where they are saved and logged as `CLIENT_TERMS_SAVED`.
+- **One Save button** adds every premium and discount edit to the open MPL proposal; they take effect on Publish.
 - A **fixed margin** on a client replaces the channel margin, and moves that client's floor with it.
 
 In the calculator itself, premiums and discounts are now one entry type: pick the client, then any component (premiums shown with +, discounts with −).

@@ -5,40 +5,26 @@
 import * as store from '../store.js';
 import { fmt, fmtKg, toCentavos, toInput } from '../money.js';
 import { esc, toast } from '../ui.js';
-import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel, fmtDate } from '../pricing.js';
+import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel } from '../pricing.js';
+import { derivePremiumPerKg } from '../engine.js';
+import { FIELDS, labelFor, displayValue } from '../clientterms.js';
 import * as wizard from './priceroom-wizard.js';
 
-const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, profile: {} };
+const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {} };
 
-// Multi-row premium columns.
-const COLS = [
+// Two column groups, each with its own subcolumns. Every cell takes as many rows as the client needs.
+const PREMIUM_COLS = [
   { code: 'ROI_INSTALL', title: 'Installation cost for ROI', note: 'Investment ₱ · ₱/kg · note', roi: true },
   { code: 'CREDIT_RISK', title: 'Credit risk / bad debts', note: '₱/kg · note' },
 ];
-
-const TANKS = [
-  { key: 'tank3_2mt', label: '3.2 MT', kg: 3200 },
-  { key: 'tank600', label: '600 kg', kg: 600 },
-  { key: 'tank4000', label: '4,000 kg', kg: 4000 },
-  { key: 'tank2000', label: '2,000 kg', kg: 2000 },
-  { key: 'tank20000', label: '20,000 kg', kg: 20000 },
+const DISCOUNT_COLS = [
+  { code: 'SUPPLY_ONLY', title: 'Supply only', note: '₱/kg · note' },
+  { code: 'DUAL_SUPPLIER', title: 'Competition (dual supplier)', note: '₱/kg · note' },
+  { code: 'CASH_ZERO', title: 'Cash / zero-rated (short term)', note: '₱/kg · note' },
 ];
+const COLS = [...PREMIUM_COLS, ...DISCOUNT_COLS];
 
-// top: stored on the client record itself; the rest live in client.profile.
-const FIELDS = [
-  { key: 'installedAt', label: 'Date (installed / activated)', type: 'date' },
-  { key: 'lpgContentBilling', label: 'LPG content billing', type: 'text' },
-  { key: 'factorRate', label: 'Factor rate', type: 'text' },
-  { key: 'tankOwnership', label: 'Tank ownership', type: 'select', choices: ['MGC-owned', 'Client-owned', 'Leased'] },
-  ...TANKS.map(t => ({ key: t.key, label: t.label, type: 'int', tank: true })),
-  { key: '_usable', label: '60% of tank capacity (90%)', type: 'computed' },
-  { key: 'minKgPerDrop', label: 'Minimum kilograms per drop', type: 'int' },
-  { key: 'fixedMarginPerKg', label: 'Fixed margin', type: 'money', top: true, lever: true },
-  { key: 'investmentCentavos', label: 'Total investment', type: 'money', top: true, lever: true },
-  { key: 'reqVolPerMonthKg', label: 'Required volume per month', type: 'int', top: true },
-  { key: 'contractStart', label: 'Date start', type: 'date', top: true },
-  { key: 'volumeGeneratedKg', label: 'Total generated volume', type: 'int', top: true, asOf: true },
-];
+// Field definitions live in clientterms.js; this screen only reads them.
 
 export function setChannel(id) {
   ui.channelId = id;
@@ -47,9 +33,10 @@ export function setChannel(id) {
 // ---- Editing state: drafts start from what is saved, so fields open pre-filled ----
 
 const rowKey = (accId, code) => `${accId}|${code}`;
+const listFor = (a, code) => (DISCOUNT_COLS.some(c => c.code === code) ? a.discounts : a.premiums) || [];
 
 function currentRows(a, code) {
-  return (a.premiums || []).filter(p => p.code === code).map(p => ({
+  return listFor(a, code).filter(p => p.code === code).map(p => ({
     perKg: p.perKg == null ? '' : toInput(p.perKg),
     investment: p.investmentCentavos ? toInput(p.investmentCentavos) : '',
     note: p.note || '',
@@ -66,28 +53,30 @@ function editRows(a, code) {
   return ui.rows[k];
 }
 
-function fieldValue(a, f) {
-  const draft = ui.profile[a.id]?.[f.key];
-  if (draft !== undefined) return draft;
-  const raw = f.top ? a[f.key] : a.profile?.[f.key];
-  if (raw == null) return '';
-  return f.type === 'money' ? toInput(raw) : String(raw);
-}
-
-function setField(a, key, value) {
-  (ui.profile[a.id] ||= {})[key] = value;
-}
-
-function usableKg(a) {
-  const total = TANKS.reduce((t, k) => {
-    const v = parseInt(ui.profile[a.id]?.[k.key] ?? a.profile?.[k.key] ?? 0, 10);
-    return t + (Number.isFinite(v) ? v : 0) * k.kg;
+// Live total of every premium on the client: the two grid columns plus any other premium it carries,
+// including premiums that take their rate from the catalogue or from a formula.
+export function premiumTotal(s, a) {
+  let total = 0;
+  const gridCodes = PREMIUM_COLS.map(c => c.code);
+  for (const col of PREMIUM_COLS) {
+    for (const r of draftRows(a, col.code)) {
+      const perKg = toCentavos(r.perKg);
+      if (perKg != null) { total += perKg; continue; }
+      const investment = toCentavos(r.investment);
+      if (investment && a.trmvKg) total += Math.round(investment / a.trmvKg);
+    }
+  }
+  const other = (a.premiums || []).filter(p => !gridCodes.includes(p.code));
+  const otherTotal = other.reduce((t, p) => {
+    const comp = s.premiumComponents.find(c => c.code === p.code);
+    const perKg = p.perKg ?? (comp ? derivePremiumPerKg(comp, { ...a, investmentCentavos: p.investmentCentavos ?? a.investmentCentavos }) : null);
+    return t + (perKg ?? 0);
   }, 0);
-  return total ? Math.round(total * 0.9 * 0.6) : 0;
+  return { total: total + otherTotal, otherTotal, otherCount: other.length };
 }
 
 export function pendingEdits() {
-  return Object.keys(ui.rows).length + Object.keys(ui.profile).length;
+  return Object.keys(ui.rows).length;
 }
 
 // ---- Render ----
@@ -103,13 +92,20 @@ export function html(s) {
       <div class="row"><div class="chips grow" style="margin:0">${chips}</div>
         <span class="small muted">${clients.length} client${clients.length === 1 ? '' : 's'}${edits ? ` · ${edits} unsaved` : ''}</span>
         <button type="button" id="cg-save" class="primary" ${edits ? '' : 'disabled'}>Save all changes</button></div>
-      <p class="small muted" style="margin:8px 0 0">Fields hold the last saved amounts. Price levers (premiums, discounts, fixed margin, total investment) go into the MPL proposal and take effect on Publish; the remaining client terms are saved straight away.</p>
+      <p class="small muted" style="margin:8px 0 0">Fields hold the last saved amounts. Saving adds these premiums and discounts to the MPL proposal — they take effect on Publish. Client terms under each name are view only; edit them in Configuration → Clients.</p>
     </div>
     ${clients.length ? `<div class="table-wrap"><table class="matrix grid-table">
-      <thead><tr>
-        <th style="min-width:190px">Client</th>
-        <th class="num" style="min-width:150px">Current price offered<div class="small muted">view only</div></th>
-        ${COLS.map(c => `<th style="min-width:250px">${esc(c.title)}<div class="small muted">${esc(c.note)}</div></th>`).join('')}
+      <thead>
+      <tr class="grp">
+        <th rowspan="2" style="min-width:180px">Client</th>
+        <th rowspan="2" class="num" style="min-width:140px">Current price offered<div class="small muted">view only</div></th>
+        <th colspan="${PREMIUM_COLS.length + 1}" class="grp-prem">Premiums</th>
+        <th colspan="${DISCOUNT_COLS.length}" class="grp-disc">Discounts</th>
+      </tr>
+      <tr>
+        <th class="num grp-prem-sub" style="min-width:110px">Total premium<div class="small muted">view only</div></th>
+        ${PREMIUM_COLS.map(c => `<th style="min-width:240px">${esc(c.title)}<div class="small muted">${esc(c.note)}</div></th>`).join('')}
+        ${DISCOUNT_COLS.map(c => `<th style="min-width:210px">${esc(c.title)}<div class="small muted">${esc(c.note)}</div></th>`).join('')}
       </tr></thead>
       <tbody>${clients.map(a => clientRow(s, a, cb)).join('')}</tbody>
     </table></div>` : '<p class="muted">No clients on this channel yet.</p>'}`;
@@ -134,9 +130,16 @@ function clientRow(s, a, cb) {
         <div class="small muted">${esc(a.zone ?? '—')} · ${esc(a.status)}</div>
       </th>
       <td class="num">${price}</td>
+      <td class="num grp-prem-sub" id="tp-${esc(a.id)}">${totalCell(s, a)}</td>
       ${COLS.map(c => `<td>${cellRows(a, c)}</td>`).join('')}
     </tr>
-    ${open ? `<tr class="prof"><td colspan="${2 + COLS.length}">${profileBox(a)}</td></tr>` : ''}`;
+    ${open ? `<tr class="prof"><td colspan="${3 + COLS.length}">${profileBox(a)}</td></tr>` : ''}`;
+}
+
+function totalCell(s, a) {
+  const { total, otherTotal, otherCount } = premiumTotal(s, a);
+  return `<div class="cell-price">${fmt(total)}</div><div class="small muted">per kg</div>
+    ${otherCount ? `<div class="small muted">incl. ${otherCount} other premium${otherCount === 1 ? '' : 's'} ${fmt(otherTotal)}</div>` : ''}`;
 }
 
 function cellRows(a, col) {
@@ -153,35 +156,22 @@ function cellRows(a, col) {
   </div>`;
 }
 
+// View only. These are maintained in Configuration → Clients.
 function profileBox(a) {
-  const today = fmtDate(new Date());
-  return `<div class="prof-grid">
-    ${FIELDS.map(f => {
-      const label = `${f.label}${f.asOf ? ` as of ${today}` : ''}${f.lever ? ' <span class="pill tiffany">price lever</span>' : ''}`;
-      if (f.type === 'computed') return `<label class="prof-f"><span>${label}</span><input value="${usableKg(a).toLocaleString('en-PH')} kg" readonly aria-readonly="true"></label>`;
-      const v = fieldValue(a, f);
-      const input = f.type === 'select'
-        ? `<select data-cg-p="${esc(a.id)}|${f.key}"><option value=""></option>${f.choices.map(c => `<option${c === v ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select>`
-        : `<input data-cg-p="${esc(a.id)}|${f.key}" type="${f.type === 'date' ? 'date' : 'text'}" ${f.type === 'money' || f.type === 'int' ? 'inputmode="decimal"' : ''} value="${esc(v)}">`;
-      return `<label class="prof-f"><span>${label}</span>${input}</label>`;
-    }).join('')}
-  </div>`;
+  return `<div class="prof-head small muted">Client terms — view only. Edit them in <a href="#/config">Configuration → Clients</a>.</div>
+    <div class="prof-grid">
+      ${FIELDS.map(f => `<div class="prof-f"><span>${esc(labelFor(f))}${f.lever ? ' <span class="pill tiffany">price lever</span>' : ''}</span>
+        <b class="prof-v">${esc(displayValue(a, f))}</b></div>`).join('')}
+    </div>`;
 }
 
 // ---- Save ----
 
-function num(v) {
-  const n = Number(String(v).replace(/[₱,\s]/g, ''));
-  return v === '' || !Number.isFinite(n) ? null : n;
-}
-
 async function saveAll(rerender) {
   const s = store.get();
   const changes = [];
-  const termsPatches = [];
-  const summary = [];
 
-  // Premium rows → one change per client and code.
+  // Premium and discount rows → one change per client and code.
   for (const [key, rows] of Object.entries(ui.rows)) {
     const [accId, code] = key.split('|');
     const a = byId(s.accounts, accId);
@@ -190,52 +180,16 @@ async function saveAll(rerender) {
       .map(r => ({ perKg: toCentavos(r.perKg), investmentCentavos: toCentavos(r.investment), note: r.note.trim() }))
       .filter(r => r.perKg != null || r.investmentCentavos != null || r.note)
       .map(r => ({ ...(r.perKg == null ? {} : { perKg: r.perKg }), ...(r.investmentCentavos ? { investmentCentavos: r.investmentCentavos } : {}), ...(r.note ? { note: r.note } : {}) }));
-    const before = (a.premiums || []).filter(p => p.code === code).map(({ code: _c, ...rest }) => rest);
+    const before = listFor(a, code).filter(p => p.code === code).map(({ code: _c, ...rest }) => rest);
     if (JSON.stringify(before) !== JSON.stringify(next)) changes.push({ type: 'ACCOUNT_COMPONENT', accountId: accId, code, rows: next });
   }
 
-  // Profile fields → price levers into the proposal, everything else straight to client terms.
-  for (const [accId, patch] of Object.entries(ui.profile)) {
-    const a = byId(s.accounts, accId);
-    if (!a) continue;
-    const terms = {};
-    const top = {};
-    for (const [key, raw] of Object.entries(patch)) {
-      const f = FIELDS.find(x => x.key === key);
-      if (!f || f.type === 'computed') continue;
-      const value = f.type === 'money' ? toCentavos(raw) : f.type === 'int' ? (num(raw) == null ? null : Math.round(num(raw))) : (raw.trim() === '' ? null : raw.trim());
-      if (f.lever) {
-        if ((a[key] ?? null) !== value) changes.push({ type: 'ACCOUNT_FIELD', accountId: accId, field: key, value });
-      } else if (f.top) {
-        if ((a[key] ?? null) !== value) top[key] = value;
-      } else if ((a.profile?.[key] ?? null) !== value) terms[key] = value;
-    }
-    if (Object.keys(terms).length || Object.keys(top).length) {
-      termsPatches.push({ accountId: accId, terms, top });
-      summary.push(`${a.name}: ${[...Object.keys(top), ...Object.keys(terms)].map(k => FIELDS.find(f => f.key === k)?.label ?? k).join(', ')}`);
-    }
-  }
-
-  if (termsPatches.length) {
-    await store.commit({
-      action: 'CLIENT_TERMS_SAVED', entity: 'account', entityId: termsPatches[0].accountId, field: 'terms',
-      after: { count: termsPatches.length, summary: summary.join('; '), accountIds: termsPatches.map(p => p.accountId), patches: termsPatches },
-    }, d => {
-      for (const p of termsPatches) {
-        const a = byId(d.accounts, p.accountId);
-        if (!a) continue;
-        Object.assign(a, p.top);
-        a.profile = { ...(a.profile || {}), ...p.terms };
-      }
-    });
-  }
   const total = changes.length ? wizard.addChanges(changes) : 0;
 
   ui.rows = {};
-  ui.profile = {};
   rerender();
-  if (!changes.length && !termsPatches.length) toast('Nothing changed');
-  else toast(`${termsPatches.length ? `Terms saved for ${termsPatches.length} client${termsPatches.length === 1 ? '' : 's'}. ` : ''}${changes.length ? `${changes.length} price change${changes.length === 1 ? '' : 's'} added to the proposal (${total} in total) — simulate and publish to apply.` : ''}`);
+  if (!changes.length) toast('Nothing changed');
+  else toast(`${changes.length} price change${changes.length === 1 ? '' : 's'} added to the proposal (${total} in total) — simulate and publish to apply.`);
 }
 
 // ---- Behaviour ----
@@ -246,7 +200,11 @@ export function bind(root, rerender) {
   root.querySelectorAll('[data-cg]').forEach(el => el.oninput = () => {
     const [accId, code, i, field] = el.dataset.cg.split('|');
     const a = byId(store.get().accounts, accId);
-    if (a) editRows(a, code)[+i][field] = el.value;
+    if (!a) return;
+    editRows(a, code)[+i][field] = el.value;
+    // The total premium follows every keystroke without redrawing the row being typed into.
+    const cell = root.querySelector(`#tp-${CSS.escape(accId)}`);
+    if (cell && PREMIUM_COLS.some(c => c.code === code)) cell.innerHTML = totalCell(store.get(), a);
   });
   root.querySelectorAll('[data-cg-add]').forEach(b => b.onclick = () => {
     const [accId, code] = b.dataset.cgAdd.split('|');
@@ -259,14 +217,6 @@ export function bind(root, rerender) {
     const a = byId(store.get().accounts, accId);
     if (a) editRows(a, code).splice(+i, 1);
     rerender();
-  });
-  root.querySelectorAll('[data-cg-p]').forEach(el => {
-    const [accId, key] = el.dataset.cgP.split('|');
-    const a = byId(store.get().accounts, accId);
-    const write = () => { if (a) setField(a, key, el.value); };
-    el.oninput = write;
-    if (el.tagName === 'SELECT') el.onchange = () => { write(); rerender(); };
-    if (TANKS.some(t => t.key === key)) el.onchange = () => { write(); rerender(); };
   });
   const save = root.querySelector('#cg-save');
   if (save) save.onclick = () => saveAll(rerender);
