@@ -11,12 +11,13 @@ import {
   skuLabel, channelLabel, userName, fmtDate, fmtDateTime, userChannels, isStaleReading, boardIsStale,
 } from '../pricing.js';
 import * as wizard from './priceroom-wizard.js';
+import * as grid from './clientgrid.js';
 
 const DAY = 86400000;
 const MAX = 5;
 // Column order on PL notices: Bulk, Commercial, Dealer, Semi-dealer, CBK, MGSA; anything else after.
 const NOTICE_ORDER = ['BULK', 'COMMERCIAL', 'DEALER', 'RETAIL_OUTLET', 'COBANKIAT', 'MGSA'];
-const TABS = [['clients', 'Clients board'], ['products', 'Products board'], ['channels', 'Channels board'], ['notices', 'PL notices']];
+const TABS = [['clients', 'Clients board'], ['products', 'Products board'], ['channels', 'Channels board'], ['grid', 'Client pricing'], ['notices', 'PL notices']];
 const ui = {
   tab: 'clients', open: true, panel: 'exceptions', wide: false, animate: false, lastSim: null, scrollTop: null,
   clients: ['acc_alta', 'acc_kja', 'acc_silca'], clientQuery: '', clientSku: '', clientOpen: false, clientScroll: 0,
@@ -63,7 +64,7 @@ export function render(root, ctx) {
     ${boardIsStale(s) ? '<div><span>Price lists</span><b class="pos">Out of date</b></div>' : ''}
   </div>`;
 
-  const bodies = { clients: clientsBoard, products: productsBoard, channels: channelsBoard, notices: noticesTab };
+  const bodies = { clients: clientsBoard, products: productsBoard, channels: channelsBoard, grid: st => grid.html(st), notices: noticesTab };
   const shift = ui.open && !ui.wide && !ui.animate;
 
   root.innerHTML = `<div class="pr ${shift ? 'pr-shift' : ''}"><section class="page wide">
@@ -117,8 +118,16 @@ export function render(root, ctx) {
   root.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { ui.tab = b.dataset.tab; setQuery('tab', ui.tab); rerender(); });
 
   bindMain(root.querySelector('#pr-main'), rerender);
+  if (ui.tab === 'grid') grid.bind(root.querySelector('#pr-main'), rerender);
   if (ui.panel === 'mpl') wizard.bind(root.querySelector('#pr-drawer'), user, rerender);
   else bindExceptions(root, rerender);
+  // "Bulk clients" / "Commercial clients" in the calculator open the grid for that channel.
+  root.querySelectorAll('[data-grid]').forEach(b => b.onclick = () => {
+    grid.setChannel(b.dataset.grid);
+    ui.tab = 'grid';
+    setQuery('tab', 'grid');
+    rerender();
+  });
 }
 
 // ---------------- Exceptions (panel) ----------------

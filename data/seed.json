@@ -88,6 +88,7 @@
     { "code": "CREDIT_07", "label": "Credit term 7 days", "perKg": 50, "type": "fixed" },
     { "code": "CREDIT_15", "label": "Credit term 15 days", "perKg": 100, "type": "fixed" },
     { "code": "CREDIT_30", "label": "Credit term 30 days", "perKg": 150, "type": "fixed" },
+    { "code": "CREDIT_RISK", "label": "Credit risk / bad debts", "type": "fixed" },
     { "code": "REPAIRS", "label": "Repairs and maintenance", "perKg": 100, "type": "fixed" },
     { "code": "MARKETING", "label": "Marketing collateral", "perKg": 10, "type": "fixed" },
     { "code": "ROI_INSTALL", "label": "ROI — installation", "type": "derived", "formula": "investmentCentavos / trmvKg" },

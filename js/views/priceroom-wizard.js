@@ -5,7 +5,7 @@ import * as store from '../store.js';
 import { fmt, fmtSigned, toCentavos, toInput } from '../money.js';
 import { esc, toast, options } from '../ui.js';
 import {
-  byId, simulate, applyChanges, describeChange, CHANGE_TYPES, currentCostBasis, marginRule, bufferFor,
+  byId, simulate, applyChanges, describeChange, CHANGE_TYPES, componentKind, currentCostBasis, marginRule, bufferFor,
   currentPublication, allBoardPrices, skuLabel, channelLabel, userName, fmtDateTime,
 } from '../pricing.js';
 
@@ -40,6 +40,18 @@ function setHash(sim) {
 // The proposal being built, so the boards can preview it. Cumulative across every board.
 export function pendingChanges() {
   return w.step === 'done' ? [] : w.changes;
+}
+
+// Used by the client pricing grid: merge a batch of changes into the open proposal.
+// Editing the set invalidates any simulation, so the wizard returns to Draft.
+export function addChanges(list) {
+  for (const c of list) {
+    const same = x => x.type === c.type && x.accountId === c.accountId && x.code === c.code && x.channelId === c.channelId && x.skuId === c.skuId;
+    w.changes = [...w.changes.filter(x => !same(x)), c];
+  }
+  if (w.step !== 'draft') w.step = 'draft';
+  w.simKey = null;
+  return w.changes.length;
 }
 
 // Review (03) and Approve (04) write nothing, so the stored status can't tell them apart from Simulate (02).
@@ -148,23 +160,28 @@ function draftHtml(s) {
     hint = cur ? `Now ${fmt(cur.perKg)}/kg` : 'Not priced on this channel yet';
   }
   if (a.type === 'BUFFER') { extra = chSel; ph = '±₱/kg'; hint = `Now ${fmt(bufferFor(s, a.channelId))}/kg · negative allowed`; }
-  if (a.type === 'ACCOUNT_PREMIUM') {
-    extra = accSel + `<select id="w-code" aria-label="Premium">${options(s.premiumComponents, a.code, { value: x => x.code, placeholder: 'Premium' })}</select>` + removeT;
-    ph = 'Catalogue'; hint = 'Leave ₱/kg blank to use the catalogue rate or formula';
-  }
-  if (a.type === 'ACCOUNT_DISCOUNT') {
-    extra = accSel + `<select id="w-code" aria-label="Discount">${options(s.discountComponents, a.code, { value: x => x.code, placeholder: 'Discount' })}</select>` + removeT;
+  if (a.type === 'ACCOUNT_COMPONENT') {
+    const comps = [
+      ...s.premiumComponents.map(c => ({ id: c.code, label: `+ ${c.label}` })),
+      ...s.discountComponents.map(c => ({ id: c.code, label: `− ${c.label}` })),
+    ];
+    extra = accSel + `<select id="w-code" aria-label="Premium or discount">${options(comps, a.code, { placeholder: 'Premium or discount' })}</select>` + removeT;
+    ph = '₱/kg';
+    hint = 'Premiums add, discounts subtract. Leave ₱/kg blank to use the catalogue rate or formula.';
   }
 
   return `<div class="calc">
       <input id="w-obj" class="calc-obj" type="text" maxlength="160" aria-label="Objective (required)" placeholder="Objective (required) — e.g. Pass through September acquisition increase" value="${esc(w.objective)}">
       <div class="calc-row">
-        <select id="w-type" aria-label="What changes">${options(Object.entries(CHANGE_TYPES).map(([id, label]) => ({ id, label })), a.type)}</select>
+        <select id="w-type" aria-label="What changes">${options(Object.entries(CHANGE_TYPES).filter(([id]) => id !== 'ACCOUNT_FIELD').map(([id, label]) => ({ id, label })), a.type)}</select>
         ${extra}
         ${a.remove ? '' : `<input id="w-val" class="calc-val" type="text" inputmode="decimal" aria-label="Amount per kg" placeholder="${esc(ph)}" value="${esc(a.value)}">`}
         <button type="button" id="w-add" class="primary">Add</button>
       </div>
       ${hint ? `<div class="calc-hint">${esc(hint)}</div>` : ''}
+      <div class="calc-channels"><span class="small muted">Edit every client of a channel:</span>
+        ${['BULK', 'COMMERCIAL'].filter(id => byId(s.channels, id)).map(id => `<button type="button" class="small" data-grid="${id}">${esc(channelLabel(s, id))} clients</button>`).join('')}
+      </div>
     </div>
     ${changeList(s, true)}
     <div class="row end"><button type="button" id="w-sim" class="primary">Save draft and simulate</button></div>`;
@@ -333,11 +350,11 @@ function addChange() {
     if (val == null) return (w.error = 'Enter the buffer per kg — use a minus sign for a negative buffer');
     c = { type: 'BUFFER', channelId: a.channelId, perKg: val };
   } else {
-    if (!a.accountId) return (w.error = 'Choose an account');
-    if (!a.code) return (w.error = `Choose a ${a.type === 'ACCOUNT_PREMIUM' ? 'premium' : 'discount'}`);
-    if (a.type === 'ACCOUNT_DISCOUNT' && !a.remove && (val == null || val <= 0)) return (w.error = 'Enter the discount per kg, for example 6.25');
+    if (!a.accountId) return (w.error = 'Choose a client');
+    if (!a.code) return (w.error = 'Choose a premium or discount');
+    if (componentKind(s, a.code) === 'discounts' && !a.remove && (val == null || val <= 0)) return (w.error = 'Enter the discount per kg, for example 6.25');
     if (val != null && val < 0) return (w.error = 'Enter a positive amount per kg');
-    c = { type: a.type, accountId: a.accountId, code: a.code, perKg: a.remove ? null : val, remove: a.remove };
+    c = { type: 'ACCOUNT_COMPONENT', accountId: a.accountId, code: a.code, rows: a.remove ? [] : [{ perKg: val }] };
   }
   const same = x => x.type === c.type && x.channelId === c.channelId && x.skuId === c.skuId && x.accountId === c.accountId && x.code === c.code;
   w.changes = [...w.changes.filter(x => !same(x)), c];

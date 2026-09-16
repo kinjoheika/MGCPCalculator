@@ -338,3 +338,21 @@ table.matrix tbody tr:hover > td, table.matrix tbody tr:hover > th { background:
 .was { background: #EEF1F5; color: var(--muted); }
 .now { background: var(--green-bg); color: var(--green); font-weight: 650; }
 td.num .was, td.num .now { margin: 1px 0; }
+
+/* ---- Client pricing grid ---- */
+.calc-channels { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--blue-100); }
+.grid-table td, .grid-table th { vertical-align: top; }
+.grid-table .exp { font-size: 13.5px; font-weight: 650; text-decoration: none; color: var(--navy); }
+.grid-table .exp:hover { text-decoration: underline; }
+.fact { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.25; }
+.fact b { display: block; color: var(--navy); font-size: 12px; }
+.rowlines { display: flex; flex-direction: column; gap: 5px; }
+.rowline { display: flex; align-items: center; gap: 4px; }
+input.mini, .rowline input { min-height: 32px; padding: 4px 7px; font-size: 12.5px; border-radius: 6px; }
+.rowline .icon { min-height: 30px; width: 28px; }
+tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line); }
+.prof-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px 12px; padding: 4px 2px 8px; }
+.prof-f { display: block; }
+.prof-f > span { display: block; font-size: 11.5px; color: var(--muted); margin-bottom: 2px; }
+.prof-f input, .prof-f select { min-height: 34px; padding: 4px 8px; font-size: 12.5px; }
+.prof-f input[readonly] { background: #EEF1F5; color: var(--muted); }

@@ -11,7 +11,7 @@ const ui = { tab: 'week', accountId: null, skuId: '11KG_MGAS' };
 const ACTION_LABEL = {
   DRAFT: 'Draft', SIMULATE: 'Simulate', APPROVE: 'Approve', PUBLISH: 'Publish', QUOTE_SENT: 'Quote sent',
   REQUEST_LOWER: 'Price request', REQUEST_DECIDED: 'Request decided', READING_CAPTURED: 'Reading captured',
-  BOARD_ACKNOWLEDGED: 'PL notice acknowledged', ACCOUNTS_IMPORTED: 'Clients imported', CONFIG_CHANGED: 'Configuration', PRICE_LIST_ISSUED: 'Price list issued',
+  BOARD_ACKNOWLEDGED: 'PL notice acknowledged', ACCOUNTS_IMPORTED: 'Clients imported', CONFIG_CHANGED: 'Configuration', PRICE_LIST_ISSUED: 'Price list issued', CLIENT_TERMS_SAVED: 'Client terms saved',
 };
 
 export function describeEvent(s, ev) {
@@ -31,6 +31,7 @@ export function describeEvent(s, ev) {
     case 'BOARD_ACKNOWLEDGED': return `${channelLabel(s, a.channelId)} price list v${a.boardVersion} acknowledged`;
     case 'ACCOUNTS_IMPORTED': return `Clients imported from ${a.file}: ${a.added} added, ${a.updated} updated${a.removed ? `, ${a.removed} removed (replace)` : ''}, ${a.skipped} rows skipped`;
     case 'CONFIG_CHANGED': return `Users changed — ${a.summary}`;
+    case 'CLIENT_TERMS_SAVED': return `Client terms updated on ${a.count} client${a.count === 1 ? '' : 's'} — ${a.summary}`;
     case 'PRICE_LIST_ISSUED': return `${byId(s.accounts, a.accountId)?.name ?? 'Walk-in'}: price list ${a.mode === 'print' ? 'printed' : 'saved as PDF'} — ${(a.lines || []).map(l => `${skuLabel(s, l.skuId)} ${fmt(l.grossPerCyl)}${l.qty ? ` × ${l.qty}` : ''}`).join(', ')}`;
     default: return ev.action;
   }

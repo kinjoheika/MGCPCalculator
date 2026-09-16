@@ -34,6 +34,18 @@ Serve it over HTTP. Browsers block ES modules and `fetch` on `file://`, and `cry
 
 Print, Save price list and Send quote all use one template (`js/pricedoc.js`): short bond (8.5 × 11 in) portrait, drawn on a canvas and saved as a one-page PDF with no library. Send quote downloads the quotation PDF; Past quotes can reprint it from the immutable snapshot. On the Quote desk, printing or saving a customer price list is gated like sending (current price list, no pending request, no unapproved below-floor price) and logged as `PRICE_LIST_ISSUED`; lines that need approval are left off.
 
+## Client pricing grid
+
+Price room → **Client pricing**, or the channel buttons inside the MPL calculator. One page per channel: clients down the side, line types across the top.
+
+- **Current price offered** is view only, with MPL (acquisition + margin) and Margin (margin + buffer) underneath.
+- **Installation cost for ROI** and **Credit risk / bad debts** take several rows per client — an investment amount, a ₱/kg, and a note. A blank ₱/kg on an ROI row divides the investment by the client's TRMV. Fields open with the last saved amounts.
+- **The client name expands** a box of terms: install date, LPG content billing, factor rate, tank ownership, tank counts by size (with 60% of 90% capacity computed), minimum kilograms per drop, fixed margin, total investment, required volume per month, start date and total generated volume.
+- **One Save button.** Price levers — premiums, discounts, fixed margin, total investment — are added to the open MPL proposal and take effect only on Publish. The remaining terms are saved immediately and logged as `CLIENT_TERMS_SAVED`.
+- A **fixed margin** on a client replaces the channel margin, and moves that client's floor with it.
+
+In the calculator itself, premiums and discounts are now one entry type: pick the client, then any component (premiums shown with +, discounts with −).
+
 ## Importing clients
 
 Configuration → Clients. Choose a CSV (or paste rows from Google Sheets), check the preview, then import. Required columns: **Name, Channel, Status**. Optional: Account ID, Needs attention, Zone, Main product, Contract start / end, TRMV kg, Volume generated kg, Avg monthly volume kg, Credit term days, Floor override per kg, Premiums (`TANK_RENTAL; CREDIT_30`), Discounts (`DUAL_SUPPLIER=6.25`), Competitor brand, Installation investment, Entrusted cylinders, Cylinder cost. "Download template" gives a ready header row. Clients match by Account ID, then by name; a column left out keeps the client's current value. "Active but needs attention" imports as Inactive with the needs-attention flag. Rows with errors are skipped and listed. The import is logged.

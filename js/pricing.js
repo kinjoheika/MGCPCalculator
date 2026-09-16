@@ -93,12 +93,13 @@ export function priceFor(s, { accountId = null, channelId = null, skuId, quantit
 
   const notes = [];
   const premiums = [];
+  // A client may carry several rows of the same premium (two installations, two credit exposures).
   for (const p of account?.premiums || []) {
     const comp = s.premiumComponents.find(c => c.code === p.code);
     if (!comp) continue;
-    const perKg = p.perKg ?? derivePremiumPerKg(comp, account);
-    if (perKg == null) { notes.push(`${comp.label} not applied — account is missing the inputs for its formula`); continue; }
-    premiums.push({ code: comp.code, label: comp.label, perKg });
+    const perKg = p.perKg ?? derivePremiumPerKg(comp, { ...account, investmentCentavos: p.investmentCentavos ?? account.investmentCentavos });
+    if (perKg == null) { notes.push(`${comp.label} not applied — the client is missing the inputs for its formula`); continue; }
+    premiums.push({ code: comp.code, label: comp.label + (p.note ? ` — ${p.note}` : ''), perKg });
   }
   const discounts = [];
   for (const d of account?.discounts || []) {
@@ -110,18 +111,20 @@ export function priceFor(s, { accountId = null, channelId = null, skuId, quantit
   const exception = ignoreException ? null : approvedException(s, key, skuId);
   if (exception) discounts.push({ code: 'APPROVED_EXCEPTION', label: 'Approved price exception', perKg: exception.approvedDiscountPerKg });
 
+  // A client with a fixed margin uses it in place of the channel margin.
+  const marginPerKg = account?.fixedMarginPerKg ?? mr.perKg;
   const input = {
     costBasis: { acqPerKg: cb.acqPerKg, haulingPerKg: cb.haulingPerKg, effectiveFrom: cb.effectiveFrom },
     sku: { id: sku.id, contentKg: sku.contentKg, label: sku.label },
     channel: { id: channel.id, label: channel.label },
-    marginPerKg: mr.perKg,
+    marginPerKg,
     bufferPerKg: bufferFor(s, chId),
     premiums,
     discounts,
     quantity,
     vatRate: s.settings.vatRate,
     vatInclusive: s.settings.vatInclusive,
-    floorPerKg: account?.floorOverridePerKg ?? defaultFloorPerKg(cb, mr.perKg),
+    floorPerKg: account?.floorOverridePerKg ?? defaultFloorPerKg(cb, marginPerKg),
   };
   return { input, result: resolvePrice(input), account, channel, sku, exception, notes, lineKey: key };
 }
@@ -157,9 +160,27 @@ export const CHANGE_TYPES = {
   HAULING: 'Hauling',
   MARGIN: 'Channel margin',
   BUFFER: 'Channel buffer',
-  ACCOUNT_PREMIUM: 'Account premium',
-  ACCOUNT_DISCOUNT: 'Account discount',
+  ACCOUNT_COMPONENT: 'Client premium or discount',
+  ACCOUNT_FIELD: 'Client pricing field', // set from the client pricing grid, not the one-line calculator
 };
+
+export const ACCOUNT_FIELDS = {
+  fixedMarginPerKg: { label: 'Fixed margin', money: true },
+  investmentCentavos: { label: 'Total investment', money: true },
+};
+
+// Which catalogue a component code belongs to.
+export function componentKind(s, code) {
+  if (s.premiumComponents.some(c => c.code === code)) return 'premiums';
+  if (s.discountComponents.some(c => c.code === code)) return 'discounts';
+  return null;
+}
+
+export function componentLabel(s, code) {
+  return [...s.premiumComponents, ...s.discountComponents].find(c => c.code === code)?.label ?? code;
+}
+
+const rowsTotal = rows => (rows || []).reduce((t, r) => t + (r.perKg || 0), 0);
 
 export function describeChange(s, c) {
   const signed = v => (v > 0 ? '+' : v < 0 ? '−' : '') + (Math.abs(v) / 100).toFixed(2);
@@ -168,15 +189,28 @@ export function describeChange(s, c) {
     case 'HAULING': return `hauling ${signed(c.perKg - currentCostBasis(s).haulingPerKg)}`;
     case 'MARGIN': return `${channelLabel(s, c.channelId)} margin on ${skuLabel(s, c.skuId)} ${signed(c.perKg - (marginRule(s, c.channelId, c.skuId)?.perKg ?? 0))}`;
     case 'BUFFER': return `${channelLabel(s, c.channelId)} buffer ${signed(c.perKg - bufferFor(s, c.channelId))}`;
-    case 'ACCOUNT_PREMIUM': {
+    case 'ACCOUNT_COMPONENT': {
       const a = byId(s.accounts, c.accountId);
-      const comp = s.premiumComponents.find(p => p.code === c.code);
-      return `${a?.name} premium ${comp?.label ?? c.code} ${c.remove ? 'removed' : `set to ${(c.perKg / 100).toFixed(2)}/kg`}`;
+      const label = componentLabel(s, c.code);
+      const rows = c.rows || [];
+      if (!rows.length) return `${a?.name} — ${label} removed`;
+      const parts = rows.map(r => r.perKg != null ? `${(r.perKg / 100).toFixed(2)}/kg`
+        : r.investmentCentavos ? `₱${(r.investmentCentavos / 100).toLocaleString('en-PH')} investment ÷ TRMV`
+        : 'catalogue rate');
+      const fixed = rowsTotal(rows);
+      return `${a?.name} — ${label}: ${parts.join(' + ')}${rows.length > 1 && fixed ? ` (${(fixed / 100).toFixed(2)}/kg fixed)` : ''}`;
     }
+    case 'ACCOUNT_FIELD': {
+      const a = byId(s.accounts, c.accountId);
+      const f = ACCOUNT_FIELDS[c.field];
+      const show = v => (v == null ? 'none' : f?.money ? (v / 100).toFixed(2) : v);
+      return `${a?.name} — ${f?.label ?? c.field} ${show(a?.[c.field])} → ${show(c.value)}`;
+    }
+    // Older proposals drafted before premiums and discounts were merged into one type.
+    case 'ACCOUNT_PREMIUM':
     case 'ACCOUNT_DISCOUNT': {
       const a = byId(s.accounts, c.accountId);
-      const comp = s.discountComponents.find(p => p.code === c.code);
-      return `${a?.name} discount ${comp?.label ?? c.code} ${c.remove ? 'removed' : `set to ${(c.perKg / 100).toFixed(2)}/kg`}`;
+      return `${a?.name} — ${componentLabel(s, c.code)} ${c.remove ? 'removed' : `set to ${(c.perKg / 100).toFixed(2)}/kg`}`;
     }
     default: return c.type;
   }
@@ -203,6 +237,15 @@ export function applyChanges(src, changes, when, idFn = p => `${p}_${Math.random
       const cur = (s.buffers || []).find(b => b.channelId === c.channelId && b.effectiveTo == null);
       if (cur) cur.effectiveTo = when;
       (s.buffers ||= []).push({ id: idFn('buf'), channelId: c.channelId, perKg: c.perKg, effectiveFrom: when, effectiveTo: null });
+    } else if (c.type === 'ACCOUNT_COMPONENT') {
+      const a = byId(s.accounts, c.accountId);
+      const key = componentKind(s, c.code);
+      if (!a || !key) continue;
+      a[key] = (a[key] || []).filter(x => x.code !== c.code);
+      for (const r of c.rows || []) a[key].push({ code: c.code, ...(r.perKg == null ? {} : { perKg: r.perKg }), ...(r.investmentCentavos ? { investmentCentavos: r.investmentCentavos } : {}), ...(r.note ? { note: r.note } : {}) });
+    } else if (c.type === 'ACCOUNT_FIELD') {
+      const a = byId(s.accounts, c.accountId);
+      if (a && ACCOUNT_FIELDS[c.field]) a[c.field] = c.value;
     } else if (c.type === 'ACCOUNT_PREMIUM' || c.type === 'ACCOUNT_DISCOUNT') {
       const a = byId(s.accounts, c.accountId);
       if (!a) continue;
