@@ -8,9 +8,10 @@ import { parseCsv, toCsv, rowsToAccounts, accountsToRows, templateRows, newAccou
 import { channelLabel, skuLabel } from '../pricing.js';
 import { FIELDS, labelFor, inputValue, displayValue, parseValue, usableKg } from '../clientterms.js';
 
-const ROLES = ['seller', 'manager', 'messenger', 'viewer'];
+const ROLES = ['seller', 'manager', 'admin', 'messenger', 'viewer'];
 const ui = { tab: 'users', users: null, base: null, userErr: '', preview: null, mode: 'merge', fileName: '', clientQuery: '', editClient: null, terms: {}, basic: {}, clientErr: '', channels: null, chanBase: null, chanErr: '',
-  skus: null, skuBase: null, skuErr: '', zones: null, zoneBase: null, zoneErr: '' };
+  skus: null, skuBase: null, skuErr: '', zones: null, zoneBase: null, zoneErr: '',
+  brands: null, brandBase: null, brandErr: '' };
 
 export function render(root, ctx) {
   const { state: s } = ctx;
@@ -22,11 +23,12 @@ export function render(root, ctx) {
   if (!ui.skus || ui.skuBase !== skuBase) { ui.skus = JSON.parse(skuBase); ui.skuBase = skuBase; }
   const zoneBase = JSON.stringify(s.zones);
   if (!ui.zones || ui.zoneBase !== zoneBase) { ui.zones = s.zones.map(z => ({ name: z, from: z })); ui.zoneBase = zoneBase; }
-  const tabs = [['users', 'Users'], ['channels', `Channels (${s.channels.length})`], ['products', `Products (${s.skus.length})`],
-    ['zones', `Zones (${s.zones.length})`], ['clients', `Clients (${s.accounts.length})`]];
+  const tabs = [['channels', `Channels (${s.channels.length})`], ['zones', `Zones (${s.zones.length})`], ['clients', `Clients (${s.accounts.length})`],
+    ['competitors', `Competitors (${s.trackedBrands.length})`], ['users', 'Users'], ['products', `Products (${s.skus.length})`]];
+  if (!ui.brands || ui.brandBase !== JSON.stringify(s.trackedBrands)) { ui.brands = JSON.parse(JSON.stringify(s.trackedBrands)); ui.brandBase = JSON.stringify(s.trackedBrands); }
   const body = {
     users: () => usersHtml(s, ctx.user), channels: () => channelsHtml(s), products: () => productsHtml(s),
-    zones: () => zonesHtml(s), clients: () => clientsHtml(s),
+    zones: () => zonesHtml(s), competitors: () => competitorsHtml(s), clients: () => clientsHtml(s),
   };
   preserveFocus(root, () => {
     root.innerHTML = `<section class="page wide">
@@ -53,11 +55,11 @@ function usersHtml(s, me) {
       <tbody>${ui.users.map((u, i) => `<tr>
         <td style="min-width:220px"><input type="text" data-u="${i}" data-f="name" value="${esc(u.name)}" aria-label="Name"><div class="small muted">${esc(u.id)}</div></td>
         <td style="min-width:130px"><select data-u="${i}" data-f="role" aria-label="Role">${options(ROLES.map(r => ({ id: r, label: r[0].toUpperCase() + r.slice(1) })), u.role)}</select></td>
-        <td>${u.role === 'manager' ? '<span class="pill blue">All price lists</span>'
+        <td>${u.role === 'manager' || u.role === 'admin' ? '<span class="pill blue">All price lists</span>'
           : u.role === 'messenger' ? '<span class="small muted">None — messengers see no MGC prices</span>'
           : `<div class="checks">${s.channels.map(c => `<label class="check"><input type="checkbox" data-u="${i}" data-ch="${esc(c.id)}" ${u.channels.includes(c.id) ? 'checked' : ''}> ${esc(c.label)}</label>`).join('')}</div>`}</td>
-        <td class="center"><input type="checkbox" data-u="${i}" data-f="canDraft" ${u.canDraft ? 'checked' : ''} ${u.role === 'manager' ? '' : 'disabled'} aria-label="May draft"></td>
-        <td class="center"><input type="checkbox" data-u="${i}" data-f="canApprove" ${u.canApprove ? 'checked' : ''} ${u.role === 'manager' ? '' : 'disabled'} aria-label="May approve"></td>
+        <td class="center"><input type="checkbox" data-u="${i}" data-f="canDraft" ${u.canDraft ? 'checked' : ''} ${u.role === 'manager' || u.role === 'admin' ? '' : 'disabled'} aria-label="May draft"></td>
+        <td class="center"><input type="checkbox" data-u="${i}" data-f="canApprove" ${u.canApprove ? 'checked' : ''} ${u.role === 'manager' || u.role === 'admin' ? '' : 'disabled'} aria-label="May approve"></td>
         <td><button type="button" class="small" data-u-del="${i}" ${u.id === me.id ? 'disabled title="You are acting as this user"' : ''}>Remove</button></td></tr>`).join('')}
       </tbody></table></div></div>`;
 }
@@ -67,16 +69,16 @@ async function saveUsers(me) {
   ui.userErr = '';
   const users = ui.users.map(u => ({
     ...u, name: u.name.trim(),
-    channels: u.role === 'manager' ? ['*'] : u.role === 'messenger' ? [] : u.channels.filter(c => c !== '*'),
-    canDraft: u.role === 'manager' && !!u.canDraft, canApprove: u.role === 'manager' && !!u.canApprove,
+    channels: (u.role === 'manager' || u.role === 'admin') ? ['*'] : u.role === 'messenger' ? [] : u.channels.filter(c => c !== '*'),
+    canDraft: (u.role === 'manager' || u.role === 'admin') && !!u.canDraft, canApprove: (u.role === 'manager' || u.role === 'admin') && !!u.canApprove,
   }));
   const blankName = users.find(u => !u.name);
   if (blankName) return (ui.userErr = `User ${blankName.id} needs a name`);
-  if (users.filter(u => u.role === 'manager').length < 2) return (ui.userErr = 'Keep at least two managers — approval needs a verifier who is not the drafter');
+  if (users.filter(u => u.role === 'manager' || u.role === 'admin').length < 2) return (ui.userErr = 'Keep at least two managers or admins — approval needs a verifier who is not the drafter');
   const noList = users.find(u => (u.role === 'seller' || u.role === 'viewer') && !u.channels.length);
   if (noList) return (ui.userErr = `${noList.name} needs at least one price list`);
   const meAfter = users.find(u => u.id === me.id);
-  if (!meAfter || meAfter.role !== 'manager') return (ui.userErr = 'You are acting as this manager — switch to another manager before changing your own role');
+  if (!meAfter || (meAfter.role !== 'manager' && meAfter.role !== 'admin')) return (ui.userErr = 'You are acting as this manager — switch to another manager before changing your own role');
 
   const summary = [];
   for (const u of users) {
@@ -206,6 +208,46 @@ function productUsage(s, id) {
 }
 
 function productsHtml(s) {
+  const parents = ui.skus.filter(k => k.hasVariants);
+  const variants = ui.skus.filter(k => k.parentId);
+  const standalone = ui.skus.filter(k => !k.hasVariants && !k.parentId);
+
+  function skuRow(k, i, indent) {
+    const u = k._new ? { priced: 0, clients: 0, quotes: 0 } : productUsage(s, k.id);
+    const locked = u.priced || u.clients || u.quotes;
+    const isParent = k.hasVariants;
+    const isVariant = !!k.parentId;
+    return `<tr class="${isVariant ? 'variant-row' : ''}">
+      <td class="num">${i + 1}</td>
+      <td style="${indent ? 'padding-left:28px' : ''}">
+        <input type="text" data-sk="${i}" data-f="label" value="${esc(k.label)}" aria-label="Product name">
+        ${isParent ? '<span class="pill blue small">Parent</span>' : ''}
+        ${isVariant ? '<span class="pill grey small">Variant</span>' : ''}</td>
+      <td>${isParent ? '<span class="muted small">—</span>' : `<input type="number" min="0.1" step="0.1" data-sk="${i}" data-f="contentKg" value="${esc(k.contentKg ?? '')}" aria-label="Content kg">`}</td>
+      <td class="center"><input type="checkbox" data-sk="${i}" data-f="active" ${k.active ? 'checked' : ''} aria-label="Sold"></td>
+      <td class="center"><input type="checkbox" data-sk="${i}" data-f="hasVariants" ${k.hasVariants ? 'checked' : ''} ${isVariant ? 'disabled' : ''} aria-label="Has variants"></td>
+      <td class="small muted">${k._new ? '<i>set on save</i>' : esc(k.id)}</td>
+      <td class="num">${u.priced} ch</td>
+      <td class="num">${u.clients}</td>
+      <td class="center nowrap"><button type="button" class="icon small" data-sk-move="${i}|-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">▲</button><button type="button" class="icon small" data-sk-move="${i}|1" ${i === ui.skus.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button></td>
+      <td class="nowrap">
+        ${isParent ? `<button type="button" class="small" data-sk-addvar="${i}">+ Variant</button>` : ''}
+        <button type="button" class="small" data-sk-del="${i}" ${locked ? `disabled title="Priced on ${u.priced} channels, ${u.clients} clients, ${u.quotes} quotes or readings"` : ''}>Remove</button></td>
+    </tr>`;
+  }
+
+  const rows = [];
+  for (let i = 0; i < ui.skus.length; i++) {
+    const k = ui.skus[i];
+    if (k.parentId) continue;
+    rows.push(skuRow(k, i, false));
+    if (k.hasVariants) {
+      for (let j = 0; j < ui.skus.length; j++) {
+        if (ui.skus[j].parentId === k.id) rows.push(skuRow(ui.skus[j], j, true));
+      }
+    }
+  }
+
   return `<div class="card">
     <div class="card-head"><h2>Products</h2>
       <div class="row"><button type="button" id="sk-add" class="small">Add product</button>
@@ -213,33 +255,26 @@ function productsHtml(s) {
         <button type="button" id="sk-save" class="primary small">Save products</button></div></div>
     ${ui.skuErr ? `<div class="banner red" role="alert">${esc(ui.skuErr)}</div>` : ''}
     <div class="table-wrap"><table class="matrix">
-      <thead><tr><th class="num">#</th><th>Name</th><th class="num">Content kg</th><th class="center">Sold</th><th>ID</th><th class="num">Priced on</th><th class="num">Clients</th><th class="center">Move</th><th></th></tr></thead>
-      <tbody>${ui.skus.map((k, i) => {
-        const u = k._new ? { priced: 0, clients: 0, quotes: 0 } : productUsage(s, k.id);
-        const locked = u.priced || u.clients || u.quotes;
-        return `<tr>
-          <td class="num">${i + 1}</td>
-          <td><input type="text" data-sk="${i}" data-f="label" value="${esc(k.label)}" aria-label="Product name"></td>
-          <td><input type="number" min="0.1" step="0.1" data-sk="${i}" data-f="contentKg" value="${esc(k.contentKg ?? '')}" aria-label="Content kg"></td>
-          <td class="center"><input type="checkbox" data-sk="${i}" data-f="active" ${k.active ? 'checked' : ''} aria-label="Sold"></td>
-          <td class="small muted">${k._new ? '<i>set on save</i>' : esc(k.id)}</td>
-          <td class="num">${u.priced} channel${u.priced === 1 ? '' : 's'}</td>
-          <td class="num">${u.clients}</td>
-          <td class="center nowrap"><button type="button" class="icon small" data-sk-move="${i}|-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">▲</button><button type="button" class="icon small" data-sk-move="${i}|1" ${i === ui.skus.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button></td>
-          <td><button type="button" class="small" data-sk-del="${i}" ${locked ? `disabled title="Priced on ${u.priced} channels, ${u.clients} clients, ${u.quotes} quotes or readings"` : ''}>Remove</button></td>
-        </tr>`;
-      }).join('')}</tbody></table></div>
-    <p class="small muted">Untick <b>Sold</b> to take a product off the pickers and price lists without deleting it. A product can only be removed once nothing references it.</p></div>`;
+      <thead><tr><th class="num">#</th><th>Name</th><th class="num">Content kg</th><th class="center">Sold</th><th class="center">Variant</th><th>ID</th><th class="num">Priced</th><th class="num">Clients</th><th class="center">Move</th><th></th></tr></thead>
+      <tbody>${rows.join('')}</tbody></table></div>
+    <p class="small muted">Tick <b>Variant</b> to group child variants under a parent product. Variants drive internal pricing; only the parent name appears on client price lists. Untick <b>Sold</b> to hide a product without deleting it.</p></div>`;
 }
 
 async function saveProducts() {
   const s = store.get();
   ui.skuErr = '';
-  const next = ui.skus.map(k => ({ ...k, label: k.label.trim(), contentKg: Number(k.contentKg), active: !!k.active }));
+  const next = ui.skus.map(k => {
+    const out = { ...k, label: k.label.trim(), active: !!k.active };
+    if (k.hasVariants) { out.contentKg = null; out.hasVariants = true; }
+    else { out.contentKg = Number(k.contentKg); delete out.hasVariants; }
+    if (k.parentId) out.parentId = k.parentId;
+    else delete out.parentId;
+    return out;
+  });
   if (!next.length) return (ui.skuErr = 'Keep at least one product');
   const blank = next.find(k => !k.label);
   if (blank) return (ui.skuErr = 'Every product needs a name');
-  const badKg = next.find(k => !Number.isFinite(k.contentKg) || k.contentKg <= 0);
+  const badKg = next.find(k => !k.hasVariants && (!Number.isFinite(k.contentKg) || k.contentKg <= 0));
   if (badKg) return (ui.skuErr = `${badKg.label} needs a content in kilograms`);
 
   const taken = new Set(next.filter(k => !k._new).map(k => k.id));
@@ -301,7 +336,7 @@ function zonesHtml(s) {
           <td><button type="button" class="small" data-z-del="${i}" ${u.readings || u.clients ? `disabled title="${u.readings} readings, ${u.clients} clients"` : ''}>Remove</button></td>
         </tr>`;
       }).join('')}</tbody></table></div>
-    <p class="small muted">Zones drive the messenger's weekly checklist, the competitor readings and the "no reading this week" exceptions. Renaming one carries its readings and clients across.</p></div>`;
+    <p class="small muted">Zones drive the messenger's weekly checklist, the competitor readings and the "no reading this week" approvals. Renaming one carries its readings and clients across.</p></div>`;
 }
 
 async function saveZones() {
@@ -339,6 +374,80 @@ async function saveZones() {
   });
   ui.zones = null;
   toast('Zones saved');
+}
+
+// ---------------- Competitors ----------------
+
+function competitorsHtml(s) {
+  return `<div class="card">
+    <div class="card-head"><h2>Tracked competitor brands</h2>
+      <div class="row"><button type="button" id="br-add" class="small">Add brand</button>
+        <button type="button" id="br-discard" class="small">Discard changes</button>
+        <button type="button" id="br-save" class="primary small">Save brands</button></div></div>
+    ${ui.brandErr ? `<div class="banner red" role="alert">${esc(ui.brandErr)}</div>` : ''}
+    <div class="table-wrap"><table class="matrix">
+      <thead><tr><th class="num">#</th><th>Brand name</th><th>Zone</th><th class="num">Readings</th><th class="num">Clients</th><th></th></tr></thead>
+      <tbody>${ui.brands.map((b, i) => {
+        const name = typeof b === 'string' ? b : b.name;
+        const zone = typeof b === 'string' ? '' : (b.zone || '');
+        const readings = s.competitorReadings.filter(r => r.brand === name).length;
+        const clients = s.accounts.filter(a => a.competitorBrand === name).length;
+        return `<tr>
+          <td class="num">${i + 1}</td>
+          <td><input type="text" data-br="${i}" data-bf="name" value="${esc(name)}" aria-label="Brand name"></td>
+          <td><input type="text" data-br="${i}" data-bf="zone" value="${esc(zone)}" list="cfg-zones-br" aria-label="Zone" style="max-width:160px"></td>
+          <td class="num">${readings}</td>
+          <td class="num">${clients}</td>
+          <td><button type="button" class="small" data-br-del="${i}" ${readings || clients ? `disabled title="${readings} readings, ${clients} clients"` : ''}>Remove</button></td>
+        </tr>`;
+      }).join('')}</tbody></table></div>
+    <datalist id="cfg-zones-br">${s.zones.map(z => `<option value="${esc(z)}"></option>`).join('')}</datalist>
+    <p class="small muted">Each competitor entry includes its zone. Readings in the price watch use the zone from here.</p></div>`;
+}
+
+async function saveBrands() {
+  const s = store.get();
+  ui.brandErr = '';
+  const next = ui.brands.map(b => {
+    const name = (typeof b === 'string' ? b : b.name || '').trim();
+    const zone = (typeof b === 'string' ? '' : b.zone || '').trim();
+    return { name, zone };
+  }).filter(b => b.name);
+  if (!next.length) return (ui.brandErr = 'Keep at least one brand');
+  const lc = next.map(b => b.name.toLowerCase());
+  const dupe = lc.find((n, i) => lc.indexOf(n) !== i);
+  if (dupe) return (ui.brandErr = `Two brands are both called "${dupe}"`);
+
+  const oldNames = s.trackedBrands.map(b => typeof b === 'string' ? b : b.name);
+  const newNames = next.map(b => b.name);
+  const summary = [];
+  for (const b of newNames) if (!oldNames.includes(b)) summary.push(`added ${b}`);
+  for (const b of oldNames) if (!newNames.includes(b)) summary.push(`removed ${b}`);
+  const renamed = [];
+  for (let i = 0; i < Math.min(oldNames.length, newNames.length); i++) {
+    if (oldNames[i] !== newNames[i] && !oldNames.includes(newNames[i]) && !newNames.includes(oldNames[i])) {
+      renamed.push({ from: oldNames[i], to: newNames[i] });
+      summary.push(`renamed ${oldNames[i]} → ${newNames[i]}`);
+    }
+  }
+  for (const b of next) {
+    const old = s.trackedBrands.find(x => (typeof x === 'string' ? x : x.name) === b.name);
+    if (old && typeof old !== 'string' && old.zone !== b.zone) summary.push(`${b.name} zone: ${old.zone || '—'} → ${b.zone || '—'}`);
+  }
+  if (!summary.length) { toast('No changes to save'); return; }
+
+  await store.commit({
+    action: 'CONFIG_CHANGED', entity: 'competitors', entityId: 'competitors', field: 'trackedBrands',
+    before: s.trackedBrands, after: { summary: summary.join('; '), trackedBrands: next },
+  }, d => {
+    d.trackedBrands = next;
+    for (const { from, to } of renamed) {
+      for (const r of d.competitorReadings) if (r.brand === from) r.brand = to;
+      for (const a of d.accounts) if (a.competitorBrand === from) a.competitorBrand = to;
+    }
+  });
+  ui.brands = null;
+  toast('Brands saved');
 }
 
 // ---------------- Clients ----------------
@@ -390,6 +499,12 @@ const BASIC = [
   { key: 'avgMonthlyVolumeKg', label: 'Avg monthly volume (kg)', type: 'int' },
   { key: 'creditTermDays', label: 'Credit term (days)', type: 'int' },
   { key: 'competitorBrand', label: 'Competitor brand', type: 'text' },
+  { key: 'email', label: 'Email address', type: 'text' },
+  { key: 'variantId', label: 'Product variant', type: 'select', from: s => {
+    const out = [['', '— None —']];
+    for (const k of s.skus) { if (k.parentId) out.push([k.id, `${k.label} (${s.skus.find(p => p.id === k.parentId)?.label ?? ''})`]); }
+    return out;
+  }},
 ];
 
 const basicValue = (a, f) => {
@@ -584,11 +699,23 @@ function bind(root, ctx) {
   // Products
   root.querySelectorAll('[data-sk][data-f]').forEach(el => {
     const k = ui.skus[+el.dataset.sk];
-    if (el.type === 'checkbox') el.onchange = () => { k.active = el.checked; };
+    if (el.dataset.f === 'active') el.onchange = () => { k.active = el.checked; };
+    else if (el.dataset.f === 'hasVariants') el.onchange = () => { k.hasVariants = el.checked; if (!el.checked) ui.skus.filter(v => v.parentId === k.id).forEach(v => { v.parentId = null; }); rerender(); };
     else el.oninput = () => { k[el.dataset.f] = el.value; };
   });
   root.querySelectorAll('[data-sk-move]').forEach(b => b.onclick = () => { move(ui.skus, b.dataset.skMove); rerender(); });
-  root.querySelectorAll('[data-sk-del]').forEach(b => b.onclick = () => { ui.skus.splice(+b.dataset.skDel, 1); rerender(); });
+  root.querySelectorAll('[data-sk-del]').forEach(b => b.onclick = () => {
+    const k = ui.skus[+b.dataset.skDel];
+    if (k.hasVariants) ui.skus.filter(v => v.parentId === k.id).forEach(v => { v.parentId = null; });
+    ui.skus.splice(+b.dataset.skDel, 1);
+    rerender();
+  });
+  root.querySelectorAll('[data-sk-addvar]').forEach(b => b.onclick = () => {
+    const parent = ui.skus[+b.dataset.skAddvar];
+    ui.skus.push({ id: '', label: '', contentKg: '', active: true, parentId: parent.id, _new: true });
+    rerender();
+    root.querySelector(`[data-sk="${ui.skus.length - 1}"][data-f="label"]`)?.focus();
+  });
   if ($('sk-add')) $('sk-add').onclick = () => {
     ui.skus.push({ id: '', label: '', contentKg: '', active: true, _new: true });
     rerender();
@@ -608,6 +735,21 @@ function bind(root, ctx) {
   };
   if ($('z-discard')) $('z-discard').onclick = () => { ui.zones = null; ui.zoneErr = ''; rerender(); };
   if ($('z-save')) $('z-save').onclick = async () => { await saveZones(); rerender(); };
+
+  // Competitors
+  root.querySelectorAll('[data-br][data-bf]').forEach(el => el.oninput = () => {
+    const b = ui.brands[+el.dataset.br];
+    if (typeof b === 'string') ui.brands[+el.dataset.br] = { name: b, zone: '' };
+    ui.brands[+el.dataset.br][el.dataset.bf] = el.value;
+  });
+  root.querySelectorAll('[data-br-del]').forEach(b => b.onclick = () => { ui.brands.splice(+b.dataset.brDel, 1); rerender(); });
+  if ($('br-add')) $('br-add').onclick = () => {
+    ui.brands.push({ name: '', zone: '' });
+    rerender();
+    root.querySelector(`[data-br="${ui.brands.length - 1}"][data-bf="name"]`)?.focus();
+  };
+  if ($('br-discard')) $('br-discard').onclick = () => { ui.brands = null; ui.brandErr = ''; rerender(); };
+  if ($('br-save')) $('br-save').onclick = async () => { await saveBrands(); rerender(); };
 
   // Clients
   const preview = (text, name) => {

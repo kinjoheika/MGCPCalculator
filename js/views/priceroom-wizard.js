@@ -3,7 +3,7 @@
 
 import * as store from '../store.js';
 import { fmt, fmtSigned, toCentavos, toInput } from '../money.js';
-import { esc, toast, options } from '../ui.js';
+import { esc, toast, options, preserveFocus } from '../ui.js';
 import {
   byId, simulate, applyChanges, describeChange, CHANGE_TYPES, componentKind, currentCostBasis, marginRule, bufferFor,
   currentPublication, allBoardPrices, skuLabel, channelLabel, userName, fmtDateTime,
@@ -14,7 +14,7 @@ const STAGE_NOTE = { draft: 'Objective and inputs', simulate: 'Impact, nothing w
 
 const fresh = () => ({
   proposalId: null, step: 'draft', objective: '', changes: [], drafterId: null,
-  instructedBy: '', verifiedBy: '', error: '', simKey: null, sharedParam: null, showAll: false, published: null,
+  instructedBy: '', verifiedBy: '', error: '', simKey: null, sharedParam: null, showAll: false, published: null, simSearch: '',
   add: { type: 'ACQ', channelId: 'DEALER', skuId: '11KG_MGAS', accountId: '', code: '', value: '', remove: false },
 });
 let w = fresh();
@@ -216,8 +216,9 @@ function simulateHtml(s) {
         <h3>Accounts crossing above the newest competitor reading</h3>
         ${sim.crossesCompetitor.length ? `<ul>${sim.crossesCompetitor.map(x => { const r = s.competitorReadings.find(c => c.id === x.readingId); return `<li><b>${esc(accName(x.accountId))}</b> — ${fmt(x.afterGrossPerCyl)} vs ${esc(r.brand)} ${fmt(r.pricePerCyl)}</li>`; }).join('')}</ul>` : '<p class="muted small">None.</p>'}
         <h3>Accounts</h3>
+        <div style="margin-bottom:6px"><input type="search" id="w-sim-search" placeholder="Search accounts…" value="${esc(w.simSearch)}" autocomplete="off" style="min-height:36px;padding:6px 10px;font-size:13px;width:100%"></div>
         <div class="table-wrap"><table><thead><tr><th>Account</th><th class="num">Δ/kg</th><th class="num">Vol kg/mo</th><th class="num">Monthly</th></tr></thead><tbody>
-        ${sim.accountRows.map(r => `<tr><td>${esc(accName(r.accountId))}<br><span class="small muted">${esc(skuLabel(s, r.skuId))} <span class="was">${fmt(r.beforePerKg)}</span> → <span class="now">${fmt(r.afterPerKg)}</span></span></td>
+        ${sim.accountRows.filter(r => { const q = w.simSearch.toLowerCase(); return !q || accName(r.accountId).toLowerCase().includes(q); }).map(r => `<tr><td>${esc(accName(r.accountId))}<br><span class="small muted">${esc(skuLabel(s, r.skuId))} <span class="was">${fmt(r.beforePerKg)}</span> → <span class="now">${fmt(r.afterPerKg)}</span></span></td>
           <td class="num">${d(r.deltaPerKg)}</td><td class="num">${r.volumeKg == null ? '<span class="muted">none</span>' : r.volumeKg.toLocaleString('en-PH')}</td>
           <td class="num">${r.impact == null ? '<span class="muted">excluded</span>' : fmtSigned(r.impact)}</td></tr>`).join('')}
         </tbody></table></div>
@@ -253,7 +254,7 @@ function reviewHtml(s) {
 }
 
 function approveHtml(s) {
-  const managers = s.users.filter(u => u.role === 'manager');
+  const managers = s.users.filter(u => u.role === 'manager' || u.role === 'admin');
   const clash = w.verifiedBy && w.verifiedBy === w.drafterId;
   return `<p class="muted small">Objective: <b>${esc(w.objective)}</b> · drafted by <b>${esc(userName(s, w.drafterId))}</b></p>
     <div class="row">
@@ -314,6 +315,7 @@ export function bind(root, user, rerender) {
 
   // Simulate
   on('w-back-draft', 'onclick', () => go('draft'));
+  on('w-sim-search', 'oninput', e => { w.simSearch = e.target.value; preserveFocus(root, rerender); });
   on('w-showall', 'onchange', e => { w.showAll = e.target.checked; rerender(); });
   on('w-rerun', 'onclick', async () => { await saveDraftAndSimulate(user); rerender(); });
   on('w-share', 'onclick', async () => {

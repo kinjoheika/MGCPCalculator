@@ -1,5 +1,5 @@
 // Store-aware selectors around the pure engine: effective-dated lookups, account pricing,
-// boards, simulation and exceptions. Takes state as an argument; never writes.
+// boards, simulation and approvals. Takes state as an argument; never writes.
 
 import { resolvePrice, derivePremiumPerKg, defaultFloorPerKg } from './engine.js';
 import { roundHalfUp, fmt } from './money.js';
@@ -9,6 +9,12 @@ const DAY = 86400000;
 export const byId = (list, id) => list.find(x => x.id === id);
 export const skuLabel = (s, id) => byId(s.skus, id)?.label ?? id;
 export const channelLabel = (s, id) => byId(s.channels, id)?.label ?? id;
+export function skuDisplayLabel(s, id) {
+  const sku = byId(s.skus, id);
+  if (!sku) return id;
+  if (sku.parentId) return byId(s.skus, sku.parentId)?.label ?? sku.label;
+  return sku.label;
+}
 export const userName = (s, id) => byId(s.users, id)?.name ?? id ?? '—';
 
 export function daysSince(dateStr, now = new Date()) {
@@ -51,7 +57,7 @@ export function boardIsStale(s) {
 }
 
 export function skusForChannel(s, channelId) {
-  return s.skus.filter(k => k.active && marginRule(s, channelId, k.id));
+  return s.skus.filter(k => k.active && !k.hasVariants && marginRule(s, channelId, k.id));
 }
 
 export function zoneOf(s, accountZone) {
@@ -64,7 +70,7 @@ export function userChannels(s, user) {
   return user.channels.includes('*') ? s.channels.map(c => c.id) : user.channels;
 }
 
-// ---- Price requests / approved exceptions ----
+// ---- Price requests / approvals ----
 
 export function lineKey(accountId, channelId) {
   return accountId ? accountId : `walkin:${channelId}`;
@@ -109,7 +115,7 @@ export function priceFor(s, { accountId = null, channelId = null, skuId, quantit
   }
   const key = lineKey(accountId, chId);
   const exception = ignoreException ? null : approvedException(s, key, skuId);
-  if (exception) discounts.push({ code: 'APPROVED_EXCEPTION', label: 'Approved price exception', perKg: exception.approvedDiscountPerKg });
+  if (exception) discounts.push({ code: 'APPROVED_EXCEPTION', label: 'Approved price', perKg: exception.approvedDiscountPerKg });
 
   // A client with a fixed margin uses it in place of the channel margin.
   const marginPerKg = account?.fixedMarginPerKg ?? mr.perKg;
@@ -317,7 +323,7 @@ export function simulate(before, changes, when) {
   return { after, cause, channelRows, accountRows, monthlyImpact, excludedNullVolume, newlyBelowFloor, crossesCompetitor, review };
 }
 
-// ---- Exceptions (rows name accounts, zones or documents — never people) ----
+// ---- Approvals (rows name accounts, zones or documents — never people) ----
 
 export function exceptions(s, now = new Date()) {
   const rows = [];

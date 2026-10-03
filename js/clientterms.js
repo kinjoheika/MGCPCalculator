@@ -16,6 +16,7 @@ export const TANKS = [
 // lever: also moves the price, so it is flagged wherever it is edited.
 export const FIELDS = [
   { key: 'installedAt', label: 'Date (installed / activated)', type: 'date' },
+  { key: 'contractStart', label: 'Date start', type: 'date', top: true },
   { key: 'lpgContentBilling', label: 'LPG content billing', type: 'text' },
   { key: 'factorRate', label: 'Factor rate', type: 'text' },
   { key: 'tankOwnership', label: 'Tank ownership', type: 'select', choices: ['MGC-owned', 'Client-owned', 'Leased'] },
@@ -25,7 +26,6 @@ export const FIELDS = [
   { key: 'fixedMarginPerKg', label: 'Fixed margin', type: 'money', top: true, lever: true },
   { key: 'investmentCentavos', label: 'Total investment', type: 'money', top: true, lever: true },
   { key: 'reqVolPerMonthKg', label: 'Required volume per month', type: 'int', top: true, unit: 'kg' },
-  { key: 'contractStart', label: 'Date start', type: 'date', top: true },
   { key: 'volumeGeneratedKg', label: 'Total generated volume', type: 'int', top: true, unit: 'kg', asOf: true },
 ];
 

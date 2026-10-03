@@ -7,14 +7,18 @@ import { fmt, toCentavos, roundHalfUp } from '../money.js';
 import { esc, toast, options, modal, preserveFocus } from '../ui.js';
 import {
   byId, priceFor, userChannels, skusForChannel, boardIsStale, currentPublication, pendingRequest,
-  zoneOf, skuLabel, channelLabel, userName, fmtDate, fmtDateTime, daysSince, isStaleReading,
+  zoneOf, skuLabel, skuDisplayLabel, channelLabel, userName, fmtDate, fmtDateTime, daysSince, isStaleReading,
 } from '../pricing.js';
 import { printDoc, savePdf, previewUrl, slug } from '../pricedoc.js';
 import { stamp } from '../ui.js';
 
 const DAY = 86400000;
 const ALL = '__all';
-const ui = { tab: 'new', walkIn: false, query: '', accountId: null, channelId: null, skuId: ALL, qty: 1, openQuoteId: null };
+const ui = {
+  tab: 'new', walkIn: false, query: '', accountId: null, channelId: null,
+  selectedSkus: new Set(), qty: 1, openQuoteId: null,
+  confirmStep: false, emailAddr: '',
+};
 
 export function render(root, ctx) {
   preserveFocus(root, () => { root.innerHTML = view(ctx); });
@@ -61,19 +65,12 @@ function newQuote(s, user) {
       <div id="q-results">${typeaheadResults(s, user)}</div></div>`;
   }
 
-  const skus = channelId ? skusForChannel(s, channelId) : [];
-  if (ui.skuId !== ALL && !skus.some(k => k.id === ui.skuId)) ui.skuId = ALL;
-  const single = ui.skuId !== ALL;
+  if (ui.confirmStep) return confirmPage(s, user, account, channelId);
 
   return `${boardIsStale(s) ? '<div class="banner red">Price list is out of date — prices cannot be sent or printed. Ask a manager to republish.</div>' : ''}
     <div class="stack">
       <label class="toggle"><input id="q-walkin" type="checkbox" ${ui.walkIn ? 'checked' : ''}> Walk-in / no account</label>
       ${customer}
-      <div class="row">
-        <label class="field grow"><span>Product</span><select id="q-sku" ${channelId ? '' : 'disabled'}>
-          <option value="${ALL}"${single ? '' : ' selected'}>All products</option>${options(skus, single ? ui.skuId : null)}</select></label>
-        ${single ? `<label class="field" style="flex:0 0 110px"><span>Quantity</span><input id="q-qty" type="number" min="1" step="1" inputmode="numeric" value="${esc(ui.qty)}"></label>` : ''}
-      </div>
     </div>
     <div id="q-result">${resultHtml(s, user)}</div>`;
 }
@@ -81,7 +78,6 @@ function newQuote(s, user) {
 function typeaheadResults(s, user) {
   const q = ui.query.trim().toLowerCase();
   if (!q) return '';
-  // Inactive accounts never appear here.
   const myChannels = userChannels(s, user);
   const matches = s.accounts.filter(a => a.status === 'Active' && myChannels.includes(a.channelId) && a.name.toLowerCase().includes(q)).slice(0, 8);
   return matches.length
@@ -92,10 +88,9 @@ function typeaheadResults(s, user) {
 function resultHtml(s, user) {
   const { account, channelId } = context(s, user);
   if (!channelId) return '';
-  return ui.skuId === ALL ? allProductsCard(s, account, channelId) : singleCard(s, account, channelId);
+  return productsCard(s, account, channelId);
 }
 
-// A line may be issued (sent, printed, saved) only when it needs no approval.
 function lineStatus(s, p) {
   if (pendingRequest(s, p.lineKey, p.sku.id)) return 'Request pending';
   if (p.result.belowFloor && !p.exception) return 'Needs approval';
@@ -108,59 +103,60 @@ function linesFor(s, account, channelId, quantity = 1) {
     .filter(p => !p.error);
 }
 
-function allProductsCard(s, account, channelId) {
+function productsCard(s, account, channelId) {
   const lines = linesFor(s, account, channelId);
   const stale = boardIsStale(s);
-  const held = lines.filter(p => lineStatus(s, p)).length;
-  const canIssue = !stale && lines.length > held;
+  const allSelected = ui.selectedSkus.size === 0;
+  const selectedLines = allSelected ? lines : lines.filter(p => ui.selectedSkus.has(p.sku.id));
+  const held = selectedLines.filter(p => lineStatus(s, p)).length;
+  const canIssue = !stale && selectedLines.length > held && selectedLines.length > 0;
+
   return `<div class="card" style="margin-top:14px">
     <div class="row"><div class="muted small grow">${esc(account ? account.name : 'Walk-in')} · ${esc(channelLabel(s, channelId))}</div>
       ${stamp(currentPublication(s).version, fmtDate(currentPublication(s).publishedAt), { size: 'sm' })}</div>
+    <div class="row" style="margin:8px 0 4px"><label class="toggle small"><input type="checkbox" id="q-selall" ${allSelected ? 'checked' : ''} ${lines.length === ui.selectedSkus.size && ui.selectedSkus.size > 0 ? 'checked' : ''}> Select all</label>
+      <span class="muted small">${allSelected ? lines.length : ui.selectedSkus.size} of ${lines.length} selected</span></div>
     <div class="table-wrap"><table>
-      <thead><tr><th>Product</th><th class="num">Per kg, net</th><th class="num">Per cylinder</th></tr></thead>
+      <thead><tr><th style="width:32px"></th><th>Product</th><th class="num">Per kg, net</th><th class="num">Per cylinder</th></tr></thead>
       <tbody>${lines.map(p => {
+        const checked = allSelected || ui.selectedSkus.has(p.sku.id);
         const st = lineStatus(s, p);
-        return `<tr><td><button type="button" class="link" data-sku="${esc(p.sku.id)}">${esc(p.sku.label)}</button>
+        return `<tr><td><input type="checkbox" class="q-chk" data-sku="${esc(p.sku.id)}" ${checked ? 'checked' : ''}></td>
+          <td><span class="link q-sku-link" data-sku="${esc(p.sku.id)}">${esc(p.sku.label)}</span>
           <div class="small muted">${p.sku.contentKg} kg${st ? ` · <span class="pill amber">${esc(st)}</span>` : ''}</div></td>
           <td class="num">${fmt(p.result.netPerKg)}</td><td class="num"><b>${fmt(p.result.grossPerCyl)}</b></td></tr>`;
       }).join('')}</tbody></table></div>
-    <p class="small muted">Per cylinder includes VAT. Tap a product to quote a quantity.</p>
+    <p class="small muted">Per cylinder includes VAT. Tick products to include in the quotation.</p>
     ${held ? `<p class="small">${held} product${held > 1 ? 's' : ''} marked above ${held > 1 ? 'are' : 'is'} left off the printed price list until approved.</p>` : ''}
     <div class="row" style="margin-top:10px">
       <button type="button" id="q-print" class="grow" ${canIssue ? '' : 'disabled'}>Print</button>
-      <button type="button" id="q-savelist" class="primary grow" ${canIssue ? '' : 'disabled'}>Save price list</button>
+      <button type="button" id="q-savelist" class="grow" ${canIssue ? '' : 'disabled'}>Save price list</button>
+      <button type="button" id="q-confirm" class="primary grow" ${canIssue ? '' : 'disabled'}>Send email</button>
     </div></div>`;
 }
 
-function singleCard(s, account, channelId) {
-  const p = priceFor(s, { accountId: account?.id ?? null, channelId, skuId: ui.skuId, quantity: ui.qty });
-  if (p.error) return `<p class="err">${esc(p.error)}</p>`;
-  const r = p.result;
-  const pending = pendingRequest(s, p.lineKey, p.sku.id);
-  const reasons = [];
-  if (boardIsStale(s)) reasons.push('Price list is out of date — republish before sending.');
-  if (pending) reasons.push(`Price request pending in the Price room since ${fmtDateTime(pending.requestedAt)}.`);
-  else if (r.belowFloor && !p.exception) reasons.push('This price needs manager approval — use Request lower before sending.');
-  if (r.quantity <= 0) reasons.push('Enter a quantity of at least 1.');
-  const ok = !reasons.length;
+// ---------------- Confirm page (change 9) ----------------
+
+function confirmPage(s, user, account, channelId) {
+  const lines = linesFor(s, account, channelId);
+  const allSelected = ui.selectedSkus.size === 0;
+  const selectedLines = allSelected ? lines : lines.filter(p => ui.selectedSkus.has(p.sku.id));
+  const ok = selectedLines.filter(p => !lineStatus(s, p) && p.result.quantity > 0);
+  const savedEmail = account?.email ?? '';
+  const emailVal = ui.emailAddr || savedEmail;
 
   return `<div class="card" style="margin-top:14px">
-    <div class="row"><div class="muted small grow">${esc(p.sku.label)} · ${esc(p.channel.label)}</div>
-      ${stamp(currentPublication(s).version, fmtDate(currentPublication(s).publishedAt), { size: 'sm' })}</div>
-    <div class="price-hero">${fmt(r.grossPerCyl)}</div>
-    <div class="muted small">per cylinder, VAT inclusive</div>
-    <div class="price-sub"><span>Per kg <b>${fmt(r.netPerKg)}</b> <span class="small muted">net</span></span>
-      <span>Total × ${r.quantity} <b>${fmt(r.grossTotal)}</b></span></div>
-    ${p.exception ? `<div class="banner green small" style="margin-top:10px">Approved price — valid until ${fmtDate(p.exception.validUntil)}</div>` : ''}
-    ${p.notes.map(n => `<p class="small muted">${esc(n)}</p>`).join('')}
-    ${reasons.map(t => `<p class="err">${esc(t)}</p>`).join('')}
+    <h2 style="margin-top:0">Confirm & send email</h2>
+    <p class="small muted">${esc(account ? account.name : 'Walk-in')} · ${esc(channelLabel(s, channelId))}</p>
+    <div class="table-wrap"><table><thead><tr><th>Product</th><th class="num">Per cylinder</th></tr></thead><tbody>
+      ${ok.map(p => `<tr><td>${esc(p.sku.label)} <span class="small muted">${p.sku.contentKg} kg</span></td><td class="num"><b>${fmt(p.result.grossPerCyl)}</b></td></tr>`).join('')}
+    </tbody></table></div>
+    <label class="field" style="margin-top:12px"><span>Email address</span>
+      <input id="q-email" type="email" placeholder="client@example.com" value="${esc(emailVal)}"></label>
+    ${savedEmail ? `<p class="small muted">Saved email for ${esc(account.name)}</p>` : '<p class="small muted">Enter the client\'s email to send the price list</p>'}
     <div class="row" style="margin-top:12px">
-      <button type="button" id="q-send" class="primary grow" ${ok ? '' : 'disabled'}>Send quote</button>
-      <button type="button" id="q-lower" class="grow" ${pending ? 'disabled' : ''}>Request lower</button>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <button type="button" id="q-print" class="grow" ${ok ? '' : 'disabled'}>Print</button>
-      <button type="button" id="q-savelist" class="grow" ${ok ? '' : 'disabled'}>Save price list</button>
+      <button type="button" id="q-send-email" class="primary grow" ${emailVal ? '' : 'disabled'}>Send email</button>
+      <button type="button" id="q-back" class="grow">Back</button>
     </div></div>`;
 }
 
@@ -176,7 +172,7 @@ function listDoc(s, user, account, channelId, lines, withQty) {
     version: pub.version, effective: fmtDate(pub.publishedAt), issued: fmtDateTime(now),
     validUntil: fmtDate(new Date(now.getTime() + (s.settings.quoteValidityDays || 7) * DAY)),
     issuedBy: user.name, vatRate: s.settings.vatRate, ref: '',
-    rows: lines.map(p => ({ label: p.sku.label, contentKg: p.sku.contentKg, netPerKg: p.result.netPerKg, grossPerCyl: p.result.grossPerCyl,
+    rows: lines.map(p => ({ label: skuDisplayLabel(s, p.sku.id), contentKg: p.sku.contentKg, netPerKg: p.result.netPerKg, grossPerCyl: p.result.grossPerCyl,
       ...(withQty ? { qty: p.result.quantity, total: p.result.grossTotal } : {}) })),
     total: withQty ? lines.reduce((t, p) => t + p.result.grossTotal, 0) : null,
   };
@@ -197,29 +193,69 @@ export function quoteDoc(s, q) {
   };
 }
 
-// Printing or saving a customer price list is an outbound price, so it is gated and logged like a quote.
 async function issueList(user, mode) {
   const s = store.get();
   const { account, channelId } = context(s, user);
   if (!channelId) return;
   if (boardIsStale(s)) return toast('Price list is out of date — republish before printing', 'bad');
-  const single = ui.skuId !== ALL;
-  const lines = single
-    ? [priceFor(s, { accountId: account?.id ?? null, channelId, skuId: ui.skuId, quantity: ui.qty })].filter(p => !p.error)
-    : linesFor(s, account, channelId);
-  const ok = lines.filter(p => !lineStatus(s, p) && p.result.quantity > 0);
+  const lines = linesFor(s, account, channelId);
+  const allSelected = ui.selectedSkus.size === 0;
+  const selectedLines = allSelected ? lines : lines.filter(p => ui.selectedSkus.has(p.sku.id));
+  const ok = selectedLines.filter(p => !lineStatus(s, p) && p.result.quantity > 0);
   if (!ok.length) return toast('No approved prices to issue', 'bad');
 
-  const doc = listDoc(s, user, account, channelId, ok, single);
+  const doc = listDoc(s, user, account, channelId, ok, false);
   const { event } = await store.commit({
     action: 'PRICE_LIST_ISSUED', entity: 'priceList', entityId: account?.id ?? `walkin:${channelId}`, field: 'grossPerCyl',
     after: { mode, accountId: account?.id ?? null, channelId, count: ok.length,
-      lines: ok.map(p => ({ skuId: p.sku.id, grossPerCyl: p.result.grossPerCyl, qty: single ? p.result.quantity : null })) },
+      lines: ok.map(p => ({ skuId: p.sku.id, grossPerCyl: p.result.grossPerCyl, qty: null })) },
     hashOf: doc,
   });
   doc.ref = event.snapshotHash.slice(0, 8);
   if (mode === 'print') await printDoc(doc);
   else { await savePdf(doc, `MGC-price-list-${slug(doc.customer)}-v${doc.version}.pdf`); toast('Price list saved'); }
+}
+
+async function sendEmailList(user) {
+  const s = store.get();
+  const { account, channelId } = context(s, user);
+  if (!channelId) return;
+  if (boardIsStale(s)) return toast('Price list is out of date', 'bad');
+  const lines = linesFor(s, account, channelId);
+  const allSelected = ui.selectedSkus.size === 0;
+  const selectedLines = allSelected ? lines : lines.filter(p => ui.selectedSkus.has(p.sku.id));
+  const ok = selectedLines.filter(p => !lineStatus(s, p) && p.result.quantity > 0);
+  if (!ok.length) return toast('No approved prices to send', 'bad');
+
+  const email = ui.emailAddr || account?.email || '';
+  if (!email) return toast('Enter an email address', 'bad');
+
+  if (account && email !== account.email) {
+    await store.commit({
+      action: 'CONFIG_CHANGED', entity: 'accounts', entityId: account.id, field: 'email',
+      before: account.email ?? null, after: email,
+    }, d => { byId(d.accounts, account.id).email = email; });
+  }
+
+  const doc = listDoc(s, user, account, channelId, ok, false);
+  const { event } = await store.commit({
+    action: 'PRICE_LIST_ISSUED', entity: 'priceList', entityId: account?.id ?? `walkin:${channelId}`, field: 'grossPerCyl',
+    after: { mode: 'email', accountId: account?.id ?? null, channelId, count: ok.length, email,
+      lines: ok.map(p => ({ skuId: p.sku.id, grossPerCyl: p.result.grossPerCyl, qty: null })) },
+    hashOf: doc,
+  });
+
+  await store.commit({
+    action: 'PL_EMAIL_SENT', entity: 'plNotice', entityId: account?.id ?? `walkin:${channelId}`, field: 'email',
+    after: { accountId: account?.id ?? null, channelId, email, version: currentPublication(s).version, sentAt: new Date().toISOString(), status: 'sent' },
+  }, d => {
+    if (!d.plEmailLog) d.plEmailLog = [];
+    d.plEmailLog.push({ accountId: account?.id ?? null, channelId, email, version: currentPublication(s).version, sentAt: new Date().toISOString(), status: 'sent' });
+  });
+
+  ui.confirmStep = false;
+  ui.emailAddr = '';
+  toast('Price list emailed to ' + email);
 }
 
 // ---------------- Past quotes ----------------
@@ -265,74 +301,49 @@ function bind(root, ctx) {
   const { user } = ctx;
   const rerender = () => render(root, { ...ctx, state: store.get() });
   const $ = id => root.querySelector('#' + id);
-  root.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { ui.tab = b.dataset.tab; ui.openQuoteId = null; rerender(); });
+  root.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { ui.tab = b.dataset.tab; ui.openQuoteId = null; ui.confirmStep = false; rerender(); });
   root.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { ui.openQuoteId = b.dataset.open; rerender(); });
   if ($('q-close')) $('q-close').onclick = () => { ui.openQuoteId = null; rerender(); };
   const openQuote = () => store.get().quotes.find(x => x.quoteId === ui.openQuoteId);
   if ($('q-doc-print')) $('q-doc-print').onclick = () => printDoc(quoteDoc(store.get(), openQuote()));
   if ($('q-doc-save')) $('q-doc-save').onclick = () => savePdf(quoteDoc(store.get(), openQuote()), `MGC-quotation-${ui.openQuoteId}.pdf`);
 
-  if ($('q-walkin')) $('q-walkin').onchange = e => { ui.walkIn = e.target.checked; ui.skuId = ALL; rerender(); };
-  if ($('q-channel')) $('q-channel').onchange = e => { ui.channelId = e.target.value; ui.skuId = ALL; rerender(); };
-  // Typing updates only the results list, never the input being typed into.
-  const bindResults = () => root.querySelectorAll('[data-acc]').forEach(b => b.onclick = () => { ui.accountId = b.dataset.acc; ui.query = ''; ui.skuId = ALL; rerender(); });
+  if ($('q-walkin')) $('q-walkin').onchange = e => { ui.walkIn = e.target.checked; ui.selectedSkus.clear(); rerender(); };
+  if ($('q-channel')) $('q-channel').onchange = e => { ui.channelId = e.target.value; ui.selectedSkus.clear(); rerender(); };
+  const bindResults = () => root.querySelectorAll('[data-acc]').forEach(b => b.onclick = () => { ui.accountId = b.dataset.acc; ui.query = ''; ui.selectedSkus.clear(); rerender(); });
   bindResults();
   if ($('q-query')) $('q-query').oninput = e => { ui.query = e.target.value; $('q-results').innerHTML = typeaheadResults(store.get(), user); bindResults(); };
-  if ($('q-clear')) $('q-clear').onclick = () => { ui.accountId = null; ui.skuId = ALL; rerender(); };
-  if ($('q-sku')) $('q-sku').onchange = e => { ui.skuId = e.target.value || ALL; rerender(); };
-  if ($('q-qty')) $('q-qty').oninput = e => { ui.qty = Math.max(0, parseInt(e.target.value, 10) || 0); $('q-result').innerHTML = resultHtml(store.get(), user); bindResult(root, user, rerender); };
-  bindResult(root, user, rerender);
-}
+  if ($('q-clear')) $('q-clear').onclick = () => { ui.accountId = null; ui.selectedSkus.clear(); rerender(); };
 
-function bindResult(root, user, rerender) {
-  const $ = id => root.querySelector('#' + id);
-  root.querySelectorAll('[data-sku]').forEach(b => b.onclick = () => { ui.skuId = b.dataset.sku; rerender(); });
-  if ($('q-send')) $('q-send').onclick = () => sendQuote(user).then(rerender);
-  if ($('q-lower')) $('q-lower').onclick = () => requestLower(store.get(), user);
+  // Product checkboxes
+  root.querySelectorAll('.q-chk').forEach(cb => cb.onchange = () => {
+    const skuId = cb.dataset.sku;
+    if (cb.checked) ui.selectedSkus.add(skuId);
+    else ui.selectedSkus.delete(skuId);
+    rerender();
+  });
+  if ($('q-selall')) $('q-selall').onchange = e => {
+    ui.selectedSkus.clear();
+    rerender();
+  };
+  root.querySelectorAll('.q-sku-link').forEach(b => b.onclick = () => {
+    ui.selectedSkus.clear();
+    ui.selectedSkus.add(b.dataset.sku);
+    rerender();
+  });
+
+  if ($('q-confirm')) $('q-confirm').onclick = () => { ui.confirmStep = true; rerender(); };
+  if ($('q-back')) $('q-back').onclick = () => { ui.confirmStep = false; rerender(); };
+  if ($('q-email')) $('q-email').oninput = e => { ui.emailAddr = e.target.value; };
+  if ($('q-send-email')) $('q-send-email').onclick = () => sendEmailList(user).then(rerender);
+
   if ($('q-print')) $('q-print').onclick = () => issueList(user, 'print');
   if ($('q-savelist')) $('q-savelist').onclick = () => issueList(user, 'save');
 }
 
-async function sendQuote(user) {
-  const s = store.get();
+function requestLower(s, user, skuId) {
   const { account, channelId } = context(s, user);
-  const p = priceFor(s, { accountId: account?.id ?? null, channelId, skuId: ui.skuId, quantity: ui.qty });
-  if (p.error) return;
-  // Re-check every gate at the moment of sending.
-  if (boardIsStale(s)) return toast('Price list is out of date — republish before sending', 'bad');
-  if (pendingRequest(s, p.lineKey, p.sku.id)) return toast('A price request is pending for this line', 'bad');
-  if (p.result.belowFloor && !p.exception) return toast('This price needs manager approval first', 'bad');
-
-  const now = new Date();
-  const quoteId = store.uid('q');
-  const snapshot = {
-    quoteId,
-    customerName: account ? account.name : `Walk-in — ${channelLabel(s, channelId)}`,
-    boardVersion: currentPublication(s).version,
-    exceptionRequestId: p.exception?.id ?? null,
-    input: p.input,
-    output: p.result,
-  };
-  await store.commit({
-    action: 'QUOTE_SENT', entity: 'quote', entityId: account?.id ?? p.lineKey, field: 'grossPerCyl',
-    after: { quoteId, skuId: p.sku.id, qty: p.result.quantity, grossPerCyl: p.result.grossPerCyl, grossTotal: p.result.grossTotal },
-    hashOf: snapshot,
-  }, (d, ev) => {
-    d.quotes.push({
-      quoteId, accountId: account?.id ?? null, channelId, skuId: p.sku.id, qty: p.result.quantity,
-      snapshot, snapshotHash: ev.snapshotHash, sentBy: user.id, sentAt: ev.timestamp,
-      validUntil: new Date(now.getTime() + (s.settings.quoteValidityDays || 7) * DAY).toISOString(),
-    });
-  });
-  ui.openQuoteId = quoteId;
-  const after = store.get();
-  await savePdf(quoteDoc(after, after.quotes.find(q => q.quoteId === quoteId)), `MGC-quotation-${quoteId}.pdf`);
-  toast('Quote sent');
-}
-
-function requestLower(s, user) {
-  const { account, channelId } = context(s, user);
-  const p = priceFor(s, { accountId: account?.id ?? null, channelId, skuId: ui.skuId, quantity: ui.qty });
+  const p = priceFor(s, { accountId: account?.id ?? null, channelId, skuId, quantity: ui.qty });
   if (p.error) return;
   const zone = account ? zoneOf(s, account.zone) : null;
   const readings = s.competitorReadings
@@ -371,7 +382,6 @@ function requestLower(s, user) {
       d.priceRequests.push({
         id, lineKey: p.lineKey, accountId: account?.id ?? null, channelId, skuId: p.sku.id, qty: p.result.quantity,
         currentGrossPerCyl: p.result.grossPerCyl, currentNetPerKg: p.result.netPerKg, targetGrossPerCyl: target,
-        // Discount per kg that would reach the target, ex-VAT.
         impliedDiscountPerKg: roundHalfUp((p.result.grossPerCyl - target) / (p.sku.contentKg * (1 + (p.input.vatInclusive ? p.input.vatRate : 0)))),
         reason, competitorReadingId: readingId, requestedBy: user.id, requestedAt: new Date().toISOString(),
         status: 'pending', decidedBy: null, decidedAt: null, decisionReason: null, approvedDiscountPerKg: null, validUntil: null,

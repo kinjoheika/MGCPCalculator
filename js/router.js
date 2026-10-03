@@ -25,10 +25,10 @@ export function canAccess(s, user, route) {
   const role = user.role;
   switch (route.name) {
     case 'quote': return role === 'seller';
-    case 'priceroom': return role === 'manager';
-    case 'log': return role === 'manager';
-    case 'config': return role === 'manager';
-    case 'market': return role === 'messenger';
+    case 'priceroom': return role === 'manager' || role === 'admin';
+    case 'log': return role === 'admin';
+    case 'config': return role === 'admin';
+    case 'market': return role === 'messenger' || role === 'seller';
     case 'board': {
       if (role === 'messenger') return false;
       if (!route.args[0]) return true; // board index lists only reachable boards
@@ -41,16 +41,16 @@ export function canAccess(s, user, route) {
 export function navFor(s, user) {
   const items = [];
   if (user.role === 'seller') items.push(['#/quote', 'Quote desk']);
-  if (user.role === 'manager') items.push(['#/priceroom', 'Price room']);
-  if (user.role === 'messenger') items.push(['#/market', 'Competitor price watch']);
+  if (user.role === 'manager' || user.role === 'admin') items.push(['#/priceroom', 'Price room']);
+  if (user.role === 'messenger' || user.role === 'seller') items.push(['#/market', 'Competitor price watch']);
   if (user.role !== 'messenger') items.push(['#/board', 'Price lists']);
-  if (user.role === 'manager') items.push(['#/log', 'Log'], ['#/config', 'Configuration']);
+  if (user.role === 'admin') items.push(['#/log', 'Log'], ['#/config', 'Configuration']);
   return items;
 }
 
 export function defaultHash(s, user) {
   if (user.role === 'seller') return '#/quote';
-  if (user.role === 'manager') return '#/priceroom';
+  if (user.role === 'manager' || user.role === 'admin') return '#/priceroom';
   if (user.role === 'messenger') return '#/market';
   const ch = userChannels(s, user)[0];
   return ch ? `#/board/${ch}` : '#/board';

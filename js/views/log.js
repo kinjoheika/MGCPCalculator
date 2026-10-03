@@ -1,4 +1,4 @@
-// Log — manager. Four read-only tabs over the one append-only event array.
+// Log — manager. Read-only tabs over the one append-only event array.
 // There is no "add log entry" control anywhere: events are written only by store.commit().
 
 import { fmt } from '../money.js';
@@ -6,12 +6,13 @@ import { esc, options } from '../ui.js';
 import { byId, skuLabel, channelLabel, userName, fmtDate, fmtDateTime, currentPublication, allBoardPrices } from '../pricing.js';
 
 const DAY = 86400000;
-const ui = { tab: 'week', accountId: null, skuId: '11KG_MGAS' };
+const ui = { tab: 'week' };
 
 const ACTION_LABEL = {
   DRAFT: 'Draft', SIMULATE: 'Simulate', APPROVE: 'Approve', PUBLISH: 'Publish', QUOTE_SENT: 'Quote sent',
   REQUEST_LOWER: 'Price request', REQUEST_DECIDED: 'Request decided', READING_CAPTURED: 'Reading captured',
   BOARD_ACKNOWLEDGED: 'PL notice acknowledged', ACCOUNTS_IMPORTED: 'Clients imported', CONFIG_CHANGED: 'Configuration', PRICE_LIST_ISSUED: 'Price list issued', CLIENT_TERMS_SAVED: 'Client terms saved',
+  PL_EMAIL_SENT: 'Price list emailed',
 };
 
 export function describeEvent(s, ev) {
@@ -32,7 +33,8 @@ export function describeEvent(s, ev) {
     case 'ACCOUNTS_IMPORTED': return `Clients imported from ${a.file}: ${a.added} added, ${a.updated} updated${a.removed ? `, ${a.removed} removed (replace)` : ''}, ${a.skipped} rows skipped`;
     case 'CONFIG_CHANGED': return `${({ users: 'Users', channels: 'Channels', skus: 'Products', zones: 'Price watch zones' })[ev.entity] ?? 'Configuration'} changed — ${a.summary}`;
     case 'CLIENT_TERMS_SAVED': return `Client terms updated on ${a.count} client${a.count === 1 ? '' : 's'} — ${a.summary}`;
-    case 'PRICE_LIST_ISSUED': return `${byId(s.accounts, a.accountId)?.name ?? 'Walk-in'}: price list ${a.mode === 'print' ? 'printed' : 'saved as PDF'} — ${(a.lines || []).map(l => `${skuLabel(s, l.skuId)} ${fmt(l.grossPerCyl)}${l.qty ? ` × ${l.qty}` : ''}`).join(', ')}`;
+    case 'PRICE_LIST_ISSUED': return `${byId(s.accounts, a.accountId)?.name ?? 'Walk-in'}: price list ${a.mode === 'print' ? 'printed' : a.mode === 'email' ? `emailed to ${a.email}` : 'saved as PDF'} — ${(a.lines || []).map(l => `${skuLabel(s, l.skuId)} ${fmt(l.grossPerCyl)}${l.qty ? ` × ${l.qty}` : ''}`).join(', ')}`;
+    case 'PL_EMAIL_SENT': return `${byId(s.accounts, a.accountId)?.name ?? 'Walk-in'}: price list v${a.version} emailed to ${a.email}`;
     default: return ev.action;
   }
 }
@@ -49,7 +51,7 @@ function eventItem(s, ev, { showActor = true } = {}) {
 }
 
 export function render(root, { state: s }) {
-  const tabs = [['week', 'Issues'], ['actor', 'Users'], ['account', 'Account history'], ['sku', 'SKU across channels']];
+  const tabs = [['week', 'Issues'], ['channels', 'Channels'], ['clients', 'Clients'], ['competitors', 'Competitors'], ['actors', 'Users'], ['products', 'Products']];
   let body = '';
   const events = [...s.events].sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
 
@@ -75,7 +77,58 @@ export function render(root, { state: s }) {
     }).join('') : '<p class="muted">Nothing logged in the last 7 days.</p>';
   }
 
-  if (ui.tab === 'actor') {
+  if (ui.tab === 'channels') {
+    const byChannel = new Map();
+    for (const e of events) {
+      const chId = e.after?.channelId ?? (e.entityId && byId(s.channels, e.entityId) ? e.entityId : null);
+      if (!chId) continue;
+      if (!byChannel.has(chId)) byChannel.set(chId, []);
+      byChannel.get(chId).push(e);
+    }
+    body = byChannel.size ? [...byChannel.entries()].map(([chId, evs]) => `<details class="card" style="margin-bottom:10px">
+      <summary>${esc(channelLabel(s, chId))} <span class="muted small" style="margin-left:8px">${evs.length} events</span></summary>
+      <ul class="timeline">${evs.map(e => eventItem(s, e)).join('')}</ul></details>`).join('')
+      : '<p class="muted">No channel-related events yet.</p>';
+  }
+
+  if (ui.tab === 'clients') {
+    const byClient = new Map();
+    for (const e of events) {
+      const accId = e.entityId && byId(s.accounts, e.entityId) ? e.entityId
+        : e.after?.accountId && byId(s.accounts, e.after.accountId) ? e.after.accountId : null;
+      if (!accId) continue;
+      if (!byClient.has(accId)) byClient.set(accId, []);
+      byClient.get(accId).push(e);
+    }
+    const sorted = [...byClient.entries()].sort((a, b) => {
+      const na = byId(s.accounts, a[0])?.name ?? '';
+      const nb = byId(s.accounts, b[0])?.name ?? '';
+      return na.localeCompare(nb);
+    });
+    body = sorted.length ? sorted.map(([accId, evs]) => {
+      const acc = byId(s.accounts, accId);
+      return `<details class="card" style="margin-bottom:10px">
+      <summary>${esc(acc?.name ?? accId)} <span class="muted small" style="margin-left:8px">${esc(channelLabel(s, acc?.channelId))} · ${esc(acc?.zone ?? '—')} · ${evs.length} events</span></summary>
+      <ul class="timeline">${evs.map(e => eventItem(s, e)).join('')}</ul></details>`;
+    }).join('') : '<p class="muted">No client-related events yet.</p>';
+  }
+
+  if (ui.tab === 'competitors') {
+    const byBrand = new Map();
+    for (const e of events) {
+      if (e.action !== 'READING_CAPTURED') continue;
+      const r = s.competitorReadings.find(x => x.id === e.entityId);
+      const brand = r?.brand ?? 'Unknown';
+      if (!byBrand.has(brand)) byBrand.set(brand, []);
+      byBrand.get(brand).push(e);
+    }
+    body = byBrand.size ? [...byBrand.entries()].map(([brand, evs]) => `<details class="card" style="margin-bottom:10px">
+      <summary>${esc(brand)} <span class="muted small" style="margin-left:8px">${evs.length} readings</span></summary>
+      <ul class="timeline">${evs.map(e => eventItem(s, e)).join('')}</ul></details>`).join('')
+      : '<p class="muted">No competitor readings logged yet.</p>';
+  }
+
+  if (ui.tab === 'actors') {
     const byActor = new Map();
     for (const e of events) {
       if (!byActor.has(e.actorId)) byActor.set(e.actorId, []);
@@ -87,33 +140,40 @@ export function render(root, { state: s }) {
       : '<p class="muted">No events yet.</p>';
   }
 
-  if (ui.tab === 'account') {
-    if (!ui.accountId) ui.accountId = s.accounts[0]?.id;
-    const acc = byId(s.accounts, ui.accountId);
-    const evs = events.filter(e => eventTouchesAccount(e, ui.accountId));
-    body = `<label class="field" style="max-width:420px"><span>Account</span><select id="l-acc">${options(s.accounts, ui.accountId, { label: a => `${a.name} (${a.status})` })}</select></label>
-      <p class="small muted">${esc(acc?.name)} · ${esc(channelLabel(s, acc?.channelId))} · ${esc(acc?.zone)}</p>
-      ${evs.length ? `<ul class="timeline" style="margin-top:12px">${evs.map(e => eventItem(s, e)).join('')}</ul>` : '<p class="muted">No events for this account yet.</p>'}`;
-  }
-
-  if (ui.tab === 'sku') {
+  if (ui.tab === 'products') {
+    const bySku = new Map();
+    for (const e of events) {
+      const skuId = e.after?.skuId ?? (e.entity === 'skus' ? e.entityId : null);
+      if (!skuId) continue;
+      if (!bySku.has(skuId)) bySku.set(skuId, []);
+      bySku.get(skuId).push(e);
+    }
     const versions = [...s.publications].sort((a, b) => b.version - a.version);
-    const rules = s.marginRules.filter(r => r.skuId === ui.skuId).sort((a, b) => (a.channelId + a.effectiveFrom < b.channelId + b.effectiveFrom ? -1 : 1));
-    const cbs = [...s.costBasis].sort((a, b) => (a.effectiveFrom < b.effectiveFrom ? 1 : -1));
-    body = `<label class="field" style="max-width:420px"><span>Product</span><select id="l-sku">${options(s.skus, ui.skuId)}</select></label>
-      <h2>Published prices, per cylinder VAT incl.</h2>
-      <div class="table-wrap"><table><thead><tr><th>Version</th>${s.channels.map(c => `<th class="num">${esc(c.label)}</th>`).join('')}</tr></thead><tbody>
-      ${versions.map(p => `<tr><td class="nowrap">v${p.version}<br><span class="small muted">${fmtDate(p.publishedAt)}</span></td>
-        ${s.channels.map(c => { const prices = p.prices ?? (p.version === currentPublication(s).version ? allBoardPrices(s) : null); const r = prices?.[c.id]?.find(x => x.skuId === ui.skuId); return `<td class="num">${r ? fmt(r.grossPerCyl) : '<span class="muted">—</span>'}</td>`; }).join('')}</tr>`).join('')}
-      </tbody></table></div>
-      <h2>Margin versions</h2>
-      <div class="table-wrap"><table><thead><tr><th>Channel</th><th class="num">Margin/kg</th><th>From</th><th>To</th></tr></thead><tbody>
-      ${rules.map(r => `<tr class="${r.effectiveTo ? 'stale' : ''}"><td>${esc(channelLabel(s, r.channelId))}</td><td class="num">${fmt(r.perKg)}</td><td>${fmtDateTime(r.effectiveFrom)}</td><td>${r.effectiveTo ? fmtDateTime(r.effectiveTo) : '<span class="pill green">Current</span>'}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Not priced on any channel.</td></tr>'}
-      </tbody></table></div>
-      <h2>Cost basis versions</h2>
-      <div class="table-wrap"><table><thead><tr><th class="num">Acquisition</th><th class="num">Hauling</th><th>From</th><th>To</th></tr></thead><tbody>
-      ${cbs.map(c => `<tr class="${c.effectiveTo ? 'stale' : ''}"><td class="num">${fmt(c.acqPerKg)}</td><td class="num">${fmt(c.haulingPerKg)}</td><td>${fmtDateTime(c.effectiveFrom)}</td><td>${c.effectiveTo ? fmtDateTime(c.effectiveTo) : '<span class="pill green">Current</span>'}</td></tr>`).join('')}
-      </tbody></table></div>`;
+    for (const pub of versions) {
+      const prices = pub.prices ?? (pub.version === currentPublication(s)?.version ? allBoardPrices(s) : null);
+      if (!prices) continue;
+      for (const [chId, rows] of Object.entries(prices)) {
+        for (const r of rows) {
+          if (!bySku.has(r.skuId)) bySku.set(r.skuId, []);
+        }
+      }
+    }
+    body = bySku.size || s.skus.length ? s.skus.map(sku => {
+      const evs = bySku.get(sku.id) || [];
+      const priceHistory = versions.map(pub => {
+        const prices = pub.prices ?? (pub.version === currentPublication(s)?.version ? allBoardPrices(s) : null);
+        if (!prices) return null;
+        const chPrices = s.channels.map(c => {
+          const r = prices[c.id]?.find(x => x.skuId === sku.id);
+          return r ? fmt(r.grossPerCyl) : '—';
+        });
+        return `<tr><td class="nowrap">v${pub.version}<br><span class="small muted">${fmtDate(pub.publishedAt)}</span></td>${chPrices.map(p => `<td class="num">${p}</td>`).join('')}</tr>`;
+      }).filter(Boolean);
+      return `<details class="card" style="margin-bottom:10px">
+      <summary>${esc(sku.label)} <span class="muted small" style="margin-left:8px">${esc(sku.id)} · ${evs.length} events · ${priceHistory.length} versions</span></summary>
+      ${priceHistory.length ? `<div class="table-wrap"><table><thead><tr><th>Version</th>${s.channels.map(c => `<th class="num">${esc(c.label)}</th>`).join('')}</tr></thead><tbody>${priceHistory.join('')}</tbody></table></div>` : ''}
+      ${evs.length ? `<ul class="timeline" style="margin-top:10px">${evs.map(e => eventItem(s, e)).join('')}</ul>` : ''}</details>`;
+    }).join('') : '<p class="muted">No product events yet.</p>';
   }
 
   root.innerHTML = `<section class="page wide"><h1>Log</h1>
@@ -121,8 +181,4 @@ export function render(root, { state: s }) {
     ${body}</section>`;
 
   root.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { ui.tab = b.dataset.tab; render(root, { state: s }); });
-  const acc = root.querySelector('#l-acc');
-  if (acc) acc.onchange = e => { ui.accountId = e.target.value; render(root, { state: s }); };
-  const sku = root.querySelector('#l-sku');
-  if (sku) sku.onchange = e => { ui.skuId = e.target.value; render(root, { state: s }); };
 }

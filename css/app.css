@@ -132,6 +132,7 @@ input[type=checkbox] { accent-color: var(--tiffany-600); }
 .pill.blue { background: var(--blue-50); color: var(--blue); }
 .pill.tiffany { background: var(--tiffany-50); color: var(--tiffany-600); }
 .stale, .stale td { color: var(--stale); }
+.variant-row { background: var(--blue-50); }
 .delta { font-size: 12px; font-weight: 650; padding: 1px 6px; border-radius: 5px; white-space: nowrap; }
 .delta.up { background: var(--blue-50); color: var(--blue); }
 .delta.down { background: var(--amber-bg); color: var(--amber); }
@@ -358,13 +359,16 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .prof-f input[readonly] { background: #EEF1F5; color: var(--muted); }
 
 /* ---- Grid column groups and read-only client terms ---- */
-.grid-table tr.grp th { text-align: center; font-size: 12px; letter-spacing: .02em; }
+.grid-table tr.grp th { text-align: center; font-size: 12px; letter-spacing: .02em; background: var(--surface); }
 .grid-table .grp-prem { background: var(--tiffany-50); color: var(--tiffany-600); border-bottom: 2px solid var(--tiffany); }
 .grid-table .grp-disc { background: var(--amber-bg); color: var(--amber); border-bottom: 2px solid #E0A33A; }
 .grid-table td.grp-prem-sub, .grid-table th.grp-prem-sub { background: var(--tiffany-50); }
 .grid-table tbody tr:hover > td.grp-prem-sub { background: #D9F2F0; }
 .prof-head { margin-bottom: 6px; }
 .prof-f .prof-v { display: block; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* ---- Client pricing filter ---- */
+.cg-filter-menu { width: 340px; }
 
 /* ---- Fatal load error bar ---- */
 .fatal { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 16px; background: var(--red-bg); color: var(--red); border-bottom: 2px solid var(--red); position: sticky; top: 0; z-index: 100; }
@@ -383,12 +387,15 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .cellfields input[type=number] { -moz-appearance: textfield; }
 .cellfields input[type=number]::-webkit-outer-spin-button,
 .cellfields input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.grid-table thead th { font-size: 11.5px; line-height: 1.2; }
+.grid-table thead { position: sticky; top: var(--topbar-h); z-index: 3; }
+.grid-table thead th { font-size: 11.5px; line-height: 1.2; background: var(--surface); }
 .grid-table .cell-price { font-size: 13.5px; }
 .grid-table .fact { font-size: 10.5px; }
 .grid-table .fact b { font-size: 11px; }
 .grid-table .small { font-size: 10.5px; }
 .grid-table .exp { font-size: 12.5px; }
+.client-info { font-size: 11px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+.client-info b { font-weight: 600; color: var(--navy); font-variant-numeric: tabular-nums; }
 .cellfields { display: flex; flex-direction: column; gap: 3px; }
 .cellfields .pair { display: flex; gap: 3px; }
 .cellfields .pair input { min-width: 0; }
@@ -426,3 +433,24 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .stamp-sm .stamp-t b { font-size: 9px; letter-spacing: .06em; }
 .stamp-sm .stamp-t span { font-size: 11px; }
 .board-head .stamp-lg { box-shadow: 0 0 0 4px #fff, 0 0 0 6px var(--tiffany-50); }
+
+/* ---- Competitor Price Watch: compact form ---- */
+.cpw-form { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow); }
+.cpw-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.cpw-f { flex: 1 1 140px; min-width: 0; margin-bottom: 0; }
+.cpw-f > span { font-size: 11.5px; margin-bottom: 2px; }
+.cpw-f input, .cpw-f select { min-height: 36px; padding: 5px 8px; font-size: 13px; }
+.cpw-f-sm { min-height: 34px !important; padding: 4px 8px !important; font-size: 12.5px !important; }
+.cpw-zone { padding: 2px 0 4px; }
+.cpw-photo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 8px; }
+.cpw-photo input[type=file] { font-size: 12.5px; min-height: 34px; }
+.cpw-photo .toggle { min-height: 34px; }
+.cpw-form .primary { width: 100%; margin-top: 4px; min-height: 40px; }
+
+/* ---- Competitors Board: surveyor stamps ---- */
+.comp-stamp { font-size: 11px; color: var(--muted); line-height: 1.3; margin-top: 4px; }
+.comp-stamp b { font-weight: 600; color: var(--navy); }
+.comp-decision { min-height: 32px; padding: 4px 7px; font-size: 12.5px; width: 100%; border-radius: 6px; }
+.comp-masagana { font-weight: 700; font-size: 15px; color: var(--navy); }
+table.matrix .decision-col { background: var(--tiffany-50); border-right: 2px solid var(--tiffany); }
+table.matrix thead .decision-col { background: var(--tiffany-50); }

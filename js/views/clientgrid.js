@@ -4,13 +4,13 @@
 
 import * as store from '../store.js';
 import { fmt, fmtKg, toCentavos, toInput } from '../money.js';
-import { esc, toast } from '../ui.js';
+import { esc, toast, preserveFocus } from '../ui.js';
 import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel } from '../pricing.js';
 import { derivePremiumPerKg } from '../engine.js';
 import { FIELDS, labelFor, displayValue } from '../clientterms.js';
 import * as wizard from './priceroom-wizard.js';
 
-const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {} };
+const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0 };
 
 // Two column groups, each with its own subcolumns. Every cell takes as many rows as the client needs.
 const PREMIUM_COLS = [
@@ -29,6 +29,9 @@ const COLS = [...PREMIUM_COLS, ...DISCOUNT_COLS];
 export function setChannel(id) {
   ui.channelId = id;
 }
+
+export function isFilterOpen() { return ui.filterOpen; }
+export function closeFilter() { ui.filterOpen = false; }
 
 // ---- Editing state: drafts start from what is saved, so fields open pre-filled ----
 
@@ -83,18 +86,39 @@ export function pendingEdits() {
 // ---- Render ----
 
 export function html(s) {
-  const clients = s.accounts.filter(a => a.channelId === ui.channelId);
+  const allClients = s.accounts.filter(a => a.channelId === ui.channelId);
+  if (ui.selectedIds === null) ui.selectedIds = new Set(allClients.map(a => a.id));
+  const clients = allClients.filter(a => ui.selectedIds.has(a.id));
   const cb = currentCostBasis(s);
   const edits = pendingEdits();
 
   const chips = s.channels.map(c => `<button type="button" class="chip-btn ${c.id === ui.channelId ? 'on' : ''}" data-cg-ch="${esc(c.id)}">${esc(c.label)}</button>`).join('');
 
+  const q = ui.filterQuery.toLowerCase();
+  const filtered = q ? allClients.filter(a => a.name.toLowerCase().includes(q) || (a.zone || '').toLowerCase().includes(q)) : allClients;
+  const allChecked = allClients.length === clients.length;
+
+  const filterHtml = `<div class="multi" id="cg-multi" style="margin-top:8px">
+      <button type="button" id="cg-toggle" class="multi-btn" aria-haspopup="listbox" aria-expanded="${ui.filterOpen}">
+        <span>Clients · <b>${clients.length}</b> of ${allClients.length} selected</span><span aria-hidden="true">▾</span></button>
+      ${ui.filterOpen ? `<div class="multi-menu cg-filter-menu">
+        <input id="cg-search" type="search" autocomplete="off" placeholder="Search client or zone" aria-label="Search clients" value="${esc(ui.filterQuery)}">
+        <div class="multi-actions small"><label class="check"><input type="checkbox" id="cg-all" ${allChecked ? 'checked' : ''}> All (${allClients.length})</label>
+          <span class="muted">${clients.length} shown</span></div>
+        <div id="cg-list" class="multi-list" role="listbox" aria-multiselectable="true" aria-label="Clients">${filtered.map(a =>
+          `<label class="multi-opt"><input type="checkbox" data-cg-sel="${esc(a.id)}" ${ui.selectedIds.has(a.id) ? 'checked' : ''}>
+            <span class="grow">${esc(a.name)}</span><span class="small muted">${esc(a.zone ?? '—')}</span></label>`).join('')}
+        </div>
+      </div>` : ''}
+    </div>`;
+
   return `<div class="picker">
       <div class="row"><div class="chips grow" style="margin:0">${chips}</div>
         <span class="small muted">${clients.length} client${clients.length === 1 ? '' : 's'}${edits ? ` · ${edits} unsaved` : ''}</span>
         <button type="button" id="cg-save" class="primary" ${edits ? '' : 'disabled'}>Save all changes</button></div>
+      ${filterHtml}
     </div>
-    ${clients.length ? `<div class="table-wrap"><table class="matrix grid-table">
+    ${clients.length ? `<table class="matrix grid-table">
       <thead>
       <tr class="grp">
         <th rowspan="2" class="col-client">Client</th>
@@ -109,7 +133,7 @@ export function html(s) {
         ${DISCOUNT_COLS.map(c => `<th class="col-line">${esc(c.title)}</th>`).join('')}
       </tr></thead>
       <tbody>${clients.map(a => clientRow(s, a, cb)).join('')}</tbody>
-    </table></div>` : '<p class="muted">No clients on this channel yet.</p>'}`;
+    </table>` : '<p class="muted">No clients match the filter.</p>'}`;
 }
 
 function clientRow(s, a, cb) {
@@ -125,10 +149,16 @@ function clientRow(s, a, cb) {
       <div class="fact"><b>Margin ${fmt(margin + buffer)}</b><span>Margin + buffer</span></div>`;
   } else if (p?.error) price = `<span class="muted small">${esc(p.error)}</span>`;
 
+  const volGen = a.volumeGeneratedKg != null ? Number(a.volumeGeneratedKg).toLocaleString('en-PH') + ' kg' : '—';
+  const reqVol = a.reqVolPerMonthKg != null ? Number(a.reqVolPerMonthKg).toLocaleString('en-PH') + ' kg' : '—';
+
   return `<tr>
       <th scope="row">
         <button type="button" class="link exp" data-cg-exp="${esc(a.id)}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(a.name)}</button>
-        <div class="small muted">${esc(a.zone ?? '—')} · ${esc(a.status)}</div>
+        <div class="client-info">
+          <div>Gen vol <b>${esc(volGen)}</b> · Req/mo <b>${esc(reqVol)}</b></div>
+          <div>${esc(a.status)} · ${esc(a.zone ?? '—')}</div>
+        </div>
       </th>
       <td class="num">${price}</td>
       <td class="num grp-prem-sub" id="tp-${esc(a.id)}">${totalCell(s, a)}</td>
@@ -177,9 +207,10 @@ function cellRows(a, col) {
 }
 
 // View only, and kept tight. These are maintained in Configuration → Clients.
+const INLINE_KEYS = new Set(['volumeGeneratedKg', 'reqVolPerMonthKg']);
 function profileBox(a) {
   return `<div class="terms-line">
-    ${FIELDS.map(f => `<span class="term"><i>${esc(labelFor(f))}</i>${esc(displayValue(a, f))}</span>`).join('')}
+    ${FIELDS.filter(f => !INLINE_KEYS.has(f.key)).map(f => `<span class="term"><i>${esc(labelFor(f))}</i>${esc(displayValue(a, f))}</span>`).join('')}
     <a class="term-edit small" href="#/config">Edit terms</a>
   </div>`;
 }
@@ -214,8 +245,50 @@ async function saveAll(rerender) {
 // ---- Behaviour ----
 
 export function bind(root, rerender) {
-  root.querySelectorAll('[data-cg-ch]').forEach(b => b.onclick = () => { ui.channelId = b.dataset.cgCh; rerender(); });
+  root.querySelectorAll('[data-cg-ch]').forEach(b => b.onclick = () => { ui.channelId = b.dataset.cgCh; ui.selectedIds = null; ui.filterQuery = ''; ui.filterOpen = false; rerender(); });
   root.querySelectorAll('[data-cg-exp]').forEach(b => b.onclick = () => { const id = b.dataset.cgExp; ui.expanded[id] = !ui.expanded[id]; rerender(); });
+
+  const toggle = root.querySelector('#cg-toggle');
+  if (toggle) toggle.onclick = () => {
+    ui.filterOpen = !ui.filterOpen;
+    ui.filterScroll = 0;
+    rerender();
+    if (ui.filterOpen) document.getElementById('cg-search')?.focus();
+  };
+
+  const bindFilterOpts = () => root.querySelectorAll('[data-cg-sel]').forEach(cb => cb.onchange = () => {
+    ui.filterScroll = document.getElementById('cg-list')?.scrollTop ?? 0;
+    const id = cb.dataset.cgSel;
+    if (cb.checked) ui.selectedIds.add(id); else ui.selectedIds.delete(id);
+    rerender();
+  });
+  bindFilterOpts();
+  const list = root.querySelector('#cg-list');
+  if (list) list.scrollTop = ui.filterScroll;
+
+  const search = root.querySelector('#cg-search');
+  if (search) search.oninput = () => {
+    ui.filterQuery = search.value;
+    ui.filterScroll = 0;
+    const s = store.get();
+    const q = ui.filterQuery.toLowerCase();
+    const allClients = s.accounts.filter(a => a.channelId === ui.channelId);
+    const filtered = q ? allClients.filter(a => a.name.toLowerCase().includes(q) || (a.zone || '').toLowerCase().includes(q)) : allClients;
+    const listEl = root.querySelector('#cg-list');
+    if (listEl) {
+      listEl.innerHTML = filtered.map(a =>
+        `<label class="multi-opt"><input type="checkbox" data-cg-sel="${esc(a.id)}" ${ui.selectedIds.has(a.id) ? 'checked' : ''}>
+          <span class="grow">${esc(a.name)}</span><span class="small muted">${esc(a.zone ?? '—')}</span></label>`).join('');
+      listEl.scrollTop = 0;
+      bindFilterOpts();
+    }
+  };
+  const allCb = root.querySelector('#cg-all');
+  if (allCb) allCb.onchange = () => {
+    const all = store.get().accounts.filter(a => a.channelId === ui.channelId);
+    ui.selectedIds = allCb.checked ? new Set(all.map(a => a.id)) : new Set();
+    rerender();
+  };
   root.querySelectorAll('[data-cg]').forEach(el => {
     const [accId, code, i, field] = el.dataset.cg.split('|');
     const a = byId(store.get().accounts, accId);

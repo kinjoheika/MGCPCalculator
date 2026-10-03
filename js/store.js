@@ -7,7 +7,7 @@ const USER_KEY = 'mgc_pricing_v1_user';
 
 export const ACTIONS = [
   'DRAFT', 'SIMULATE', 'APPROVE', 'PUBLISH', 'QUOTE_SENT', 'REQUEST_LOWER',
-  'REQUEST_DECIDED', 'READING_CAPTURED', 'BOARD_ACKNOWLEDGED', 'ACCOUNTS_IMPORTED', 'CONFIG_CHANGED', 'PRICE_LIST_ISSUED', 'CLIENT_TERMS_SAVED',
+  'REQUEST_DECIDED', 'READING_CAPTURED', 'BOARD_ACKNOWLEDGED', 'ACCOUNTS_IMPORTED', 'CONFIG_CHANGED', 'PRICE_LIST_ISSUED', 'CLIENT_TERMS_SAVED', 'PL_EMAIL_SENT',
 ];
 
 let state = null;
@@ -67,6 +67,7 @@ export async function init() {
     // Bring saved sessions up to date with channels added to the seed later.
     for (const c of seed.channels) if (!state.channels.some(x => x.id === c.id)) state.channels.push(clone(c));
     state.buffers ||= [];
+    state.plEmailLog ||= [];
     for (const b of seed.buffers || []) if (!state.buffers.some(x => x.channelId === b.channelId)) state.buffers.push(clone(b));
   } else {
     state = clone(seed);

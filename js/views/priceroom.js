@@ -1,4 +1,4 @@
-// Price room — manager. Comparison boards on the left; MPL calculator and exceptions in a sliding panel
+// Price room — manager. Comparison boards on the left; MPL calculator and approvals in a sliding panel
 // on the right. The panel's proposal is cumulative: every change added there is previewed on all boards.
 
 import * as store from '../store.js';
@@ -8,16 +8,17 @@ import { derivePremiumPerKg } from '../engine.js';
 import { parse } from '../router.js';
 import {
   byId, currentCostBasis, currentPublication, daysSince, exceptions, priceFor, marginRule, bufferFor, applyChanges,
-  skuLabel, channelLabel, userName, fmtDate, fmtDateTime, userChannels, isStaleReading, boardIsStale,
+  skuLabel, channelLabel, userName, fmtDate, fmtDateTime, userChannels, isStaleReading, boardIsStale, allBoardPrices, newestReading,
 } from '../pricing.js';
 import * as wizard from './priceroom-wizard.js';
 import * as grid from './clientgrid.js';
 
 const DAY = 86400000;
 const MAX = 5;
-const TABS = [['clients', 'Clients board'], ['products', 'Products board'], ['channels', 'Channels board'], ['grid', 'Client pricing'], ['notices', 'PL notices']];
+const TABS = [['competitors', 'Competitors board'], ['clients', 'Clients board'], ['products', 'Products board'], ['channels', 'Channels board'], ['grid', 'Client Pricing'], ['history', 'Price History'], ['notices', 'PL Notices']];
 const ui = {
-  tab: 'clients', open: true, panel: 'exceptions', wide: false, animate: false, lastSim: null, scrollTop: null, excAll: false,
+  tab: 'competitors', open: true, panel: 'exceptions', wide: false, animate: false, lastSim: null, scrollTop: null, excAll: false,
+  compDecisions: {},
   clients: ['acc_alta', 'acc_kja', 'acc_silca'], clientQuery: '', clientSku: '', clientOpen: false, clientScroll: 0,
   products: ['11KG_MGAS', '50KG_A', '22KG_A'], prodOpen: false, channels: ['DEALER', 'COMMERCIAL', 'END_USER'],
   reasons: {}, errors: {},
@@ -61,7 +62,7 @@ export function render(root, ctx) {
     ${boardIsStale(s) ? '<div><span>Price lists</span><b class="pos">Out of date</b></div>' : ''}
   </div>`;
 
-  const bodies = { clients: clientsBoard, products: productsBoard, channels: channelsBoard, grid: st => grid.html(st), notices: noticesTab };
+  const bodies = { competitors: competitorsBoard, clients: clientsBoard, products: productsBoard, channels: channelsBoard, grid: st => grid.html(st), history: priceHistoryTab, notices: noticesTab };
   const shift = ui.open && !ui.wide && !ui.animate;
 
   root.innerHTML = `<div class="pr ${shift ? 'pr-shift' : ''}"><section class="page wide">
@@ -73,18 +74,18 @@ export function render(root, ctx) {
       <div class="tabs">${TABS.map(([k, l]) => `<button type="button" data-tab="${k}" class="${ui.tab === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</div>
       <div id="pr-main">${bodies[ui.tab](s, proposed)}</div>
     </section></div>
-    <aside id="pr-aside" class="drawer ${ui.open && !ui.animate ? 'open' : ''} ${ui.wide ? 'wide' : ''}" aria-label="MPL calculator and exceptions" ${ui.open ? '' : 'inert'}>
+    <aside id="pr-aside" class="drawer ${ui.open && !ui.animate ? 'open' : ''} ${ui.wide ? 'wide' : ''}" aria-label="MPL calculator and approvals" ${ui.open ? '' : 'inert'}>
       <div class="drawer-head">
         <div class="drawer-tabs">
           <button type="button" data-panel="mpl" class="${ui.panel === 'mpl' ? 'on' : ''}">MPL calculator${changes.length ? ` <span class="count">${changes.length}</span>` : ''}</button>
-          <button type="button" data-panel="exceptions" class="${ui.panel === 'exceptions' ? 'on' : ''}">Exceptions <span class="count">${exc.length}</span></button>
+          <button type="button" data-panel="exceptions" class="${ui.panel === 'exceptions' ? 'on' : ''}">Approvals <span class="count">${exc.length}</span></button>
         </div>
         <button type="button" id="pr-wide" class="icon" aria-label="${ui.wide ? 'Narrow the panel' : 'Widen the panel'}" title="${ui.wide ? 'Narrow' : 'Widen'}">${ui.wide ? '⇥' : '⇤'}</button>
         <button type="button" id="pr-close" class="icon" aria-label="Close panel" title="Close">✕</button>
       </div>
       <div class="drawer-body" id="pr-drawer">${ui.panel === 'mpl' ? wizard.html(s, user) : exceptionsPanel(s, exc)}</div>
     </aside>
-    ${ui.open ? '' : `<button type="button" id="pr-handle" class="drawer-handle">MPL calculator · ${exc.length} exceptions</button>`}`;
+    ${ui.open ? '' : `<button type="button" id="pr-handle" class="drawer-handle">MPL calculator · ${exc.length} approvals</button>`}`;
 
   const aside = root.querySelector('#pr-aside');
   root.querySelector('#pr-drawer').scrollTop = prevScroll;
@@ -133,7 +134,7 @@ export function render(root, ctx) {
   });
 }
 
-// ---------------- Exceptions (panel) ----------------
+// ---------------- Approvals (panel) ----------------
 
 function label(kind) {
   return { below_floor: 'Below floor', contract: 'Contract', trmv: 'TRMV pace', no_reading: 'No reading', competitor_below: 'Competitor lower', request: 'Request' }[kind] || kind;
@@ -147,7 +148,7 @@ function exceptionsPanel(s, rows) {
   const sorted = [...rows].sort((a, b) => (order[a.severity] ?? 2) - (order[b.severity] ?? 2));
   const shown = ui.excAll ? sorted : sorted.slice(0, 25);
   const counts = rows.reduce((m, r) => ({ ...m, [r.kind]: (m[r.kind] || 0) + 1 }), {});
-  return `<h2 style="margin-top:0">Exceptions <span class="muted">(${rows.length})</span></h2>
+  return `<h2 style="margin-top:0">Approvals <span class="muted">(${rows.length})</span></h2>
     ${rows.length ? `<div class="row small" style="gap:6px;margin-bottom:8px">${Object.entries(counts).map(([k, n]) => `<span class="pill grey">${esc(label(k))} ${n}</span>`).join('')}</div>` : ''}
     ${shown.map(r => `<div class="exc"><span class="pill ${r.severity}">${esc(label(r.kind))}</span>
       <div><div class="subject">${esc(r.subject)}</div><div class="small">${esc(r.text)}</div>
@@ -218,6 +219,67 @@ function bindExceptions(root, rerender) {
     setQuery('tab', 'clients');
     rerender();
   });
+}
+
+// ---------------- Competitors board ----------------
+
+function brandName(b) { return typeof b === 'string' ? b : b.name; }
+function brandZone(b) { return typeof b === 'string' ? '' : (b.zone || ''); }
+
+function competitorsBoard(s) {
+  const brands = (s.trackedBrands || []).map(b => ({ name: brandName(b), zone: brandZone(b) }));
+  if (!brands.length) return '<p class="muted">No competitor brands configured. Add them in Configuration → Competitors.</p>';
+
+  const skus = s.skus.filter(k => k.active && !k.hasVariants);
+  const productIds = [...new Set(s.competitorReadings.map(r => r.skuId))].filter(id => skus.some(k => k.id === id));
+  if (!productIds.length) return '<p class="muted">No competitor readings yet. Readings are captured in Competitor Price Watch.</p>';
+
+  const products = productIds.map(id => byId(s.skus, id)).filter(Boolean);
+  const now = new Date();
+  const defaultChannel = s.channels[0]?.id;
+
+  return `<div class="card" style="padding:0"><div class="table-wrap"><table class="matrix">
+    <thead><tr>
+      <th>Product</th>
+      <th class="num decision-col"><div class="mh">Price decision</div><div class="small muted">For MPL Calculator</div></th>
+      <th class="num"><div class="mh">Masagana</div><div class="small muted">Current price</div></th>
+      ${brands.map(b => {
+        const latest = s.competitorReadings
+          .filter(r => r.brand === b.name)
+          .sort((a, c) => (a.capturedAt < c.capturedAt ? 1 : -1))[0];
+        return `<th class="num"><div class="mh">${esc(b.name)}</div>
+          <div class="small muted">${esc(b.zone || '—')}</div>
+          ${latest ? `<div class="comp-stamp">
+            <b>${esc(userName(s, latest.capturedBy))}</b><br>
+            ${fmtDate(latest.capturedAt)}<br>
+            ${new Date(latest.capturedAt).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
+          </div>` : '<div class="comp-stamp muted">No readings</div>'}
+        </th>`;
+      }).join('')}
+    </tr></thead>
+    <tbody>${products.map(sku => {
+      const masaganaPrice = defaultChannel && marginRule(s, defaultChannel, sku.id)
+        ? priceFor(s, { channelId: defaultChannel, skuId: sku.id }).result?.grossPerCyl : null;
+      const decKey = sku.id;
+      const decVal = ui.compDecisions[decKey] ?? '';
+      return `<tr>
+        <th scope="row"><div class="mh">${esc(sku.label)}</div><div class="small muted">${sku.contentKg} kg</div></th>
+        <td class="num decision-col"><input type="text" inputmode="decimal" class="comp-decision" data-comp-dec="${esc(sku.id)}" placeholder="—" value="${esc(decVal)}"></td>
+        <td class="num">${masaganaPrice ? `<span class="comp-masagana">${fmt(masaganaPrice)}</span>` : '<span class="muted">—</span>'}</td>
+        ${brands.map(b => {
+          const r = newestReading(s, { zone: b.zone, skuId: sku.id, brand: b.name });
+          if (!r) return '<td class="num muted">—</td>';
+          const stale = isStaleReading(s, r, now);
+          const diff = masaganaPrice && r.pricePerCyl !== masaganaPrice
+            ? `<div class="small ${r.pricePerCyl < masaganaPrice ? 'neg' : 'pos'}">${r.pricePerCyl < masaganaPrice ? '−' : '+'}${fmt(Math.abs(r.pricePerCyl - masaganaPrice))}</div>` : '';
+          return `<td class="num ${stale ? 'stale' : ''}">
+            <div class="cell-price">${fmt(r.pricePerCyl)}</div>
+            ${diff}
+            <div class="comp-stamp">${esc(userName(s, r.capturedBy))}<br>${fmtDate(r.capturedAt)} ${new Date(r.capturedAt).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}</div>
+          </td>`;
+        }).join('')}
+      </tr>`;
+    }).join('')}</tbody></table></div></div>`;
 }
 
 // ---------------- Clients board ----------------
@@ -375,18 +437,20 @@ function productPicker(s) {
 let closeProductMenu = null;
 // Close the product or client dropdown on an outside click or Escape.
 document.addEventListener('click', e => {
-  if (!ui.prodOpen && !ui.clientOpen) return;
-  const onPage = document.querySelector('#pb-multi, #cb-multi');
-  if (!onPage) { ui.prodOpen = ui.clientOpen = false; return; }
+  if (!ui.prodOpen && !ui.clientOpen && !grid.isFilterOpen()) return;
+  const onPage = document.querySelector('#pb-multi, #cb-multi, #cg-multi');
+  if (!onPage) { ui.prodOpen = ui.clientOpen = false; grid.closeFilter(); return; }
   if (!e.target.isConnected) return;
   let changed = false;
   if (ui.prodOpen && !e.target.closest('#pb-multi')) { ui.prodOpen = false; changed = true; }
   if (ui.clientOpen && !e.target.closest('#cb-multi')) { ui.clientOpen = false; changed = true; }
+  if (grid.isFilterOpen() && !e.target.closest('#cg-multi')) { grid.closeFilter(); changed = true; }
   if (changed) closeProductMenu?.();
 });
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape' || !(ui.prodOpen || ui.clientOpen) || !document.querySelector('#pb-multi, #cb-multi')) return;
+  if (e.key !== 'Escape' || !(ui.prodOpen || ui.clientOpen || grid.isFilterOpen()) || !document.querySelector('#pb-multi, #cb-multi, #cg-multi')) return;
   ui.prodOpen = ui.clientOpen = false;
+  grid.closeFilter();
   closeProductMenu?.();
 });
 
@@ -413,6 +477,34 @@ function channelsBoard(s, proposed) {
       ${cols.map(c => cell(s, proposed, c.id, k.id)).join('')}</tr>`).join('')}</tbody></table></div></div>`;
 }
 
+// ---------------- Price History ----------------
+
+function priceHistoryTab(s) {
+  const versions = [...s.publications].sort((a, b) => b.version - a.version);
+  if (!versions.length) return '<p class="muted">No published versions yet.</p>';
+  const skus = s.skus.filter(k => k.active && !k.hasVariants);
+
+  return `<div class="card">
+    <h2>Approved price versions</h2>
+    <p class="small muted">All published price list versions with prices per channel and product, most recent first.</p>
+    ${versions.map(pub => {
+      const prices = pub.prices ?? (pub.version === currentPublication(s).version ? allBoardPrices(s) : null);
+      if (!prices) return '';
+      const ev = s.events.find(e => e.action === 'APPROVE' && e.proposalId && s.events.some(p => p.proposalId === e.proposalId && p.action === 'PUBLISH' && p.after?.version === pub.version));
+      return `<details class="card" style="margin-bottom:10px" ${pub.version === currentPublication(s).version ? 'open' : ''}>
+        <summary><b>v${pub.version}</b> <span class="muted small" style="margin-left:8px">Published ${fmtDate(pub.publishedAt)}${ev ? ` · Approved by ${esc(userName(s, ev.verifiedBy))}` : ''}</span>
+        ${pub.version === currentPublication(s).version ? '<span class="pill green" style="margin-left:8px">Current</span>' : ''}</summary>
+        <div class="table-wrap" style="margin-top:8px"><table class="matrix">
+          <thead><tr><th>Product</th>${s.channels.map(c => `<th class="num">${esc(c.label)}</th>`).join('')}</tr></thead>
+          <tbody>${skus.map(sku => {
+            return `<tr><td>${esc(sku.label)}</td>${s.channels.map(c => {
+              const r = prices[c.id]?.find(x => x.skuId === sku.id);
+              return `<td class="num">${r ? fmt(r.grossPerCyl) : '<span class="muted">—</span>'}</td>`;
+            }).join('')}</tr>`;
+          }).join('')}</tbody></table></div></details>`;
+    }).join('')}</div>`;
+}
+
 // ---------------- PL notices ----------------
 
 function noticesTab(s) {
@@ -433,6 +525,9 @@ function noticesTab(s) {
           : '<span class="badge amber">Not seen</span><div class="ack-date">&nbsp;</div>'}</td>`;
       }).join('')}</tr>`;
   }).join('');
+  const emailLog = s.plEmailLog || [];
+  const emailRows = emailLog.filter(e => e.version === pub.version).sort((a, b) => (a.sentAt < b.sentAt ? 1 : -1));
+
   return `<div class="card">
     <div class="notice-head">
       <h2>Notice acknowledgement</h2>
@@ -441,7 +536,18 @@ function noticesTab(s) {
     <div class="legend"><span class="lg green">Green: user acknowledged</span><span class="lg amber">Amber: not seen</span><span class="muted">· not on this user's price lists</span></div>
     <div class="table-wrap"><table class="matrix">
       <thead><tr><th>User</th>${lists.map(c => `<th class="center"><span class="pl-badge">${esc(c.label)}</span><div class="small muted">${esc(c.audience)}</div></th>`).join('')}</tr></thead>
-      <tbody>${body}</tbody></table></div></div>`;
+      <tbody>${body}</tbody></table></div></div>
+  <div class="card" style="margin-top:16px">
+    <h2>Email notifications — v${pub.version}</h2>
+    ${emailRows.length ? `<div class="table-wrap"><table>
+      <thead><tr><th>Client</th><th>Email</th><th>Sent</th><th>Status</th></tr></thead>
+      <tbody>${emailRows.map(e => {
+        const acc = byId(s.accounts, e.accountId);
+        return `<tr><td>${esc(acc?.name ?? e.accountId ?? 'Walk-in')}</td><td>${esc(e.email)}</td>
+          <td class="small">${fmtDateTime(e.sentAt)}</td>
+          <td><span class="pill ${e.status === 'sent' ? 'green' : e.status === 'received' ? 'blue' : 'amber'}">${esc(e.status)}</span></td></tr>`;
+      }).join('')}</tbody></table></div>` : '<p class="muted">No emails sent for this version yet. Emails are sent from the Quote Desk when issuing price lists.</p>'}
+  </div>`;
 }
 
 // ---------------- Board behaviour ----------------
@@ -480,4 +586,5 @@ function bindMain(root, rerender) {
   root.querySelectorAll('[data-prod]').forEach(b => b.onchange = () => { ui.products = toggle(ui.products, b.dataset.prod); rerender(); });
   root.querySelectorAll('[data-unprod]').forEach(b => b.onclick = () => { ui.products = ui.products.filter(x => x !== b.dataset.unprod); rerender(); });
   root.querySelectorAll('[data-chan]').forEach(b => b.onclick = () => { ui.channels = toggle(ui.channels, b.dataset.chan); rerender(); });
+  root.querySelectorAll('[data-comp-dec]').forEach(inp => inp.oninput = e => { ui.compDecisions[inp.dataset.compDec] = e.target.value; });
 }
