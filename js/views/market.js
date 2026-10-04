@@ -41,7 +41,7 @@ function view({ state: s, user }) {
 
   const recent = [...s.competitorReadings].sort((a, b) => (a.capturedAt < b.capturedAt ? 1 : -1)).slice(0, 12);
   const brandList = brands(s);
-  const skuList = s.skus.filter(k => k.active && !k.hasVariants);
+  const skuList = s.skus.filter(k => k.active);
   const selectedZone = ui.brand && ui.brand !== '__other' ? zoneForBrand(s, ui.brand) : '';
 
   return `<section class="page narrow">

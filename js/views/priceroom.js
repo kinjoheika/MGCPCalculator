@@ -230,7 +230,7 @@ function competitorsBoard(s) {
   const channelId = byId(s.channels, ui.compChannel) ? ui.compChannel : s.channels[0]?.id;
   const channel = byId(s.channels, channelId);
   const now = new Date();
-  const skus = s.skus.filter(k => k.active && !k.hasVariants);
+  const skus = s.skus.filter(k => k.active);
 
   // Everything on this board comes straight from Price Watch readings. A reading with no channel counts for every channel.
   const forChannel = s.competitorReadings.filter(r => skus.some(k => k.id === r.skuId) && (!r.channelId || r.channelId === channelId));
