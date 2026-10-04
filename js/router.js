@@ -28,7 +28,7 @@ export function canAccess(s, user, route) {
     case 'priceroom': return role === 'manager' || role === 'admin';
     case 'log': return role === 'admin';
     case 'config': return role === 'admin';
-    case 'market': return role === 'messenger' || role === 'seller';
+    case 'market': return true;
     case 'board': {
       if (role === 'messenger') return false;
       if (!route.args[0]) return true; // board index lists only reachable boards
@@ -42,7 +42,7 @@ export function navFor(s, user) {
   const items = [];
   if (user.role === 'seller') items.push(['#/quote', 'Quote desk']);
   if (user.role === 'manager' || user.role === 'admin') items.push(['#/priceroom', 'Price room']);
-  if (user.role === 'messenger' || user.role === 'seller') items.push(['#/market', 'Competitor price watch']);
+  items.push(['#/market', 'Price Watch']);
   if (user.role !== 'messenger') items.push(['#/board', 'Price lists']);
   if (user.role === 'admin') items.push(['#/log', 'Log'], ['#/config', 'Configuration']);
   return items;

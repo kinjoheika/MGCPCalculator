@@ -11,7 +11,7 @@ import { FIELDS, labelFor, inputValue, displayValue, parseValue, usableKg } from
 const ROLES = ['seller', 'manager', 'admin', 'messenger', 'viewer'];
 const ui = { tab: 'users', users: null, base: null, userErr: '', preview: null, mode: 'merge', fileName: '', clientQuery: '', editClient: null, terms: {}, basic: {}, clientErr: '', channels: null, chanBase: null, chanErr: '',
   skus: null, skuBase: null, skuErr: '', zones: null, zoneBase: null, zoneErr: '',
-  brands: null, brandBase: null, brandErr: '' };
+  brands: null, brandBase: null, brandErr: '', inl: {}, inlErr: '' };
 
 export function render(root, ctx) {
   const { state: s } = ctx;
@@ -473,19 +473,67 @@ function clientsHtml(s) {
 
   <div class="card" style="margin-top:16px">
     <div class="card-head"><h2>Clients (${s.accounts.length})</h2>
-      <input id="c-q" type="search" placeholder="Filter by name" value="${esc(ui.clientQuery)}" style="max-width:280px" aria-label="Filter clients"></div>
+      <div class="row"><input id="c-q" type="search" placeholder="Filter by name" value="${esc(ui.clientQuery)}" style="max-width:240px" aria-label="Filter clients">
+        <span class="small muted">${inlCount() ? `${inlCount()} client${inlCount() === 1 ? '' : 's'} edited` : 'Edit any cell, then save'}</span>
+        <button type="button" id="ci-discard" class="small" ${inlCount() ? '' : 'disabled'}>Discard changes</button>
+        <button type="button" id="ci-save" class="primary small" ${inlCount() ? '' : 'disabled'}>Save changes</button></div></div>
+    ${ui.inlErr ? `<div class="banner red" role="alert">${esc(ui.inlErr)}</div>` : ''}
+    <datalist id="cfg-zones-i">${s.zones.map(z => `<option value="${esc(z)}"></option>`).join('')}</datalist>
     <div class="table-wrap"><table class="matrix">
       <thead><tr><th>Name</th><th>Channel</th><th>Status</th><th>Zone</th><th>Main product</th><th class="num">Avg monthly kg</th><th class="num">Credit days</th><th>Premiums</th><th>Discounts</th><th></th></tr></thead>
-      <tbody>${list.map(a => `<tr><td><b>${esc(a.name)}</b><div class="small muted">${esc(a.id)}</div></td>
-        <td>${esc(channelLabel(s, a.channelId))}</td>
-        <td><span class="pill ${a.status === 'Active' ? 'green' : 'grey'}">${esc(a.status)}</span>${a.needsAttention ? ' <span class="pill amber">Attention</span>' : ''}</td>
-        <td>${esc(a.zone ?? '—')}</td><td>${esc(a.primarySkuId ? skuLabel(s, a.primarySkuId) : '—')}</td>
-        <td class="num">${a.avgMonthlyVolumeKg == null ? '—' : a.avgMonthlyVolumeKg.toLocaleString('en-PH')}</td>
-        <td class="num">${a.creditTermDays ?? '—'}</td>
+      <tbody>${list.map(a => `<tr class="${ui.inl[a.id] ? 'edited' : ''}"><td style="min-width:200px"><input type="text" data-ci="${esc(a.id)}|name" value="${esc(inlVal(a, 'name'))}" aria-label="Client name"><div class="small muted">${esc(a.id)}</div></td>
+        <td><select data-ci="${esc(a.id)}|channelId" aria-label="Channel">${s.channels.map(c => `<option value="${esc(c.id)}"${c.id === inlVal(a, 'channelId') ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select></td>
+        <td><select data-ci="${esc(a.id)}|status" aria-label="Status">${['Active', 'Inactive'].map(v => `<option${v === inlVal(a, 'status') ? ' selected' : ''}>${v}</option>`).join('')}</select>${a.needsAttention ? ' <span class="pill amber">Attention</span>' : ''}</td>
+        <td><input type="text" list="cfg-zones-i" data-ci="${esc(a.id)}|zone" value="${esc(inlVal(a, 'zone'))}" aria-label="Zone" style="min-width:110px"></td>
+        <td><select data-ci="${esc(a.id)}|primarySkuId" aria-label="Main product"><option value=""></option>${s.skus.filter(k => k.active).map(k => `<option value="${esc(k.id)}"${k.id === inlVal(a, 'primarySkuId') ? ' selected' : ''}>${esc(k.label)}</option>`).join('')}</select></td>
+        <td class="num"><input type="number" min="0" step="1" data-ci="${esc(a.id)}|avgMonthlyVolumeKg" value="${esc(inlVal(a, 'avgMonthlyVolumeKg'))}" aria-label="Avg monthly kg" style="width:100px;text-align:right"></td>
+        <td class="num"><input type="number" min="0" step="1" data-ci="${esc(a.id)}|creditTermDays" value="${esc(inlVal(a, 'creditTermDays'))}" aria-label="Credit days" style="width:70px;text-align:right"></td>
         <td class="small">${esc(compOut(a.premiums, 'premiumComponents'))}</td>
         <td class="small">${esc(compOut(a.discounts, 'discountComponents'))}</td>
         <td><button type="button" class="small" data-c-edit="${esc(a.id)}">Edit</button></td></tr>`).join('') || '<tr><td colspan="10" class="muted">No clients match.</td></tr>'}
       </tbody></table></div></div>`;
+}
+
+// Inline edits in the clients table: drafts live in ui.inl until saved.
+const INLINE = [['name', 'Client name'], ['channelId', 'Channel'], ['status', 'Status'], ['zone', 'Zone'], ['primarySkuId', 'Main product'], ['avgMonthlyVolumeKg', 'Avg monthly volume'], ['creditTermDays', 'Credit term']];
+const INT_KEYS = ['avgMonthlyVolumeKg', 'creditTermDays'];
+const inlCount = () => Object.keys(ui.inl).length;
+const inlVal = (a, k) => (ui.inl[a.id]?.[k] !== undefined ? ui.inl[a.id][k] : a[k] == null ? '' : String(a[k]));
+
+async function saveInline() {
+  const s = store.get();
+  ui.inlErr = '';
+  const patches = [], notes = [];
+  for (const [id, draft] of Object.entries(ui.inl)) {
+    const a = s.accounts.find(x => x.id === id);
+    if (!a) continue;
+    const patch = {}, parts = [];
+    for (const [key, label] of INLINE) {
+      if (draft[key] === undefined) continue;
+      const raw = String(draft[key]).trim();
+      let value = raw === '' ? null : raw;
+      if (INT_KEYS.includes(key) && value != null) {
+        value = Math.round(Number(value.replace(/[,\s]/g, '')));
+        if (!Number.isFinite(value) || value < 0) { ui.inlErr = `${a.name}: ${label} must be a number of 0 or more`; return; }
+      }
+      if (key === 'name' && !value) { ui.inlErr = 'Every client needs a name'; return; }
+      if ((key === 'channelId' || key === 'status') && !value) { ui.inlErr = `${a.name}: ${label} is required`; return; }
+      if ((a[key] ?? null) === value) continue;
+      patch[key] = value;
+      parts.push(`${label} ${a[key] ?? 'none'} → ${value ?? 'none'}`);
+    }
+    if (parts.length) { patches.push({ id, patch }); notes.push(`${a.name}: ${parts.join('; ')}`); }
+  }
+  if (!patches.length) { ui.inl = {}; toast('Nothing changed'); return; }
+  await store.commit({
+    action: 'CLIENT_TERMS_SAVED', entity: 'account', entityId: patches.length === 1 ? patches[0].id : 'accounts', field: 'client',
+    before: null,
+    after: { count: patches.length, accountIds: patches.map(p => p.id), summary: notes.join(' | '), top: Object.fromEntries(patches.map(p => [p.id, p.patch])) },
+  }, d => {
+    for (const p of patches) Object.assign(d.accounts.find(x => x.id === p.id), p.patch);
+  });
+  ui.inl = {};
+  toast(`${patches.length} client${patches.length === 1 ? '' : 's'} saved`);
 }
 
 // The basic client record, edited alongside the terms below it.
@@ -767,6 +815,17 @@ function bind(root, ctx) {
   if ($('c-template')) $('c-template').onclick = () => download('mgc-clients-template.csv', new Blob(['﻿' + toCsv(templateRows())], { type: 'text/csv' }));
   if ($('c-export')) $('c-export').onclick = () => download('mgc-clients.csv', new Blob(['﻿' + toCsv(accountsToRows(store.get().accounts))], { type: 'text/csv' }));
   if ($('c-q')) $('c-q').oninput = e => { ui.clientQuery = e.target.value; rerender(); };
+  root.querySelectorAll('[data-ci]').forEach(el => {
+    const [id, key] = el.dataset.ci.split('|');
+    el.onchange = () => {
+      (ui.inl[id] ||= {})[key] = el.value;
+      const a = store.get().accounts.find(x => x.id === id);
+      if (a && INLINE.every(([k]) => ui.inl[id][k] === undefined || ui.inl[id][k] === (a[k] == null ? '' : String(a[k])))) delete ui.inl[id];
+      rerender();
+    };
+  });
+  if ($('ci-discard')) $('ci-discard').onclick = () => { ui.inl = {}; ui.inlErr = ''; rerender(); };
+  if ($('ci-save')) $('ci-save').onclick = async () => { await saveInline(); rerender(); };
 
   // Client terms
   root.querySelectorAll('[data-c-edit]').forEach(b => b.onclick = () => {

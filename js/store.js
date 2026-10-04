@@ -69,6 +69,15 @@ export async function init() {
     state.buffers ||= [];
     state.plEmailLog ||= [];
     for (const b of seed.buffers || []) if (!state.buffers.some(x => x.channelId === b.channelId)) state.buffers.push(clone(b));
+    // Mock readings added to the seed later, and channel / brand fields on ones saved before they existed.
+    for (const r of seed.competitorReadings || []) {
+      const have = state.competitorReadings.find(x => x.id === r.id);
+      if (!have) state.competitorReadings.push(clone(r));
+      else {
+        if (have.channelId === undefined && r.channelId) have.channelId = r.channelId;
+        if (have.productBrand === undefined && r.productBrand) have.productBrand = r.productBrand;
+      }
+    }
   } else {
     state = clone(seed);
   }

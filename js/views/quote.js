@@ -358,7 +358,7 @@ function requestLower(s, user, skuId) {
       <label class="field"><span>Reason</span><textarea id="rl-reason" placeholder="What the customer said, and why this matters"></textarea></label>
       <label class="field"><span>Competitor reading${zone ? ` in ${esc(zone)}` : ''}</span>
         <select id="rl-reading">${options(readings, null, { label: readingLabel, placeholder: readings.length ? 'Select a reading' : 'No readings for this product' + (zone ? ' in this zone' : '') })}</select></label>
-      ${readings.length ? '' : '<p class="small muted">Ask a messenger to capture a reading in Competitor price watch first.</p>'}
+      ${readings.length ? '' : '<p class="small muted">Ask a messenger to capture a reading in Price Watch first.</p>'}
       <div id="rl-err" class="err" role="alert"></div>
       <div class="row"><button type="button" id="rl-submit" class="primary grow">Submit request</button><button type="button" id="rl-cancel" class="grow">Cancel</button></div>
     </div>`);

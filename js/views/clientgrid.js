@@ -8,6 +8,7 @@ import { esc, toast, preserveFocus } from '../ui.js';
 import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel } from '../pricing.js';
 import { derivePremiumPerKg } from '../engine.js';
 import { FIELDS, labelFor, displayValue } from '../clientterms.js';
+import { inRange, rangeActive, rangeBar } from '../pricerange.js';
 import * as wizard from './priceroom-wizard.js';
 
 const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0 };
@@ -88,7 +89,9 @@ export function pendingEdits() {
 export function html(s) {
   const allClients = s.accounts.filter(a => a.channelId === ui.channelId);
   if (ui.selectedIds === null) ui.selectedIds = new Set(allClients.map(a => a.id));
-  const clients = allClients.filter(a => ui.selectedIds.has(a.id));
+  const selected = allClients.filter(a => ui.selectedIds.has(a.id));
+  const grossOf = a => { const p = a.primarySkuId ? priceFor(s, { accountId: a.id, skuId: a.primarySkuId }) : null; return p && !p.error ? p.result.grossPerCyl : null; };
+  const clients = rangeActive() ? selected.filter(a => inRange(grossOf(a))) : selected;
   const cb = currentCostBasis(s);
   const edits = pendingEdits();
 
@@ -96,15 +99,15 @@ export function html(s) {
 
   const q = ui.filterQuery.toLowerCase();
   const filtered = q ? allClients.filter(a => a.name.toLowerCase().includes(q) || (a.zone || '').toLowerCase().includes(q)) : allClients;
-  const allChecked = allClients.length === clients.length;
+  const allChecked = allClients.length === selected.length;
 
   const filterHtml = `<div class="multi" id="cg-multi" style="margin-top:8px">
       <button type="button" id="cg-toggle" class="multi-btn" aria-haspopup="listbox" aria-expanded="${ui.filterOpen}">
-        <span>Clients · <b>${clients.length}</b> of ${allClients.length} selected</span><span aria-hidden="true">▾</span></button>
+        <span>Clients · <b>${selected.length}</b> of ${allClients.length} selected</span><span aria-hidden="true">▾</span></button>
       ${ui.filterOpen ? `<div class="multi-menu cg-filter-menu">
         <input id="cg-search" type="search" autocomplete="off" placeholder="Search client or zone" aria-label="Search clients" value="${esc(ui.filterQuery)}">
         <div class="multi-actions small"><label class="check"><input type="checkbox" id="cg-all" ${allChecked ? 'checked' : ''}> All (${allClients.length})</label>
-          <span class="muted">${clients.length} shown</span></div>
+          <span class="muted">${selected.length} shown</span></div>
         <div id="cg-list" class="multi-list" role="listbox" aria-multiselectable="true" aria-label="Clients">${filtered.map(a =>
           `<label class="multi-opt"><input type="checkbox" data-cg-sel="${esc(a.id)}" ${ui.selectedIds.has(a.id) ? 'checked' : ''}>
             <span class="grow">${esc(a.name)}</span><span class="small muted">${esc(a.zone ?? '—')}</span></label>`).join('')}
@@ -118,6 +121,7 @@ export function html(s) {
         <button type="button" id="cg-save" class="primary" ${edits ? '' : 'disabled'}>Save all changes</button></div>
       ${filterHtml}
     </div>
+    ${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
     ${clients.length ? `<table class="matrix grid-table">
       <thead>
       <tr class="grp">
@@ -133,7 +137,7 @@ export function html(s) {
         ${DISCOUNT_COLS.map(c => `<th class="col-line">${esc(c.title)}</th>`).join('')}
       </tr></thead>
       <tbody>${clients.map(a => clientRow(s, a, cb)).join('')}</tbody>
-    </table>` : '<p class="muted">No clients match the filter.</p>'}`;
+    </table>` : '<p class="muted">No clients match the filter or price range.</p>'}`;
 }
 
 function clientRow(s, a, cb) {

@@ -10,7 +10,6 @@ import {
 } from '../pricing.js';
 
 const STEPS = [['draft', 'Draft'], ['simulate', 'Simulate'], ['review', 'Review'], ['approve', 'Approve'], ['publish', 'Publish']];
-const STAGE_NOTE = { draft: 'Objective and inputs', simulate: 'Impact, nothing written', review: 'Plain-language diff', approve: 'Four-eyes check', publish: 'Atomic release' };
 
 const fresh = () => ({
   proposalId: null, step: 'draft', objective: '', changes: [], drafterId: null,
@@ -119,7 +118,7 @@ export function html(s, user) {
   const idx = STEPS.findIndex(([k]) => k === w.step);
   const bar = `<ol class="chevrons" aria-label="Stages">${STEPS.map(([k, l], i) => {
     const cls = w.step === 'done' || i < idx ? 'done' : i === idx ? 'on' : '';
-    return `<li class="${cls}"${i === idx ? ' aria-current="step"' : ''}><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${l}</span><span class="s">${STAGE_NOTE[k]}</span></li>`;
+    return `<li class="${cls}"${i === idx ? ' aria-current="step"' : ''}><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${l}</span></li>`;
   }).join('')}</ol>`;
   const body = { draft: draftHtml, simulate: simulateHtml, review: reviewHtml, approve: approveHtml, publish: publishHtml, done: doneHtml }[w.step](s, user);
   const open = s.proposals.filter(p => p.status !== 'published').sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
@@ -130,7 +129,7 @@ export function html(s, user) {
     ${w.error ? `<div class="banner red" role="alert">${esc(w.error)}</div>` : ''}
     ${body}
     <hr class="hr">
-    <h3>Open proposals</h3>
+    <h2 class="sub-h">Open proposals</h2>
     ${open.length ? `<div class="table-wrap"><table><tbody>${open.map(p => `<tr><td><b>${esc(p.objective)}</b><br>
       <span class="small muted">${esc(p.changes.map(c => describeChange(s, c)).join('; '))}</span></td>
       <td><span class="pill ${p.status === 'approved' ? 'green' : 'amber'}">${esc(p.status[0].toUpperCase() + p.status.slice(1))}</span></td>
@@ -140,7 +139,7 @@ export function html(s, user) {
 }
 
 function changeList(s, editable) {
-  if (!w.changes.length) return '<p class="muted small">No changes yet — add one above. Boards preview every change you add.</p>';
+  if (!w.changes.length) return '<p class="muted small">No changes yet.</p>';
   return `<ul class="change-list">${w.changes.map((c, i) => `<li>
     <span class="grow"><span class="small muted">${esc(CHANGE_TYPES[c.type])}</span> · ${esc(describeChange(s, c))}</span>
     ${editable ? `<button type="button" class="icon small" data-del-change="${i}" aria-label="Remove change">✕</button>` : ''}</li>`).join('')}</ul>`;
@@ -181,7 +180,7 @@ function draftHtml(s) {
         <button type="button" id="w-add" class="primary">Add</button>
       </div>
       ${hint ? `<div class="calc-hint">${esc(hint)}</div>` : ''}
-      <div class="calc-channels"><span class="small muted">Edit every client of a channel:</span>
+      <div class="calc-channels">
         ${['BULK', 'COMMERCIAL'].filter(id => byId(s.channels, id)).map(id => `<button type="button" class="small" data-grid="${id}">${esc(channelLabel(s, id))} clients</button>`).join('')}
       </div>
     </div>
@@ -200,15 +199,14 @@ function simulateHtml(s) {
   const accName = id => byId(s.accounts, id)?.name ?? id;
   const d = v => (v == null ? '—' : fmtSigned(v));
 
-  return `<p class="muted small">Objective: <b>${esc(w.objective)}</b>. Simulation writes nothing — prices stay as they are until Publish.</p>
-    ${changeList(s, false)}
+  return `${changeList(s, false)}
     <div class="strip">
       <div><span>Estimated monthly peso impact</span><b class="${impactClass(sim.monthlyImpact)}">${fmtSigned(sim.monthlyImpact)}</b></div>
       <div><span>Accounts excluded (no volume on record)</span><b>${sim.excludedNullVolume.length}</b></div>
       <div><span>Newly below floor</span><b>${sim.newlyBelowFloor.length}</b></div>
       <div><span>Cross above competitor</span><b>${sim.crossesCompetitor.length}</b></div>
     </div>
-    ${sim.excludedNullVolume.length ? `<p class="small muted">Excluded from impact, not treated as zero: ${esc(sim.excludedNullVolume.map(accName).join(', '))}.</p>` : ''}
+    ${sim.excludedNullVolume.length ? `<p class="small muted">Excluded: ${esc(sim.excludedNullVolume.map(accName).join(', '))}.</p>` : ''}
     <div class="cols">
       <div>
         <h3>Accounts newly below floor</h3>
@@ -240,13 +238,12 @@ function simulateHtml(s) {
       <button type="button" id="w-share">Copy share link</button>
       <button type="button" id="w-to-review" class="primary" ${logged ? '' : 'disabled'}>Continue to review</button>
     </div>
-    ${logged ? '' : '<p class="small muted">Run the simulation for this exact set of changes before continuing.</p>'}`;
+    ${logged ? '' : '<p class="small muted">Run the simulation first.</p>'}`;
 }
 
 function reviewHtml(s) {
   const sim = simulate(s, w.changes, new Date().toISOString());
-  return `<p class="muted small">Objective: <b>${esc(w.objective)}</b></p>
-    <h3>What will change</h3>
+  return `<h3>What will change</h3>
     ${sim.review.length ? `<ul class="stack">${sim.review.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : '<p class="muted">No prices change.</p>'}
     <p>Estimated monthly impact <b>${fmtSigned(sim.monthlyImpact)}</b>${sim.excludedNullVolume.length ? `, excluding ${sim.excludedNullVolume.length} accounts with no volume` : ''}.</p>
     <div class="row"><button type="button" id="w-back-sim">Back to simulation</button>
@@ -256,8 +253,7 @@ function reviewHtml(s) {
 function approveHtml(s) {
   const managers = s.users.filter(u => u.role === 'manager' || u.role === 'admin');
   const clash = w.verifiedBy && w.verifiedBy === w.drafterId;
-  return `<p class="muted small">Objective: <b>${esc(w.objective)}</b> · drafted by <b>${esc(userName(s, w.drafterId))}</b></p>
-    <div class="row">
+  return `<div class="row">
       <label class="field grow"><span>Instructed by</span><select id="w-instr">${options(s.users.filter(u => u.role !== 'messenger'), w.instructedBy, { label: u => u.name, placeholder: 'Choose who instructed this' })}</select></label>
       <label class="field grow"><span>Verified by</span><select id="w-verif">${options(managers, w.verifiedBy, { label: u => u.name + (u.canApprove ? ' — may approve' : ''), placeholder: 'Choose verifier' })}</select></label>
     </div>

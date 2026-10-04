@@ -186,16 +186,14 @@ details.collapse[open] > summary::after { content: "−"; }
 .version { font-size: 42px; font-weight: 750; line-height: 1; font-variant-numeric: tabular-nums; color: var(--navy); }
 
 /* ---- Connected stages (MPL calculator) ---- */
-.chevrons { display: flex; list-style: none; margin: 12px 0 18px; padding: 0; }
-.chevrons li { flex: 1 1 0; min-width: 0; position: relative; padding: 9px 10px 9px 24px; margin-left: -10px; background: #E6ECF4; color: var(--muted);
+.chevrons { display: flex; list-style: none; margin: 8px 0 10px; padding: 0; }
+.chevrons li { flex: 1 1 0; min-width: 0; position: relative; padding: 6px 10px 6px 24px; margin-left: -10px; background: #E6ECF4; color: var(--muted);
   clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%); }
 .chevrons li:first-child { margin-left: 0; padding-left: 12px; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%); border-radius: 6px 0 0 6px; }
 .chevrons .n { display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em; opacity: .75; font-variant-numeric: tabular-nums; }
 .chevrons .t { display: block; font-weight: 700; font-size: 13.5px; line-height: 1.2; }
-.chevrons .s { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 11px; line-height: 1.25; opacity: .85; margin-top: 1px; overflow: hidden; padding-right: 8px; }
 .chevrons li.done { background: var(--navy); color: #fff; }
 .chevrons li.on { background: var(--tiffany); color: var(--navy); }
-.chevrons li.on .s { opacity: 1; }
 .chevrons li + li { filter: none; }
 
 .strip { display: flex; flex-wrap: wrap; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 16px; box-shadow: var(--shadow); overflow: hidden; }
@@ -240,7 +238,7 @@ details.collapse[open] > summary::after { content: "−"; }
 .drawer-tabs button { background: transparent; border: 0; border-radius: 8px 8px 0 0; color: rgba(255, 255, 255, .75); padding: 10px 14px; }
 .drawer-tabs button.on { background: var(--surface); color: var(--navy); font-weight: 650; }
 .count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--tiffany); color: var(--navy); font-size: 11.5px; font-weight: 700; }
-.drawer-body { flex: 1; overflow: auto; padding: 16px 18px 40px; }
+.drawer-body { flex: 1; overflow: auto; padding: 10px 14px 24px; }
 .drawer:not(.wide) .cols { grid-template-columns: 1fr; }
 .drawer-handle { position: fixed; right: 0; top: 45%; z-index: 25; writing-mode: vertical-rl; transform: rotate(180deg); border-radius: 0 10px 10px 0; background: var(--navy); color: #fff; border: 0; padding: 16px 8px; box-shadow: var(--shadow); }
 .drawer-handle:hover { background: var(--navy-2); }
@@ -413,9 +411,17 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .terms-editor .prof-f input, .terms-editor .prof-f select { min-height: 30px; padding: 3px 7px; font-size: 12px; }
 .terms-editor .card-head { position: sticky; top: var(--topbar-h); background: var(--surface); z-index: 5; padding: 6px 0; margin: -6px 0 8px; }
 
+/* Consistent compact subheaders and fixed scroll boxes */
+.sub-h { font-size: 13px; font-weight: 700; color: var(--navy); margin: 14px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--line); letter-spacing: 0; }
+.sub-h.first { margin-top: 0; }
+.sub-h .muted { font-weight: 500; }
+.scroll-box { height: 190px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; background: var(--surface); }
+.scroll-box table { margin: 0; }
+.scroll-box thead th { position: sticky; top: -8px; background: var(--surface); z-index: 1; }
+
 /* MPL calculator header stays put while the panel scrolls */
-.wiz-head { position: sticky; top: 0; z-index: 3; background: var(--surface); margin: -16px -18px 8px; padding: 12px 18px 4px; border-bottom: 1px solid var(--line); }
-.wiz-head .chevrons { margin-bottom: 10px; }
+.wiz-head { position: sticky; top: 0; z-index: 3; background: var(--surface); margin: -10px -14px 6px; padding: 8px 14px 2px; border-bottom: 1px solid var(--line); }
+.wiz-head .chevrons { margin-bottom: 6px; }
 
 /* ---- Version stamp: same mark wherever a price is shown ---- */
 .stamp { display: inline-flex; align-items: center; gap: 9px; padding: 5px 12px; border: 2px solid var(--navy); border-radius: 9px; background: var(--tiffany-50); white-space: nowrap; }
@@ -454,3 +460,65 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .comp-masagana { font-weight: 700; font-size: 15px; color: var(--navy); }
 table.matrix .decision-col { background: var(--tiffany-50); border-right: 2px solid var(--tiffany); }
 table.matrix thead .decision-col { background: var(--tiffany-50); }
+
+/* Price Watch sections */
+.cpw-sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 14px; margin-bottom: 14px; }
+.cpw-main { border-top: 4px solid var(--tiffany); }
+.cpw-sec-head, .cpw-sec > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.cpw-sec > summary { cursor: pointer; list-style: none; margin-bottom: 0; }
+.cpw-sec[open] > summary { margin-bottom: 10px; }
+.cpw-sec > summary::-webkit-details-marker { display: none; }
+.cpw-sec > summary::before { content: '▸'; color: var(--muted); margin-right: 8px; transition: transform .15s; }
+.cpw-sec[open] > summary::before { transform: rotate(90deg); }
+.cpw-sec h2 { margin: 0; font-size: 16px; font-weight: 700; color: var(--navy); flex: 1; }
+.cpw-count { background: var(--blue-50); color: var(--navy); border-radius: 999px; padding: 2px 10px; font-size: 12.5px; font-weight: 650; }
+.cpw-main .cpw-count { background: var(--tiffany); }
+.cpw-sec .scroll-box { box-shadow: none; }
+.cpw-sec .cpw-form { border: 0; box-shadow: none; padding: 0; background: transparent; margin: 0; }
+
+/* Price range filter */
+.range-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px; margin-bottom: 12px; }
+.range-label { font-weight: 650; font-size: 13px; color: var(--navy); }
+.range-in { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; padding: 0 8px; background: #fff; }
+.range-in span { color: var(--muted); font-size: 13px; }
+.range-in input { border: 0; outline: 0; width: 84px; min-height: 32px; padding: 4px 6px; font-size: 13.5px; background: transparent; }
+.range-in:focus-within { border-color: var(--tiffany); }
+.range-dash { color: var(--muted); }
+.range-note { margin-left: auto; }
+.out-range { opacity: .35; }
+
+/* Price history raw table */
+.hist-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.hist-filters select { min-height: 34px; padding: 4px 8px; font-size: 13px; width: auto; }
+table.raw { font-size: 12.5px; border-collapse: separate; border-spacing: 0; }
+table.raw th, table.raw td { padding: 5px 9px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); white-space: nowrap; }
+table.raw thead th { background: var(--blue-50); position: sticky; top: 0; z-index: 2; text-align: center; font-weight: 650; }
+table.raw thead tr.sub th { top: 29px; font-weight: 500; color: var(--muted); }
+table.raw td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.raw .sticky { position: sticky; left: 0; background: var(--surface); z-index: 1; font-weight: 700; }
+table.raw thead .sticky { z-index: 3; background: var(--blue-50); }
+.raw-scroll { max-height: 520px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+.edited { background: var(--tiffany-50); }
+
+/* Dual-handle price range */
+.dual { position: relative; width: 230px; height: 34px; flex: 0 0 230px; margin: 0 6px; }
+.dual-track { position: absolute; left: 8px; right: 8px; top: 9px; height: 4px; background: var(--line); border-radius: 4px; }
+.dual-fill { position: absolute; top: 0; bottom: 0; background: var(--tiffany); border-radius: 4px; }
+.dual input[type=range] { position: absolute; left: 0; top: 0; width: 100%; height: 22px; margin: 0; padding: 0; min-height: 0; background: none; border: 0; pointer-events: none; -webkit-appearance: none; appearance: none; }
+.dual input[type=range]::-webkit-slider-runnable-track { background: none; height: 22px; }
+.dual input[type=range]::-moz-range-track { background: none; }
+.dual input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 18px; height: 18px; margin-top: 2px; border-radius: 50%; background: #fff; border: 2px solid var(--tiffany-600); box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: grab; }
+.dual input[type=range]::-moz-range-thumb { pointer-events: auto; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 2px solid var(--tiffany-600); cursor: grab; }
+.dual input[type=range]:active::-webkit-slider-thumb { cursor: grabbing; }
+.dual-ends { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); }
+
+/* Price history: versions as columns */
+table.raw thead tr.sub th { top: 29px; }
+table.raw thead tr.sub:nth-child(3) th { top: 53px; }
+table.raw .sticky.ch { font-weight: 500; padding-left: 18px; }
+table.raw tr.grp-row th { background: var(--blue-50); text-align: left; position: sticky; left: 0; color: var(--navy); }
+table.raw td.chg-up { background: #FDECEC; color: #B42318; }
+table.raw td.chg-down { background: #E6F6EC; color: #0B6B3A; }
+.key { padding: 1px 6px; border-radius: 4px; }
+.key.chg-up { background: #FDECEC; color: #B42318; }
+.key.chg-down { background: #E6F6EC; color: #0B6B3A; }

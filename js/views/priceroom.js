@@ -10,6 +10,7 @@ import {
   byId, currentCostBasis, currentPublication, daysSince, exceptions, priceFor, marginRule, bufferFor, applyChanges,
   skuLabel, channelLabel, userName, fmtDate, fmtDateTime, userChannels, isStaleReading, boardIsStale, allBoardPrices, newestReading,
 } from '../pricing.js';
+import { inRange, rangeActive, rangeBar, bindRange } from '../pricerange.js';
 import * as wizard from './priceroom-wizard.js';
 import * as grid from './clientgrid.js';
 
@@ -18,7 +19,7 @@ const MAX = 5;
 const TABS = [['competitors', 'Competitors board'], ['clients', 'Clients board'], ['products', 'Products board'], ['channels', 'Channels board'], ['grid', 'Client Pricing'], ['history', 'Price History'], ['notices', 'PL Notices']];
 const ui = {
   tab: 'competitors', open: true, panel: 'exceptions', wide: false, animate: false, lastSim: null, scrollTop: null, excAll: false,
-  compDecisions: {},
+  compDecisions: {}, compChannel: '', compZone: null, histProducts: [], histFrom: '', histTo: '',
   clients: ['acc_alta', 'acc_kja', 'acc_silca'], clientQuery: '', clientSku: '', clientOpen: false, clientScroll: 0,
   products: ['11KG_MGAS', '50KG_A', '22KG_A'], prodOpen: false, channels: ['DEALER', 'COMMERCIAL', 'END_USER'],
   reasons: {}, errors: {},
@@ -70,7 +71,6 @@ export function render(root, ctx) {
         ${stamp(pub.version, fmtDate(pub.publishedAt), { note: boardIsStale(s) ? 'Out of date' : '' })}
         <button type="button" id="pr-toggle" class="${ui.open ? '' : 'primary'}">${ui.open ? 'Hide' : 'Open'} MPL calculator</button></div>
       ${strip}
-      ${proposed ? `<div class="banner tiffany">Boards show proposed prices from ${changes.length} change${changes.length > 1 ? 's' : ''} in the MPL calculator — nothing is published until stage 05.</div>` : ''}
       <div class="tabs">${TABS.map(([k, l]) => `<button type="button" data-tab="${k}" class="${ui.tab === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</div>
       <div id="pr-main">${bodies[ui.tab](s, proposed)}</div>
     </section></div>
@@ -148,7 +148,7 @@ function exceptionsPanel(s, rows) {
   const sorted = [...rows].sort((a, b) => (order[a.severity] ?? 2) - (order[b.severity] ?? 2));
   const shown = ui.excAll ? sorted : sorted.slice(0, 25);
   const counts = rows.reduce((m, r) => ({ ...m, [r.kind]: (m[r.kind] || 0) + 1 }), {});
-  return `<h2 style="margin-top:0">Approvals <span class="muted">(${rows.length})</span></h2>
+  return `<h2 class="sub-h first">Needs attention <span class="muted">(${rows.length})</span></h2>
     ${rows.length ? `<div class="row small" style="gap:6px;margin-bottom:8px">${Object.entries(counts).map(([k, n]) => `<span class="pill grey">${esc(label(k))} ${n}</span>`).join('')}</div>` : ''}
     ${shown.map(r => `<div class="exc"><span class="pill ${r.severity}">${esc(label(r.kind))}</span>
       <div><div class="subject">${esc(r.subject)}</div><div class="small">${esc(r.text)}</div>
@@ -156,7 +156,7 @@ function exceptionsPanel(s, rows) {
         : byId(s.accounts, r.entityId) ? `<button type="button" class="link small" data-compare="${esc(r.entityId)}">Compare on Clients board</button>` : ''}</div></div>`).join('')}
     ${rows.length === 0 ? '<p class="muted">Nothing needs attention.</p>' : ''}
     ${rows.length > shown.length || ui.excAll ? `<button type="button" id="pr-exc-all" class="small" style="margin-top:8px">${ui.excAll ? 'Show fewer' : `Show all ${rows.length}`}</button>` : ''}
-    <h2>Pending price requests <span class="muted">(${pending.length})</span></h2>
+    <h2 class="sub-h">Pending price requests <span class="muted">(${pending.length})</span></h2>
     ${pending.length ? pending.map(r => requestCard(s, r)).join('') : '<p class="muted">None pending.</p>'}
     <details class="collapse"><summary>Latest competitor readings (${readings.length})</summary>
       <div class="table-wrap"><table class="mini"><thead><tr><th>Brand · zone</th><th>Product</th><th class="num">Per cyl</th><th>Captured</th></tr></thead><tbody>
@@ -227,55 +227,77 @@ function brandName(b) { return typeof b === 'string' ? b : b.name; }
 function brandZone(b) { return typeof b === 'string' ? '' : (b.zone || ''); }
 
 function competitorsBoard(s) {
-  const brands = (s.trackedBrands || []).map(b => ({ name: brandName(b), zone: brandZone(b) }));
-  if (!brands.length) return '<p class="muted">No competitor brands configured. Add them in Configuration → Competitors.</p>';
-
-  const skus = s.skus.filter(k => k.active && !k.hasVariants);
-  const productIds = [...new Set(s.competitorReadings.map(r => r.skuId))].filter(id => skus.some(k => k.id === id));
-  if (!productIds.length) return '<p class="muted">No competitor readings yet. Readings are captured in Competitor Price Watch.</p>';
-
-  const products = productIds.map(id => byId(s.skus, id)).filter(Boolean);
+  const channelId = byId(s.channels, ui.compChannel) ? ui.compChannel : s.channels[0]?.id;
+  const channel = byId(s.channels, channelId);
   const now = new Date();
-  const defaultChannel = s.channels[0]?.id;
+  const skus = s.skus.filter(k => k.active && !k.hasVariants);
 
-  return `<div class="card" style="padding:0"><div class="table-wrap"><table class="matrix">
+  // Everything on this board comes straight from Price Watch readings. A reading with no channel counts for every channel.
+  const forChannel = s.competitorReadings.filter(r => skus.some(k => k.id === r.skuId) && (!r.channelId || r.channelId === channelId));
+  const zones = [...new Set([...forChannel.map(r => r.zone), ...(s.trackedBrands || []).map(brandZone)])].filter(Boolean).sort();
+  const topZone = [...zones].sort((x, y) => forChannel.filter(r => r.zone === y).length - forChannel.filter(r => r.zone === x).length)[0] || '';
+  const zone = ui.compZone === null ? topZone : zones.includes(ui.compZone) ? ui.compZone : '';
+
+  const seen = new Map();
+  const addCol = (name, z) => { if (name && z && (!zone || z === zone)) seen.set(name + '|' + z, { name, zone: z }); };
+  for (const b of s.trackedBrands || []) addCol(brandName(b), brandZone(b));
+  for (const r of forChannel) addCol(r.brand, r.zone);
+  const brands = [...seen.values()].sort((a, b) => a.name.localeCompare(b.name) || a.zone.localeCompare(b.zone));
+
+  const readingFor = (b, skuId) => forChannel
+    .filter(r => r.brand === b.name && r.zone === b.zone && r.skuId === skuId)
+    .sort((a, c) => (a.capturedAt < c.capturedAt ? 1 : -1))[0] || null;
+  const latestOf = b => forChannel.filter(r => r.brand === b.name && r.zone === b.zone).sort((a, c) => (a.capturedAt < c.capturedAt ? 1 : -1))[0] || null;
+  const ownPrice = sku => (marginRule(s, channelId, sku.id) ? priceFor(s, { channelId, skuId: sku.id }).result?.grossPerCyl : null);
+  const stampOf = r => `${esc(userName(s, r.capturedBy))}<br>${fmtDate(r.capturedAt)} ${new Date(r.capturedAt).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}`;
+
+  const productIds = [...new Set(forChannel.filter(r => !zone || r.zone === zone).map(r => r.skuId))];
+  const allProducts = productIds.map(id => byId(s.skus, id)).filter(Boolean);
+  const cells = sku => [ownPrice(sku), ...brands.map(b => readingFor(b, sku.id)?.pricePerCyl)];
+  const products = allProducts.filter(sku => !rangeActive() || cells(sku).some(inRange));
+  const spread = allProducts.flatMap(cells);
+  const latest = [...forChannel].sort((a, c) => (a.capturedAt < c.capturedAt ? 1 : -1))[0];
+
+  const filters = `<div class="picker"><div class="row">
+      <label class="field inline"><span>Channel</span><select id="cp-ch">${options(s.channels, channelId)}</select></label>
+      <label class="field inline"><span>Zone</span><select id="cp-zone"><option value="">All zones</option>${zones.map(z => `<option${z === zone ? ' selected' : ''}>${esc(z)}</option>`).join('')}</select></label>
+      <span class="small muted grow">${forChannel.length} Price Watch reading${forChannel.length === 1 ? '' : 's'}${latest ? ` · latest ${fmtDate(latest.capturedAt)} by ${esc(userName(s, latest.capturedBy))}` : ''}</span>
+      <a class="btn small" href="#/market">Add a reading in Price Watch</a>
+    </div></div>`;
+
+  if (!allProducts.length) return filters + '<p class="muted">No Price Watch readings for this channel and zone yet.</p>';
+  if (!products.length) return filters + rangeBar(0, allProducts.length, 'products', spread) + '<p class="muted">No product has a price in this range.</p>';
+
+  return filters + rangeBar(products.length, allProducts.length, 'products', spread) + `<div class="card" style="padding:0"><div class="table-wrap"><table class="matrix">
     <thead><tr>
       <th>Product</th>
       <th class="num decision-col"><div class="mh">Price decision</div><div class="small muted">For MPL Calculator</div></th>
-      <th class="num"><div class="mh">Masagana</div><div class="small muted">Current price</div></th>
+      <th class="num"><div class="mh">Masagana</div><div class="small muted">${esc(channel?.label ?? '')} · current</div></th>
       ${brands.map(b => {
-        const latest = s.competitorReadings
-          .filter(r => r.brand === b.name)
-          .sort((a, c) => (a.capturedAt < c.capturedAt ? 1 : -1))[0];
+        const l = latestOf(b);
         return `<th class="num"><div class="mh">${esc(b.name)}</div>
-          <div class="small muted">${esc(b.zone || '—')}</div>
-          ${latest ? `<div class="comp-stamp">
-            <b>${esc(userName(s, latest.capturedBy))}</b><br>
-            ${fmtDate(latest.capturedAt)}<br>
-            ${new Date(latest.capturedAt).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
-          </div>` : '<div class="comp-stamp muted">No readings</div>'}
+          <div class="small muted">${esc(b.zone)}</div>
+          ${l ? `<div class="comp-stamp"><b>${esc(userName(s, l.capturedBy))}</b><br>${fmtDate(l.capturedAt)}<br>${new Date(l.capturedAt).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}</div>` : '<div class="comp-stamp muted">No readings</div>'}
         </th>`;
       }).join('')}
     </tr></thead>
     <tbody>${products.map(sku => {
-      const masaganaPrice = defaultChannel && marginRule(s, defaultChannel, sku.id)
-        ? priceFor(s, { channelId: defaultChannel, skuId: sku.id }).result?.grossPerCyl : null;
-      const decKey = sku.id;
-      const decVal = ui.compDecisions[decKey] ?? '';
+      const masaganaPrice = ownPrice(sku);
+      const decVal = ui.compDecisions[sku.id] ?? '';
       return `<tr>
         <th scope="row"><div class="mh">${esc(sku.label)}</div><div class="small muted">${sku.contentKg} kg</div></th>
         <td class="num decision-col"><input type="text" inputmode="decimal" class="comp-decision" data-comp-dec="${esc(sku.id)}" placeholder="—" value="${esc(decVal)}"></td>
-        <td class="num">${masaganaPrice ? `<span class="comp-masagana">${fmt(masaganaPrice)}</span>` : '<span class="muted">—</span>'}</td>
+        <td class="num ${rangeActive() && !inRange(masaganaPrice) ? 'out-range' : ''}">${masaganaPrice ? `<span class="comp-masagana">${fmt(masaganaPrice)}</span>` : '<span class="muted">—</span>'}</td>
         ${brands.map(b => {
-          const r = newestReading(s, { zone: b.zone, skuId: sku.id, brand: b.name });
+          const r = readingFor(b, sku.id);
           if (!r) return '<td class="num muted">—</td>';
           const stale = isStaleReading(s, r, now);
           const diff = masaganaPrice && r.pricePerCyl !== masaganaPrice
             ? `<div class="small ${r.pricePerCyl < masaganaPrice ? 'neg' : 'pos'}">${r.pricePerCyl < masaganaPrice ? '−' : '+'}${fmt(Math.abs(r.pricePerCyl - masaganaPrice))}</div>` : '';
-          return `<td class="num ${stale ? 'stale' : ''}">
+          return `<td class="num ${stale ? 'stale' : ''} ${rangeActive() && !inRange(r.pricePerCyl) ? 'out-range' : ''}" title="${esc(r.photoName || '')}">
             <div class="cell-price">${fmt(r.pricePerCyl)}</div>
             ${diff}
-            <div class="comp-stamp">${esc(userName(s, r.capturedBy))}<br>${fmtDate(r.capturedAt)} ${new Date(r.capturedAt).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}</div>
+            <div class="comp-stamp">${r.productBrand ? `${esc(r.productBrand)} · ` : ''}${stampOf(r)}${stale ? ` · <span class="pill grey">${daysSince(r.capturedAt, now)}d</span>` : ''}</div>
           </td>`;
         }).join('')}
       </tr>`;
@@ -303,13 +325,15 @@ function clientOptions(s) {
 
 function clientsBoard(s, proposed) {
   ui.clients = ui.clients.filter(id => byId(s.accounts, id));
-  const sel = ui.clients.map(id => byId(s.accounts, id));
-  const full = sel.length >= MAX;
+  const picked = ui.clients.map(id => byId(s.accounts, id));
+  const grossOf = a => { const skuId = ui.clientSku || a.primarySkuId; const p = skuId ? priceFor(s, { accountId: a.id, skuId }) : null; return p && !p.error ? p.result.grossPerCyl : null; };
+  const sel = rangeActive() ? picked.filter(a => inRange(grossOf(a))) : picked;
+  const full = picked.length >= MAX;
   const picker = `<div class="picker">
     <div class="row">
       <div class="multi" id="cb-multi">
         <button type="button" id="cb-toggle" class="multi-btn" aria-haspopup="listbox" aria-expanded="${ui.clientOpen}">
-          <span>Clients · <b>${sel.length}</b> of ${MAX} selected</span><span aria-hidden="true">▾</span></button>
+          <span>Clients · <b>${picked.length}</b> of ${MAX} selected</span><span aria-hidden="true">▾</span></button>
         ${ui.clientOpen ? `<div class="multi-menu client-menu">
           <input id="cb-q" type="search" autocomplete="off" placeholder="Search client, zone or channel" aria-label="Search clients" value="${esc(ui.clientQuery)}">
           <div class="multi-actions small"><span class="muted">${full ? `Maximum of ${MAX} reached` : `Choose up to ${MAX}`} · ${s.accounts.length} clients</span>
@@ -321,11 +345,13 @@ function clientsBoard(s, proposed) {
     </div>
     ${sel.length ? `<div class="chips" style="margin:10px 0 0">${sel.map(a => `<span class="chip">${esc(a.name)}<button type="button" data-unpick="${esc(a.id)}" aria-label="Remove ${esc(a.name)}">✕</button></span>`).join('')}</div>` : ''}
   </div>`;
-  if (!sel.length) return picker + '<p class="muted">Add up to 5 clients to compare side by side.</p>';
+  const bar = rangeBar(sel.length, picked.length, 'clients', picked.map(grossOf));
+  if (!picked.length) return picker + '<p class="muted">Add up to 5 clients to compare side by side.</p>';
+  if (!sel.length) return picker + bar + '<p class="muted">No selected client has a price in this range.</p>';
 
   const n = sel.length;
   const grid = (title, fn) => `<div class="section-title">${title}</div><div class="cmp" style="--n:${n}">${sel.map(a => `<div class="card cmp-card">${fn(s, a, proposed)}</div>`).join('')}</div>`;
-  return picker + `<div class="cmp-scroll">
+  return picker + bar + `<div class="cmp-scroll">
     <div class="cmp" style="--n:${n}">${sel.map(a => `<div class="cmp-head"><b>${esc(a.name)}</b><div class="small muted">${esc(channelLabel(s, a.channelId))} · ${esc(a.zone ?? '—')}</div></div>`).join('')}</div>
     ${grid('Client details', detailsCard)}
     ${grid('Premiums and discounts', premiumsCard)}
@@ -400,11 +426,21 @@ function cell(s, proposed, channelId, skuId) {
   const b = m ? priceFor(s, { channelId, skuId }).result : null;
   const a = proposed && marginRule(proposed, channelId, skuId) ? priceFor(proposed, { channelId, skuId }).result : null;
   if (!b && !a) return '<td class="num muted">—</td>';
-  return `<td class="num">
+  const out = rangeActive() && !(b && inRange(b.grossPerCyl)) && !(a && inRange(a.grossPerCyl));
+  return `<td class="num ${out ? 'out-range' : ''}">
     <div class="cell-price">${b ? fmt(b.grossPerCyl) : '<span class="muted">New</span>'}</div>
     ${b ? `<div class="small muted">${fmt(b.netPerKg)}/kg · margin ${fmt(m.perKg)}</div>` : ''}
     ${a && (!b || a.grossPerCyl !== b.grossPerCyl) ? `<div class="proposed">→ ${fmt(a.grossPerCyl)} ${b ? delta(a.grossPerCyl - b.grossPerCyl) : ''}</div>` : ''}</td>`;
 }
+
+// Gross per cylinder on a channel, current or proposed, so the range filter sees what the cell shows.
+function grossesFor(s, proposed, channelId, skuId) {
+  const out = [];
+  if (marginRule(s, channelId, skuId)) out.push(priceFor(s, { channelId, skuId }).result?.grossPerCyl);
+  if (proposed && marginRule(proposed, channelId, skuId)) out.push(priceFor(proposed, { channelId, skuId }).result?.grossPerCyl);
+  return out;
+}
+const anyInRange = list => list.some(inRange);
 
 function pickerPills(items, selected, attr, noun) {
   return `<div class="picker"><div class="chips" style="margin:0">${items.map(x => {
@@ -458,10 +494,12 @@ function productsBoard(s, proposed) {
   const cols = ui.products.map(id => byId(s.skus, id)).filter(Boolean);
   const pills = productPicker(s);
   if (!cols.length) return pills + '<p class="muted">Pick up to 5 products to compare across channels.</p>';
-  return pills + `<div class="card" style="padding:0"><div class="table-wrap"><table class="matrix">
+  const rows = s.channels.filter(c => !rangeActive() || anyInRange(cols.flatMap(k => grossesFor(s, proposed, c.id, k.id))));
+  const spreadCh = s.channels.flatMap(c => cols.flatMap(k => grossesFor(s, proposed, c.id, k.id)));
+  return pills + rangeBar(rows.length, s.channels.length, 'channels', spreadCh) + (!rows.length ? '<p class="muted">No channel has a price in this range.</p>' : `<div class="card" style="padding:0"><div class="table-wrap"><table class="matrix">
     <thead><tr><th>Channel</th>${cols.map(k => `<th class="num"><div class="mh">${esc(k.label)}</div><div class="small muted">${k.contentKg} kg · per cyl, VAT incl.</div></th>`).join('')}</tr></thead>
-    <tbody>${s.channels.map(c => `<tr><th scope="row"><div class="mh">${esc(c.label)}</div><div class="small muted">${esc(c.audience)} · buffer ${fmt(bufferFor(s, c.id))}</div></th>
-      ${cols.map(k => cell(s, proposed, c.id, k.id)).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+    <tbody>${rows.map(c => `<tr><th scope="row"><div class="mh">${esc(c.label)}</div><div class="small muted">${esc(c.audience)} · buffer ${fmt(bufferFor(s, c.id))}</div></th>
+      ${cols.map(k => cell(s, proposed, c.id, k.id)).join('')}</tr>`).join('')}</tbody></table></div></div>`);
 }
 
 function channelsBoard(s, proposed) {
@@ -469,40 +507,58 @@ function channelsBoard(s, proposed) {
   const pills = pickerPills(s.channels, ui.channels, 'chan', 'channels');
   if (!cols.length) return pills + '<p class="muted">Pick up to 5 channels to compare across products.</p>';
   const pricedIn = st => st && s.skus.filter(k => k.active && cols.some(c => marginRule(st, c.id, k.id)));
-  const skus = s.skus.filter(k => pricedIn(s).includes(k) || (proposed && pricedIn(proposed).some(x => x.id === k.id)));
-  return pills + `<div class="card" style="padding:0"><div class="table-wrap"><table class="matrix">
+  const priced = s.skus.filter(k => pricedIn(s).includes(k) || (proposed && pricedIn(proposed).some(x => x.id === k.id)));
+  const skus = priced.filter(k => !rangeActive() || anyInRange(cols.flatMap(c => grossesFor(s, proposed, c.id, k.id))));
+  const spreadPr = priced.flatMap(k => cols.flatMap(c => grossesFor(s, proposed, c.id, k.id)));
+  return pills + rangeBar(skus.length, priced.length, 'products', spreadPr) + (!skus.length ? '<p class="muted">No product has a price in this range.</p>' : `<div class="card" style="padding:0"><div class="table-wrap"><table class="matrix">
     <thead><tr><th>Product</th>${cols.map(c => `<th class="num"><div class="mh">${esc(c.label)}</div>
       <div class="small muted">${esc(c.audience)} · ${s.accounts.filter(a => a.channelId === c.id && a.status === 'Active').length} active clients</div></th>`).join('')}</tr></thead>
     <tbody>${skus.map(k => `<tr><th scope="row"><div class="mh">${esc(k.label)}</div><div class="small muted">${k.contentKg} kg</div></th>
-      ${cols.map(c => cell(s, proposed, c.id, k.id)).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+      ${cols.map(c => cell(s, proposed, c.id, k.id)).join('')}</tr>`).join('')}</tbody></table></div></div>`);
 }
 
 // ---------------- Price History ----------------
 
 function priceHistoryTab(s) {
-  const versions = [...s.publications].sort((a, b) => b.version - a.version);
-  if (!versions.length) return '<p class="muted">No published versions yet.</p>';
-  const skus = s.skus.filter(k => k.active && !k.hasVariants);
+  const all = [...s.publications].sort((a, b) => b.version - a.version);
+  if (!all.length) return '<p class="muted">No published versions yet.</p>';
+  const allSkus = s.skus.filter(k => k.active && !k.hasVariants);
+  const skus = ui.histProducts.length ? allSkus.filter(k => ui.histProducts.includes(k.id)) : allSkus;
+  const from = ui.histFrom === '' ? -Infinity : +ui.histFrom, to = ui.histTo === '' ? Infinity : +ui.histTo;
+  const cur = currentPublication(s).version;
+  const pricesOf = pub => pub.prices ?? (pub.version === cur ? allBoardPrices(s) : null);
+  const priceAt = (pub, channelId, skuId) => pricesOf(pub)?.[channelId]?.find(x => x.skuId === skuId)?.grossPerCyl ?? null;
+  // Versions are columns, newest first. Each cell is compared with the version before it.
+  const cols = all.filter(v => v.version >= from && v.version <= to);
+  const vOpts = (label, chosen) => `<option value="">${label}</option>` + [...all].reverse().map(v => `<option value="${v.version}"${String(v.version) === String(chosen) ? ' selected' : ''}>v${v.version}</option>`).join('');
+  const approver = pub => {
+    const ev = s.events.find(e => e.action === 'APPROVE' && e.proposalId && s.events.some(p => p.proposalId === e.proposalId && p.action === 'PUBLISH' && p.after?.version === pub.version));
+    return ev ? userName(s, ev.verifiedBy) : '—';
+  };
+  const cell = (pub, channelId, skuId) => {
+    const v = priceAt(pub, channelId, skuId);
+    if (v == null) return '<td class="num muted">—</td>';
+    const prev = all.find(x => x.version < pub.version);
+    const pv = prev ? priceAt(prev, channelId, skuId) : null;
+    const cls = pv == null || pv === v ? '' : v > pv ? 'chg-up' : 'chg-down';
+    return `<td class="num ${cls}">${fmt(v)}</td>`;
+  };
 
-  return `<div class="card">
-    <h2>Approved price versions</h2>
-    <p class="small muted">All published price list versions with prices per channel and product, most recent first.</p>
-    ${versions.map(pub => {
-      const prices = pub.prices ?? (pub.version === currentPublication(s).version ? allBoardPrices(s) : null);
-      if (!prices) return '';
-      const ev = s.events.find(e => e.action === 'APPROVE' && e.proposalId && s.events.some(p => p.proposalId === e.proposalId && p.action === 'PUBLISH' && p.after?.version === pub.version));
-      return `<details class="card" style="margin-bottom:10px" ${pub.version === currentPublication(s).version ? 'open' : ''}>
-        <summary><b>v${pub.version}</b> <span class="muted small" style="margin-left:8px">Published ${fmtDate(pub.publishedAt)}${ev ? ` · Approved by ${esc(userName(s, ev.verifiedBy))}` : ''}</span>
-        ${pub.version === currentPublication(s).version ? '<span class="pill green" style="margin-left:8px">Current</span>' : ''}</summary>
-        <div class="table-wrap" style="margin-top:8px"><table class="matrix">
-          <thead><tr><th>Product</th>${s.channels.map(c => `<th class="num">${esc(c.label)}</th>`).join('')}</tr></thead>
-          <tbody>${skus.map(sku => {
-            return `<tr><td>${esc(sku.label)}</td>${s.channels.map(c => {
-              const r = prices[c.id]?.find(x => x.skuId === sku.id);
-              return `<td class="num">${r ? fmt(r.grossPerCyl) : '<span class="muted">—</span>'}</td>`;
-            }).join('')}</tr>`;
-          }).join('')}</tbody></table></div></details>`;
-    }).join('')}</div>`;
+  return `<div class="hist-filters">
+      <label class="small">Product <select id="h-prod"><option value="">All products</option>${allSkus.map(k => `<option value="${esc(k.id)}"${ui.histProducts[0] === k.id ? ' selected' : ''}>${esc(k.label)}</option>`).join('')}</select></label>
+      <label class="small">Version <select id="h-from">${vOpts('From', ui.histFrom)}</select></label>
+      <label class="small">to <select id="h-to">${vOpts('To', ui.histTo)}</select></label>
+      ${ui.histProducts.length || ui.histFrom !== '' || ui.histTo !== '' ? '<button type="button" id="h-clear" class="small">Clear</button>' : ''}
+      <span class="small muted">${cols.length} of ${all.length} versions · per cyl, VAT incl. · <span class="chg-up key">higher</span> <span class="chg-down key">lower</span> than the version before</span>
+    </div>
+    ${cols.length ? `<div class="raw-scroll"><table class="raw">
+      <thead>
+        <tr><th class="sticky">Product · Channel</th>${cols.map(v => `<th>v${v.version}${v.version === cur ? ' <span class="pill green">Current</span>' : ''}</th>`).join('')}</tr>
+        <tr class="sub"><th class="sticky">Published</th>${cols.map(v => `<th>${fmtDate(v.publishedAt)}</th>`).join('')}</tr>
+        <tr class="sub"><th class="sticky">Approved by</th>${cols.map(v => `<th>${esc(approver(v))}</th>`).join('')}</tr>
+      </thead>
+      <tbody>${skus.map(k => ({ k, chs: s.channels.filter(c => cols.some(v => priceAt(v, c.id, k.id) != null)) })).filter(x => x.chs.length).map(({ k, chs }) => `<tr class="grp-row"><th class="sticky" colspan="${cols.length + 1}">${esc(k.label)}</th></tr>
+        ${chs.map(c => `<tr><td class="sticky ch">${esc(c.label)}</td>${cols.map(v => cell(v, c.id, k.id)).join('')}</tr>`).join('')}`).join('')}</tbody></table></div>` : '<p class="muted">No versions in this range.</p>'}`;
 }
 
 // ---------------- PL notices ----------------
@@ -530,7 +586,7 @@ function noticesTab(s) {
 
   return `<div class="card">
     <div class="notice-head">
-      <h2>Notice acknowledgement</h2>
+      <h2 class="sub-h first">Notice acknowledgement</h2>
       <div class="row">${stamp(pub.version, fmtDate(pub.publishedAt))}<span class="muted"><b>${acked}/${total}</b> acknowledged</span></div>
     </div>
     <div class="legend"><span class="lg green">Green: user acknowledged</span><span class="lg amber">Amber: not seen</span><span class="muted">· not on this user's price lists</span></div>
@@ -538,7 +594,7 @@ function noticesTab(s) {
       <thead><tr><th>User</th>${lists.map(c => `<th class="center"><span class="pl-badge">${esc(c.label)}</span><div class="small muted">${esc(c.audience)}</div></th>`).join('')}</tr></thead>
       <tbody>${body}</tbody></table></div></div>
   <div class="card" style="margin-top:16px">
-    <h2>Email notifications — v${pub.version}</h2>
+    <h2 class="sub-h first">Email notifications — v${pub.version}</h2>
     ${emailRows.length ? `<div class="table-wrap"><table>
       <thead><tr><th>Client</th><th>Email</th><th>Sent</th><th>Status</th></tr></thead>
       <tbody>${emailRows.map(e => {
@@ -586,5 +642,12 @@ function bindMain(root, rerender) {
   root.querySelectorAll('[data-prod]').forEach(b => b.onchange = () => { ui.products = toggle(ui.products, b.dataset.prod); rerender(); });
   root.querySelectorAll('[data-unprod]').forEach(b => b.onclick = () => { ui.products = ui.products.filter(x => x !== b.dataset.unprod); rerender(); });
   root.querySelectorAll('[data-chan]').forEach(b => b.onclick = () => { ui.channels = toggle(ui.channels, b.dataset.chan); rerender(); });
+  bindRange(root, rerender);
+  if ($('cp-ch')) $('cp-ch').onchange = e => { ui.compChannel = e.target.value; rerender(); };
+  if ($('cp-zone')) $('cp-zone').onchange = e => { ui.compZone = e.target.value; rerender(); };
+  if ($('h-prod')) $('h-prod').onchange = e => { ui.histProducts = e.target.value ? [e.target.value] : []; rerender(); };
+  if ($('h-from')) $('h-from').onchange = e => { ui.histFrom = e.target.value; rerender(); };
+  if ($('h-to')) $('h-to').onchange = e => { ui.histTo = e.target.value; rerender(); };
+  if ($('h-clear')) $('h-clear').onclick = () => { ui.histProducts = []; ui.histFrom = ui.histTo = ''; rerender(); };
   root.querySelectorAll('[data-comp-dec]').forEach(inp => inp.oninput = e => { ui.compDecisions[inp.dataset.compDec] = e.target.value; });
 }
