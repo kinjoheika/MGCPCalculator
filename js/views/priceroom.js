@@ -352,7 +352,7 @@ function clientsBoard(s, proposed) {
   const n = sel.length;
   const grid = (title, fn) => `<div class="section-title">${title}</div><div class="cmp" style="--n:${n}">${sel.map(a => `<div class="card cmp-card">${fn(s, a, proposed)}</div>`).join('')}</div>`;
   return picker + bar + `<div class="cmp-scroll">
-    <div class="cmp" style="--n:${n}">${sel.map(a => `<div class="cmp-head"><b>${esc(a.name)}</b><div class="small muted">${esc(channelLabel(s, a.channelId))} · ${esc(a.zone ?? '—')}</div></div>`).join('')}</div>
+    <div class="cmp" style="--n:${n}">${sel.map(a => `<div class="cmp-head"><b>${esc(a.name)}</b><div class="small muted">${a.clientCode ? esc(a.clientCode) + ' · ' : ''}${esc(channelLabel(s, a.channelId))} · ${esc(a.zone ?? '—')}</div></div>`).join('')}</div>
     ${grid('Client details', detailsCard)}
     ${grid('Premiums and discounts', premiumsCard)}
     ${grid('Current price', priceCard)}

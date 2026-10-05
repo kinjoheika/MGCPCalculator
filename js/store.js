@@ -81,6 +81,16 @@ export async function init() {
   } else {
     state = clone(seed);
   }
+  // Every client gets a Client ID; ones already set are kept, the rest start as C-0001, C-0002 and so on.
+  const used = new Set(state.accounts.map(a => (a.clientCode || '').toLowerCase()).filter(Boolean));
+  let n = 1;
+  for (const a of state.accounts) {
+    if (a.clientCode !== undefined) continue;
+    let code;
+    do code = 'C-' + String(n++).padStart(4, '0'); while (used.has(code.toLowerCase()));
+    a.clientCode = code;
+    used.add(code.toLowerCase());
+  }
   return state;
 }
 

@@ -520,7 +520,7 @@ async function saveBrands() {
 
 function clientsHtml(s) {
   const q = ui.clientQuery.trim().toLowerCase();
-  const list = s.accounts.filter(a => !q || a.name.toLowerCase().includes(q));
+  const list = s.accounts.filter(a => !q || a.name.toLowerCase().includes(q) || (a.clientCode || '').toLowerCase().includes(q));
   const compOut = (xs, cat) => (xs || []).map(x => {
     const c = s[cat].find(k => k.code === x.code);
     return `${c?.label ?? x.code}${x.perKg != null ? ` ${fmt(x.perKg)}` : ''}`;
@@ -539,15 +539,15 @@ function clientsHtml(s) {
 
   <div class="card" style="margin-top:16px">
     <div class="card-head"><h2>Clients (${s.accounts.length})</h2>
-      <div class="row"><input id="c-q" type="search" placeholder="Filter by name" value="${esc(ui.clientQuery)}" style="max-width:240px" aria-label="Filter clients">
+      <div class="row"><input id="c-q" type="search" placeholder="Filter by name or client ID" value="${esc(ui.clientQuery)}" style="max-width:240px" aria-label="Filter clients">
         <span class="small muted">${inlCount() ? `${inlCount()} client${inlCount() === 1 ? '' : 's'} edited` : 'Edit any cell, then save'}</span>
         <button type="button" id="ci-discard" class="small" ${inlCount() ? '' : 'disabled'}>Discard changes</button>
         <button type="button" id="ci-save" class="primary small" ${inlCount() ? '' : 'disabled'}>Save changes</button></div></div>
     ${ui.inlErr ? `<div class="banner red" role="alert">${esc(ui.inlErr)}</div>` : ''}
     <datalist id="cfg-zones-i">${s.zones.map(z => `<option value="${esc(z)}"></option>`).join('')}</datalist>
     <div class="table-wrap"><table class="matrix">
-      <thead><tr><th>Name</th><th>Channel</th><th>Status</th><th>Zone</th><th>Main product</th><th class="num">Avg monthly kg</th><th class="num">Credit days</th><th>Premiums</th><th>Discounts</th><th></th></tr></thead>
-      <tbody>${list.map(a => `<tr class="${ui.inl[a.id] ? 'edited' : ''}"><td style="min-width:200px"><input type="text" data-ci="${esc(a.id)}|name" value="${esc(inlVal(a, 'name'))}" aria-label="Client name"><div class="small muted">${esc(a.id)}</div></td>
+      <thead><tr><th>Client ID</th><th>Name</th><th>Channel</th><th>Status</th><th>Zone</th><th>Main product</th><th class="num">Avg monthly kg</th><th class="num">Credit days</th><th>Premiums</th><th>Discounts</th><th></th></tr></thead>
+      <tbody>${list.map(a => `<tr class="${ui.inl[a.id] ? 'edited' : ''}"><td><input type="text" data-ci="${esc(a.id)}|clientCode" value="${esc(inlVal(a, 'clientCode'))}" aria-label="Client ID" placeholder="Client ID" style="width:110px"></td><td style="min-width:200px"><input type="text" data-ci="${esc(a.id)}|name" value="${esc(inlVal(a, 'name'))}" aria-label="Client name"><div class="small muted" title="System reference, cannot change">ref ${esc(a.id)}</div></td>
         <td><select data-ci="${esc(a.id)}|channelId" aria-label="Channel">${s.channels.map(c => `<option value="${esc(c.id)}"${c.id === inlVal(a, 'channelId') ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select></td>
         <td><select data-ci="${esc(a.id)}|status" aria-label="Status">${['Active', 'Inactive'].map(v => `<option${v === inlVal(a, 'status') ? ' selected' : ''}>${v}</option>`).join('')}</select>${a.needsAttention ? ' <span class="pill amber">Attention</span>' : ''}</td>
         <td><input type="text" list="cfg-zones-i" data-ci="${esc(a.id)}|zone" value="${esc(inlVal(a, 'zone'))}" aria-label="Zone" style="min-width:110px"></td>
@@ -556,12 +556,12 @@ function clientsHtml(s) {
         <td class="num"><input type="number" min="0" step="1" data-ci="${esc(a.id)}|creditTermDays" value="${esc(inlVal(a, 'creditTermDays'))}" aria-label="Credit days" style="width:70px;text-align:right"></td>
         <td class="small">${esc(compOut(a.premiums, 'premiumComponents'))}</td>
         <td class="small">${esc(compOut(a.discounts, 'discountComponents'))}</td>
-        <td><button type="button" class="small" data-c-edit="${esc(a.id)}">Edit</button></td></tr>`).join('') || '<tr><td colspan="10" class="muted">No clients match.</td></tr>'}
+        <td><button type="button" class="small" data-c-edit="${esc(a.id)}">Edit</button></td></tr>`).join('') || '<tr><td colspan="11" class="muted">No clients match.</td></tr>'}
       </tbody></table></div></div>`;
 }
 
 // Inline edits in the clients table: drafts live in ui.inl until saved.
-const INLINE = [['name', 'Client name'], ['channelId', 'Channel'], ['status', 'Status'], ['zone', 'Zone'], ['primarySkuId', 'Main product'], ['avgMonthlyVolumeKg', 'Avg monthly volume'], ['creditTermDays', 'Credit term']];
+const INLINE = [['clientCode', 'Client ID'], ['name', 'Client name'], ['channelId', 'Channel'], ['status', 'Status'], ['zone', 'Zone'], ['primarySkuId', 'Main product'], ['avgMonthlyVolumeKg', 'Avg monthly volume'], ['creditTermDays', 'Credit term']];
 const INT_KEYS = ['avgMonthlyVolumeKg', 'creditTermDays'];
 const inlCount = () => Object.keys(ui.inl).length;
 const inlVal = (a, k) => (ui.inl[a.id]?.[k] !== undefined ? ui.inl[a.id][k] : a[k] == null ? '' : String(a[k]));
@@ -591,6 +591,13 @@ async function saveInline() {
     if (parts.length) { patches.push({ id, patch }); notes.push(`${a.name}: ${parts.join('; ')}`); }
   }
   if (!patches.length) { ui.inl = {}; toast('Nothing changed'); return; }
+  const codeOwner = new Map();
+  for (const a of s.accounts) {
+    const code = String(patches.find(p => p.id === a.id)?.patch.clientCode === undefined ? a.clientCode ?? '' : patches.find(p => p.id === a.id).patch.clientCode ?? '').trim().toLowerCase();
+    if (!code) continue;
+    if (codeOwner.has(code)) { ui.inlErr = `Client ID ${code.toUpperCase()} is used by both ${codeOwner.get(code)} and ${a.name}. Client IDs must be unique`; return; }
+    codeOwner.set(code, a.name);
+  }
   await store.commit({
     action: 'CLIENT_TERMS_SAVED', entity: 'account', entityId: patches.length === 1 ? patches[0].id : 'accounts', field: 'client',
     before: null,
@@ -604,6 +611,7 @@ async function saveInline() {
 
 // The basic client record, edited alongside the terms below it.
 const BASIC = [
+  { key: 'clientCode', label: 'Client ID', type: 'text' },
   { key: 'name', label: 'Client name', type: 'text' },
   { key: 'channelId', label: 'Channel', type: 'select', from: s => s.channels.map(c => [c.id, c.label]) },
   { key: 'status', label: 'Status', type: 'select', from: () => [['Active', 'Active'], ['Inactive', 'Inactive']] },
@@ -680,6 +688,10 @@ async function saveTerms() {
     else if (f.type === 'int') { value = raw === '' ? null : Math.round(Number(raw.replace(/[,\s]/g, ''))); if (value != null && (!Number.isFinite(value) || value < 0)) { ui.clientErr = `${f.label} must be a number of 0 or more`; return; } }
     else value = raw === '' ? null : raw;
     if (f.key === 'name' && !value) { ui.clientErr = 'The client needs a name'; return; }
+    if (f.key === 'clientCode' && value) {
+      const clash = s.accounts.find(x => x.id !== a.id && (x.clientCode || '').toLowerCase() === value.toLowerCase());
+      if (clash) { ui.clientErr = `Client ID ${value} is already used by ${clash.name}`; return; }
+    }
     if ((f.key === 'channelId' || f.key === 'status') && !value) { ui.clientErr = `${f.label} is required`; return; }
     const before = a[f.key] ?? (f.key === 'needsAttention' ? false : null);
     if (before === value) continue;

@@ -82,6 +82,7 @@ const compOut = list => (list || []).map(x => (x.perKg != null ? `${x.code}=${pe
 
 export const ACCOUNT_COLUMNS = [
   { key: 'id', header: 'Account ID', aliases: ['id'], hint: 'Optional. Updates the client with this ID', parse: text('id'), out: a => a.id },
+  { key: 'clientCode', header: 'Client ID', aliases: ['client code', 'customer id', 'customer code', 'client no', 'customer no'], hint: 'Your own client ID. Must be unique', parse: text('clientCode'), out: a => a.clientCode },
   { key: 'name', header: 'Name', aliases: ['customer', 'customer name', 'client', 'client name', 'account', 'account name'], required: true, parse: text('name'), out: a => a.name },
   { key: 'channelId', header: 'Channel', aliases: ['segment', 'price list'], required: true, hint: 'Channel ID, label or audience, e.g. COMMERCIAL or Dealer',
     parse: (raw, s) => {
@@ -161,6 +162,7 @@ export function rowsToAccounts(s, table) {
   if (missing.length) return { fatal: `Missing required column${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}. The first row must be the header row.` };
 
   const seen = new Map();
+  const seenCodes = new Map();
   const results = table.slice(1).map((cells, idx) => {
     const rowNo = idx + 2;
     const errors = [], warnings = [], patch = {};
@@ -184,6 +186,13 @@ export function rowsToAccounts(s, table) {
     else if (key) seen.set(key, rowNo);
 
     const existing = matchId ? s.accounts.find(a => a.id === matchId) : null;
+    if (patch.clientCode) {
+      const code = patch.clientCode.toLowerCase();
+      const clash = s.accounts.find(a => a.id !== matchId && (a.clientCode || '').toLowerCase() === code);
+      if (clash) errors.push(`Client ID ${patch.clientCode} is already used by ${clash.name}`);
+      else if (seenCodes.has(code)) errors.push(`Client ID ${patch.clientCode} is repeated from row ${seenCodes.get(code)}`);
+      else seenCodes.set(code, rowNo);
+    }
     const ch = patch.channelId ?? existing?.channelId;
     const sku = present.has('primarySkuId') ? patch.primarySkuId : existing?.primarySkuId;
     if (ch && sku && !priced(s, ch, sku)) warnings.push(`${s.skus.find(k => k.id === sku)?.label} is not priced on ${s.channels.find(c => c.id === ch)?.label}`);

@@ -161,7 +161,7 @@ function clientRow(s, a, cb) {
         <button type="button" class="link exp" data-cg-exp="${esc(a.id)}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(a.name)}</button>
         <div class="client-info">
           <div>Gen vol <b>${esc(volGen)}</b> · Req/mo <b>${esc(reqVol)}</b></div>
-          <div>${esc(a.status)} · ${esc(a.zone ?? '—')}</div>
+          <div>${a.clientCode ? esc(a.clientCode) + ' · ' : ''}${esc(a.status)} · ${esc(a.zone ?? '—')}</div>
         </div>
       </th>
       <td class="num">${price}</td>
