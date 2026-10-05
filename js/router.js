@@ -27,7 +27,7 @@ export function canAccess(s, user, route) {
     case 'quote': return role === 'seller';
     case 'priceroom': return role === 'manager' || role === 'admin';
     case 'log': return role === 'admin';
-    case 'config': return role === 'admin';
+    case 'config': return role === 'admin' || role === 'manager' || role === 'seller';
     case 'market': return true;
     case 'board': {
       if (role === 'messenger') return false;
@@ -44,7 +44,8 @@ export function navFor(s, user) {
   if (user.role === 'manager' || user.role === 'admin') items.push(['#/priceroom', 'Price room']);
   items.push(['#/market', 'Price Watch']);
   if (user.role !== 'messenger') items.push(['#/board', 'Price lists']);
-  if (user.role === 'admin') items.push(['#/log', 'Log'], ['#/config', 'Configuration']);
+  if (user.role === 'admin') items.push(['#/log', 'Log']);
+  if (user.role === 'admin' || user.role === 'manager' || user.role === 'seller') items.push(['#/config', 'Configuration']);
   return items;
 }
 

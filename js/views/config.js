@@ -2,7 +2,7 @@
 // Every save goes through store.commit, so configuration changes are logged like price changes.
 
 import * as store from '../store.js';
-import { fmt } from '../money.js';
+import { fmt, toCentavos, toInput } from '../money.js';
 import { esc, toast, options, download, preserveFocus } from '../ui.js';
 import { parseCsv, toCsv, rowsToAccounts, accountsToRows, templateRows, newAccount } from '../csv.js';
 import { channelLabel, skuLabel } from '../pricing.js';
@@ -11,7 +11,7 @@ import { FIELDS, labelFor, inputValue, displayValue, parseValue, usableKg } from
 const ROLES = ['seller', 'manager', 'admin', 'messenger', 'viewer'];
 const ui = { tab: 'users', users: null, base: null, userErr: '', preview: null, mode: 'merge', fileName: '', clientQuery: '', editClient: null, terms: {}, basic: {}, clientErr: '', channels: null, chanBase: null, chanErr: '',
   skus: null, skuBase: null, skuErr: '', zones: null, zoneBase: null, zoneErr: '',
-  brands: null, brandBase: null, brandErr: '', inl: {}, inlErr: '' };
+  brands: null, brandBase: null, brandErr: '', inl: {}, inlErr: '', cp: {}, cpErr: '' };
 
 export function render(root, ctx) {
   const { state: s } = ctx;
@@ -144,7 +144,73 @@ function channelsHtml(s) {
           <td><button type="button" class="small" data-ch-del="${i}" ${locked ? `disabled title="${u.clients} clients, ${u.products} priced products"` : ''}>Remove</button></td>
         </tr>`;
       }).join('')}</tbody></table></div>
-    <p class="small muted">A channel can only be removed once it has no clients and no priced products.</p></div>`;
+    <p class="small muted">A channel can only be removed once it has no clients and no priced products.</p></div>
+  ${channelProductsHtml(s)}`;
+}
+
+// ---- Which products each channel sells ----
+// A product is "in" a channel while it has an open margin rule there. Existing margins are price levers and
+// stay with the MPL calculator; a product added here needs a starting margin.
+const sellable = s => s.skus.filter(k => k.active && (!k.hasVariants || !s.skus.some(v => v.parentId === k.id && v.active)));
+const cpKey = (ch, sku) => `${ch}|${sku}`;
+const cpPriced = (s, ch, sku) => s.marginRules.find(r => r.channelId === ch && r.skuId === sku && r.effectiveTo == null);
+const cpOn = (s, ch, sku) => ui.cp[cpKey(ch, sku)]?.on ?? !!cpPriced(s, ch, sku);
+
+function channelProductsHtml(s) {
+  const skus = sellable(s);
+  const edits = Object.keys(ui.cp).length;
+  return `<div class="card" style="margin-top:16px">
+    <div class="card-head"><div><h2>Products sold in each channel</h2>
+      <p class="small muted">Tick the products a channel sells. A newly ticked product needs a starting margin per kg; unticking removes it from that channel's price list.</p></div>
+      <div class="row"><span class="small muted">${edits ? `${edits} change${edits === 1 ? '' : 's'}` : ''}</span>
+        <button type="button" id="cp-discard" class="small" ${edits ? '' : 'disabled'}>Discard changes</button>
+        <button type="button" id="cp-save" class="primary small" ${edits ? '' : 'disabled'}>Save products</button></div></div>
+    ${ui.cpErr ? `<div class="banner red" role="alert">${esc(ui.cpErr)}</div>` : ''}
+    <div class="table-wrap"><table class="matrix">
+      <thead><tr><th>Product</th>${s.channels.map(c => `<th class="center">${esc(c.label)}</th>`).join('')}</tr></thead>
+      <tbody>${skus.map(k => `<tr><th scope="row"><div class="mh">${esc(k.label)}</div><div class="small muted">${k.contentKg} kg</div></th>
+        ${s.channels.map(c => {
+          const rule = cpPriced(s, c.id, k.id);
+          const on = cpOn(s, c.id, k.id);
+          const draft = ui.cp[cpKey(c.id, k.id)];
+          return `<td class="center ${draft ? 'edited' : ''}"><label class="check" style="justify-content:center"><input type="checkbox" data-cp="${esc(c.id)}|${esc(k.id)}" ${on ? 'checked' : ''} aria-label="${esc(k.label)} in ${esc(c.label)}"></label>
+            ${on && rule ? `<div class="small muted">margin ${fmt(rule.perKg)}</div>` : ''}
+            ${on && !rule ? `<input type="text" inputmode="decimal" class="mini" data-cpm="${esc(c.id)}|${esc(k.id)}" placeholder="₱/kg margin" value="${esc(draft?.margin ?? '')}" aria-label="Starting margin per kg" style="width:96px;text-align:right">` : ''}</td>`;
+        }).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+}
+
+async function saveChannelProducts() {
+  const s = store.get();
+  ui.cpErr = '';
+  const adds = [], drops = [], notes = [];
+  for (const [key, d] of Object.entries(ui.cp)) {
+    const [chId, skuId] = key.split('|');
+    const rule = cpPriced(s, chId, skuId);
+    const chL = channelLabel(s, chId), skL = skuLabel(s, skuId);
+    if (d.on && !rule) {
+      const margin = toCentavos(d.margin);
+      if (margin == null || margin < 0) { ui.cpErr = `Enter a starting margin per kg for ${skL} in ${chL}, for example 30.00`; return; }
+      adds.push({ chId, skuId, margin });
+      notes.push(`${skL} added to ${chL} at margin ${fmt(margin)}/kg`);
+    } else if (!d.on && rule) {
+      drops.push({ chId, skuId });
+      const clients = s.accounts.filter(a => a.channelId === chId && a.primarySkuId === skuId).length;
+      notes.push(`${skL} removed from ${chL}${clients ? ` (${clients} clients have it as main product)` : ''}`);
+    }
+  }
+  if (!notes.length) { ui.cp = {}; toast('No changes to save'); return; }
+  const hit = drops.reduce((n, x) => n + s.accounts.filter(a => a.channelId === x.chId && a.primarySkuId === x.skuId).length, 0);
+  if (hit && !confirm(`${hit} clients have a removed product as their main product and will have no price for it. Save anyway?`)) return;
+  const now = new Date().toISOString();
+  await store.commit({
+    action: 'CONFIG_CHANGED', entity: 'channelProducts', entityId: 'channelProducts', field: 'marginRules',
+    before: null, after: { summary: notes.join('; ') },
+  }, d => {
+    for (const x of drops) for (const r of d.marginRules) if (r.channelId === x.chId && r.skuId === x.skuId && r.effectiveTo == null) r.effectiveTo = now;
+    for (const x of adds) d.marginRules.push({ id: store.uid('mr'), channelId: x.chId, skuId: x.skuId, perKg: x.margin, effectiveFrom: now, effectiveTo: null });
+  });
+  ui.cp = {};
+  toast('Channel products saved');
 }
 
 async function saveChannels() {
@@ -743,6 +809,17 @@ function bind(root, ctx) {
   };
   if ($('ch-discard')) $('ch-discard').onclick = () => { ui.channels = null; ui.chanErr = ''; rerender(); };
   if ($('ch-save')) $('ch-save').onclick = async () => { await saveChannels(); rerender(); };
+  root.querySelectorAll('[data-cp]').forEach(cb => cb.onchange = () => {
+    const [ch, sku] = cb.dataset.cp.split('|');
+    const priced = !!cpPriced(store.get(), ch, sku);
+    if (cb.checked === priced) delete ui.cp[cb.dataset.cp];
+    else ui.cp[cb.dataset.cp] = { on: cb.checked, margin: ui.cp[cb.dataset.cp]?.margin ?? '' };
+    rerender();
+    if (cb.checked && !priced) root.querySelector(`[data-cpm="${CSS.escape(cb.dataset.cp)}"]`)?.focus();
+  });
+  root.querySelectorAll('[data-cpm]').forEach(el => el.oninput = () => { if (ui.cp[el.dataset.cpm]) ui.cp[el.dataset.cpm].margin = el.value; });
+  if ($('cp-discard')) $('cp-discard').onclick = () => { ui.cp = {}; ui.cpErr = ''; rerender(); };
+  if ($('cp-save')) $('cp-save').onclick = async () => { await saveChannelProducts(); rerender(); };
 
   // Products
   root.querySelectorAll('[data-sk][data-f]').forEach(el => {
