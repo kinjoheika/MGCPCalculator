@@ -5,7 +5,7 @@ import { fmt, toCentavos } from '../money.js';
 import { esc, toast, options, preserveFocus } from '../ui.js';
 import { newestReading, isStaleReading, daysSince, fmtDate, userName, channelLabel } from '../pricing.js';
 
-const ui = { dueOpen: true, recentOpen: true, channelId: '', productBrand: '', brand: '', brandOther: '', skuId: '11KG_MGAS', price: '', photoUrl: null, photoName: '', noCamera: false, error: '', outlier: null };
+const ui = { dueOpen: true, recentOpen: true, channelId: '', productBrand: '', brand: '', brandOther: '', lines: [{ skuId: '11KG_MGAS', price: '' }], photoUrl: null, photoName: '', noCamera: false, error: '', outlier: null };
 
 function brandName(b) { return typeof b === 'string' ? b : b.name; }
 function brandZone(b) { return typeof b === 'string' ? '' : (b.zone || ''); }
@@ -61,10 +61,12 @@ function view({ state: s, user }) {
           <select id="m-brand">${options(brandList.map(b => ({ id: b, label: b })), ui.brand, { placeholder: 'Choose' })}<option value="__other"${ui.brand === '__other' ? ' selected' : ''}>Other</option></select></label>
         ${ui.brand === '__other' ? `<label class="field cpw-f"><span>Brand name</span><input id="m-brand-other" type="text" value="${esc(ui.brandOther)}"></label>` : ''}
       </div>
-      <div class="cpw-row">
-        <label class="field cpw-f"><span>Product</span><select id="m-sku">${options(skuList, ui.skuId)}</select></label>
-        <label class="field cpw-f"><span>Price / cyl (₱)</span><input id="m-price" type="text" inputmode="decimal" placeholder="1055.00" value="${esc(ui.price)}"></label>
-      </div>
+      ${ui.lines.map((l, i) => `<div class="cpw-row">
+        <label class="field cpw-f"><span>Product${ui.lines.length > 1 ? ` ${i + 1}` : ''}</span><select class="m-sku" data-i="${i}">${options(skuList, l.skuId)}</select></label>
+        <label class="field cpw-f"><span>Price / cyl (₱)</span><input class="m-price" data-i="${i}" type="text" inputmode="decimal" placeholder="1055.00" value="${esc(l.price)}"></label>
+        ${ui.lines.length > 1 ? `<button type="button" class="m-rm small" data-i="${i}" aria-label="Remove product ${i + 1}">✕</button>` : ''}
+      </div>`).join('')}
+      <div><button type="button" id="m-add" class="small">+ Add another product</button></div>
       ${selectedZone ? `<div class="cpw-zone small muted">Zone: <b>${esc(selectedZone)}</b></div>` : ''}
       <div class="cpw-photo">
         ${ui.noCamera
@@ -99,6 +101,8 @@ function view({ state: s, user }) {
   </section>`;
 }
 
+function s_skus(ctx) { return store.get().skus.filter(k => k.active); }
+
 function bind(root, ctx) {
   const rerender = () => render(root, { ...ctx, state: store.get() });
   const $ = id => root.querySelector('#' + id);
@@ -110,8 +114,15 @@ function bind(root, ctx) {
   $('m-pbrand').oninput = e => { ui.productBrand = e.target.value; };
   $('m-brand').onchange = e => { ui.brand = e.target.value; clearFlags(); rerender(); };
   if ($('m-brand-other')) $('m-brand-other').oninput = e => { ui.brandOther = e.target.value; clearFlags(); };
-  $('m-sku').onchange = e => { ui.skuId = e.target.value; clearFlags(); rerender(); };
-  $('m-price').oninput = e => { ui.price = e.target.value; if (ui.outlier || ui.error) { clearFlags(); rerender(); } };
+  root.querySelectorAll('.m-sku').forEach(el => { el.onchange = e => { ui.lines[+el.dataset.i].skuId = e.target.value; clearFlags(); rerender(); }; });
+  root.querySelectorAll('.m-price').forEach(el => { el.oninput = e => { ui.lines[+el.dataset.i].price = e.target.value; if (ui.outlier || ui.error) { clearFlags(); rerender(); } }; });
+  root.querySelectorAll('.m-rm').forEach(el => { el.onclick = () => { ui.lines.splice(+el.dataset.i, 1); clearFlags(); rerender(); }; });
+  $('m-add').onclick = () => {
+    const used = new Set(ui.lines.map(l => l.skuId));
+    const next = s_skus(ctx).find(k => !used.has(k.id));
+    ui.lines.push({ skuId: next ? next.id : ui.lines[ui.lines.length - 1].skuId, price: '' });
+    clearFlags(); rerender();
+  };
   $('m-nocam').onchange = e => { ui.noCamera = e.target.checked; ui.photoUrl = null; ui.photoName = ''; rerender(); };
   if ($('m-photo')) $('m-photo').onchange = e => {
     const f = e.target.files[0];
@@ -122,7 +133,7 @@ function bind(root, ctx) {
     rerender();
   };
   if ($('m-photo-name')) $('m-photo-name').oninput = e => { ui.photoName = e.target.value; };
-  if ($('m-fix')) $('m-fix').onclick = () => { ui.outlier = null; rerender(); root.querySelector('#m-price')?.focus(); };
+  if ($('m-fix')) $('m-fix').onclick = () => { ui.outlier = null; rerender(); root.querySelector('.m-price')?.focus(); };
   if ($('m-confirm')) $('m-confirm').onclick = () => submit(ctx, true).then(rerender);
   $('m-submit').onclick = () => submit(ctx, false).then(rerender);
 }
@@ -130,37 +141,46 @@ function bind(root, ctx) {
 async function submit({ user }, confirmed) {
   const s = store.get();
   const brand = (ui.brand === '__other' ? ui.brandOther : ui.brand).trim();
-  const price = toCentavos(ui.price);
   ui.error = '';
   if (!ui.channelId) { ui.error = 'Choose a channel'; return; }
   if (!brand) { ui.error = 'Choose a partner (competitor)'; return; }
-  if (!price || price <= 0) { ui.error = 'Enter the price per cylinder'; return; }
+  const lines = ui.lines.map(l => ({ skuId: l.skuId, price: toCentavos(l.price) }));
+  if (lines.some(l => !l.price || l.price <= 0)) { ui.error = 'Enter the price per cylinder for every product'; return; }
+  if (new Set(lines.map(l => l.skuId)).size !== lines.length) { ui.error = 'Each product can only be listed once'; return; }
   const photo = ui.noCamera ? ui.photoName.trim() : ui.photoUrl;
   if (!photo) { ui.error = ui.noCamera ? 'Enter the photo filename' : 'Attach a photo of the price'; return; }
 
   const zone = zoneForBrand(s, brand) || '—';
 
-  const last = newestReading(s, { zone, skuId: ui.skuId, brand });
-  if (last && !confirmed) {
-    const diff = (price - last.pricePerCyl) / last.pricePerCyl;
-    if (Math.abs(diff) > 0.10) {
-      ui.outlier = { message: `This is ${Math.round(Math.abs(diff) * 100)}% ${diff > 0 ? 'higher' : 'lower'} than the last ${last.brand} reading (${fmt(last.pricePerCyl)} on ${fmtDate(last.capturedAt)}). Correct?` };
-      return;
+  const lasts = lines.map(l => newestReading(s, { zone, skuId: l.skuId, brand }));
+  if (!confirmed) {
+    for (let i = 0; i < lines.length; i++) {
+      const last = lasts[i];
+      if (!last) continue;
+      const diff = (lines[i].price - last.pricePerCyl) / last.pricePerCyl;
+      if (Math.abs(diff) > 0.10) {
+        const sku = s.skus.find(k => k.id === lines[i].skuId)?.label ?? lines[i].skuId;
+        ui.outlier = { message: `${sku}: this is ${Math.round(Math.abs(diff) * 100)}% ${diff > 0 ? 'higher' : 'lower'} than the last ${last.brand} reading (${fmt(last.pricePerCyl)} on ${fmtDate(last.capturedAt)}). Correct?` };
+        return;
+      }
     }
   }
 
-  const id = store.uid('cr');
-  const reading = {
-    id, brand, zone, channelId: ui.channelId, productBrand: ui.productBrand.trim() || null, skuId: ui.skuId, pricePerCyl: price,
-    capturedAt: new Date().toISOString(), capturedBy: user.id,
-    photoUrl: ui.noCamera ? ui.photoName.trim() : ui.photoUrl, photoName: ui.photoName || null,
+  const capturedAt = new Date().toISOString();
+  const readings = lines.map(l => ({
+    id: store.uid('cr'), brand, zone, channelId: ui.channelId, productBrand: ui.productBrand.trim() || null, skuId: l.skuId, pricePerCyl: l.price,
+    capturedAt, capturedBy: user.id,
+    photoUrl: photo, photoName: ui.photoName || null,
     outlierConfirmed: !!confirmed,
-  };
-  await store.commit({
-    action: 'READING_CAPTURED', entity: 'competitorReading', entityId: id, field: 'pricePerCyl',
-    before: last ? last.pricePerCyl : null, after: price,
-  }, d => { d.competitorReadings.push(reading); });
+  }));
+  for (let i = 0; i < readings.length; i++) {
+    const r = readings[i];
+    await store.commit({
+      action: 'READING_CAPTURED', entity: 'competitorReading', entityId: r.id, field: 'pricePerCyl',
+      before: lasts[i] ? lasts[i].pricePerCyl : null, after: r.pricePerCyl,
+    }, d => { d.competitorReadings.push(r); });
+  }
 
-  Object.assign(ui, { productBrand: '', brand: '', brandOther: '', price: '', photoUrl: null, photoName: '', outlier: null, error: '' });
-  toast('Reading captured');
+  Object.assign(ui, { productBrand: '', brand: '', brandOther: '', lines: [{ skuId: ui.lines[0].skuId, price: '' }], photoUrl: null, photoName: '', outlier: null, error: '' });
+  toast(readings.length > 1 ? `${readings.length} readings captured` : 'Reading captured');
 }
