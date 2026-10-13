@@ -142,8 +142,8 @@ export function html(s) {
       <thead>
       <tr class="grp">
         <th rowspan="2" class="col-client">Client</th>
-        ${showPrice ? '<th rowspan="2" class="num col-price">Current price</th>' : ''}
         ${showFuture ? '<th rowspan="2" class="num col-price col-future">Future price</th>' : ''}
+        ${showPrice ? '<th rowspan="2" class="num col-price">Current price</th>' : ''}
         ${showMargin ? '<th rowspan="2" class="num col-margin">Margin/kg</th>' : ''}
         ${pCols.length ? `<th colspan="${pCols.length + 1}" class="grp-prem">Premiums</th>` : ''}
         ${dCols.length ? `<th colspan="${dCols.length + 1}" class="grp-disc">Discounts</th>` : ''}
@@ -173,8 +173,8 @@ function clientRow(s, a, cb, v) {
       <th scope="row" title="${esc(`${a.clientCode ? a.clientCode + ' · ' : ''}${a.status} · ${a.zone ?? '—'} · Gen vol ${volGen} · Req/mo ${reqVol}`)}">
         <button type="button" class="link exp" data-cg-exp="${esc(a.id)}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(a.name)}</button>
       </th>
-      ${v.showPrice ? `<td class="num">${price}</td>` : ''}
       ${v.showFuture ? `<td class="num col-future" id="fp-${esc(a.id)}">${futurePriceCell(s, a, v.inp)}</td>` : ''}
+      ${v.showPrice ? `<td class="num">${price}</td>` : ''}
       ${v.showMargin ? `<td class="num col-margin">${marginCell(s, a)}</td>` : ''}
       ${v.pCols.length ? `<td class="num grp-prem-sub" id="tp-${esc(a.id)}">${totalCell(s, a)}</td>${v.pCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
       ${v.dCols.length ? `<td class="num grp-disc-sub" id="td-${esc(a.id)}">${discountCell(a)}</td>${v.dCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
