@@ -146,11 +146,12 @@ export function html(s) {
         ${showFuture ? '<th rowspan="2" class="num col-price col-future">Future price</th>' : ''}
         ${showPrice ? `<th rowspan="2" class="num col-price">Current price <button type="button" id="cg-hist-toggle" class="hist-col-toggle" title="${histOpen ? 'Hide price history' : 'Show past 5 prices'}" aria-expanded="${histOpen}">${histOpen ? '▴' : '▾'}</button></th>` : ''}
         ${histOpen ? histPubs.map(p => `<th rowspan="2" class="num col-hist"><span class="hist-ver">v${p.version}</span><span class="hist-date">${fmtDate(p.publishedAt)}</span></th>`).join('') : ''}
-        ${showMargin ? '<th rowspan="2" class="num col-margin">Margin/kg</th>' : ''}
+        ${showMargin ? '<th colspan="1" class="grp-margin">Margin/kg</th>' : ''}
         ${pCols.length ? `<th colspan="${pCols.length + 1}" class="grp-prem">Premiums</th>` : ''}
         ${dCols.length ? `<th colspan="${dCols.length + 1}" class="grp-disc">Discounts</th>` : ''}
       </tr>
       <tr>
+        ${showMargin ? '<th class="num grp-margin-sub col-margin">₱/kg</th>' : ''}
         ${pCols.length ? `<th class="num grp-prem-sub col-total">Total premium</th>${pCols.map(c => `<th class="col-line">${esc(c.title)}</th>`).join('')}` : ''}
         ${dCols.length ? `<th class="num grp-disc-sub col-total">Total discounts</th>${dCols.map(c => `<th class="col-line">${esc(c.title)}</th>`).join('')}` : ''}
       </tr></thead>
@@ -196,7 +197,7 @@ function clientRow(s, a, cb, v) {
       ${v.showFuture ? `<td class="num col-future" id="fp-${esc(a.id)}">${futurePriceCell(s, a, v.inp)}</td>` : ''}
       ${priceCell}
       ${v.histPubs.map(pub => `<td class="num col-hist">${histPriceCell(s, a, pub)}</td>`).join('')}
-      ${v.showMargin ? `<td class="num col-margin">${marginCell(s, a)}</td>` : ''}
+      ${v.showMargin ? `<td class="num grp-margin-sub col-margin">${marginCell(s, a)}</td>` : ''}
       ${v.pCols.length ? `<td class="num grp-prem-sub" id="tp-${esc(a.id)}">${totalCell(s, a)}</td>${v.pCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
       ${v.dCols.length ? `<td class="num grp-disc-sub" id="td-${esc(a.id)}">${discountCell(a)}</td>${v.dCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
     </tr>
