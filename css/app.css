@@ -374,6 +374,7 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .cg-sess-lbl > span { font-size: 10.5px; color: var(--muted); font-weight: 500; white-space: nowrap; }
 .cg-sess-lbl input { min-height: 32px; padding: 3px 7px; font-size: 12.5px; border-radius: 6px; width: 76px; }
 .cell-future { color: var(--tiffany-600); font-weight: 650; }
+.mg-rule { display: block; margin-bottom: 2px; }
 
 /* ---- Price history toggle (in Current price column header) ---- */
 .hist-col-toggle { min-height: 20px; padding: 1px 5px; font-size: 11px; border-radius: 5px; background: var(--blue-50); border-color: var(--blue-100); color: var(--blue); margin-left: 4px; vertical-align: middle; }
@@ -714,7 +715,7 @@ table.grid-table thead th { white-space: normal; line-height: 1.2; vertical-alig
 table.grid-table .col-client { width: 190px; }
 table.grid-table .col-price { width: 140px; }
 table.grid-table .col-future { width: 140px; }
-table.grid-table .col-margin { width: 90px; }
+table.grid-table .col-margin { width: 100px; }
 table.grid-table .col-total { width: 80px; }
 table.grid-table .cellfields input, table.grid-table .cellfields input.mini { width: 100%; min-width: 0; }
 table.grid-table tbody th { max-width: none; }

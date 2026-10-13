@@ -12,7 +12,7 @@ import { inRange, rangeActive, rangeBar } from '../pricerange.js';
 import * as wizard from './priceroom-wizard.js';
 import { level } from '../access.js';
 
-const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histOpen: false };
+const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, margins: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histOpen: false };
 
 // Two column groups, each with its own subcolumns. Every cell takes as many rows as the client needs.
 const PREMIUM_COLS = [
@@ -86,7 +86,7 @@ export function premiumTotal(s, a) {
 }
 
 export function pendingEdits() {
-  return Object.keys(ui.rows).length;
+  return Object.keys(ui.rows).length + Object.keys(ui.margins).length;
 }
 
 // ---- Render ----
@@ -250,9 +250,15 @@ function futurePriceCell(s, a, inp) {
 function marginCell(s, a) {
   if (!a.primarySkuId) return '<span class="muted small">—</span>';
   const mr = marginRule(s, a.channelId, a.primarySkuId);
-  const mPerKg = a.fixedMarginPerKg ?? mr?.perKg;
-  if (mPerKg == null) return '<span class="muted small">—</span>';
-  return `<span class="cell-price">${fmt(mPerKg)}/kg</span>${a.fixedMarginPerKg != null ? ' <span class="small muted">fixed</span>' : ''}`;
+  const rulePerKg = mr?.perKg;
+  const draftVal = ui.margins[a.id] ?? (a.fixedMarginPerKg != null ? toInput(a.fixedMarginPerKg) : '');
+  const pastHtml = rulePerKg != null
+    ? `<span class="cell-price muted small mg-rule">${fmt(rulePerKg)}/kg</span>`
+    : '';
+  return `<div class="cellfields">
+    ${pastHtml}
+    <input class="mini" type="number" min="0" step="0.01" inputmode="decimal" placeholder="₱/kg" value="${esc(draftVal)}" aria-label="Margin ₱/kg" data-mg="${esc(a.id)}">
+  </div>`;
 }
 
 // One row of fields per client and line type. Any extra rows a client already carries are kept as they are.
@@ -296,9 +302,20 @@ async function saveAll(rerender) {
     if (JSON.stringify(before) !== JSON.stringify(next)) changes.push({ type: 'ACCOUNT_COMPONENT', accountId: accId, code, rows: next });
   }
 
+  // Margin overrides → ACCOUNT_FIELD on fixedMarginPerKg
+  for (const [accId, valStr] of Object.entries(ui.margins)) {
+    const a = byId(s.accounts, accId);
+    if (!a) continue;
+    const val = toCentavos(valStr);
+    const before = a.fixedMarginPerKg ?? null;
+    if ((val ?? null) !== before)
+      changes.push({ type: 'ACCOUNT_FIELD', accountId: accId, field: 'fixedMarginPerKg', value: val ?? null });
+  }
+
   const total = changes.length ? wizard.addChanges(changes) : 0;
 
   ui.rows = {};
+  ui.margins = {};
   rerender();
   if (!changes.length) toast('Nothing changed');
   else toast(`${changes.length} price change${changes.length === 1 ? '' : 's'} added to the proposal (${total} in total) — simulate and publish to apply.`);
@@ -380,6 +397,20 @@ export function bind(root, rerender) {
 
   const histToggle = root.querySelector('#cg-hist-toggle');
   if (histToggle) histToggle.onclick = () => { ui.histOpen = !ui.histOpen; rerender(); };
+
+  root.querySelectorAll('[data-mg]').forEach(el => {
+    const accId = el.dataset.mg;
+    el.oninput = () => {
+      ui.margins[accId] = el.value;
+      const saveBtn = root.querySelector('#cg-save');
+      if (saveBtn) saveBtn.disabled = false;
+    };
+    el.onblur = () => {
+      const c = toCentavos(el.value);
+      el.value = c == null ? '' : toInput(c);
+      ui.margins[accId] = el.value;
+    };
+  });
 
   // Session inputs: acq / margin / buffer → trigger full rerender so future price column appears/updates
   [['#cg-acq', 'acqInput'], ['#cg-margin', 'marginInput'], ['#cg-buf', 'bufferInput']].forEach(([sel, key]) => {
