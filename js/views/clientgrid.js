@@ -103,7 +103,7 @@ export function html(s) {
   const pCols = PREMIUM_COLS.filter(c => lvl(s, c.code) >= 1), dCols = DISCOUNT_COLS.filter(c => lvl(s, c.code) >= 1);
   const showPrice = level(s, store.currentUser(), 'cp_price') >= 1;
   const inp = sessionInputs();
-  const showFuture = showPrice && !!inp;
+  const showFuture = showPrice;
   const showMargin = showPrice;
   const v = { pCols, dCols, showPrice, showFuture, showMargin, inp };
 
