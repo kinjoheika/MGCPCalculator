@@ -12,7 +12,7 @@ import { inRange, rangeActive, rangeBar } from '../pricerange.js';
 import * as wizard from './priceroom-wizard.js';
 import { level } from '../access.js';
 
-const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histExpanded: {} };
+const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histOpen: false };
 
 // Two column groups, each with its own subcolumns. Every cell takes as many rows as the client needs.
 const PREMIUM_COLS = [
@@ -105,7 +105,9 @@ export function html(s) {
   const inp = sessionInputs();
   const showFuture = showPrice;
   const showMargin = showPrice;
-  const v = { pCols, dCols, showPrice, showFuture, showMargin, inp };
+  const histOpen = ui.histOpen;
+  const histPubs = histOpen ? pastPublications(s, ui.channelId) : [];
+  const v = { pCols, dCols, showPrice, showFuture, showMargin, inp, histOpen, histPubs };
 
   const chSel = `<select id="cg-ch" aria-label="Channel">${s.channels.map(c => `<option value="${esc(c.id)}"${c.id === ui.channelId ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select>`;
 
@@ -142,7 +144,8 @@ export function html(s) {
       <tr class="grp">
         <th rowspan="2" class="col-client">Client</th>
         ${showFuture ? '<th rowspan="2" class="num col-price col-future">Future price</th>' : ''}
-        ${showPrice ? '<th rowspan="2" class="num col-price">Current price</th>' : ''}
+        ${showPrice ? `<th rowspan="2" class="num col-price">Current price <button type="button" id="cg-hist-toggle" class="hist-col-toggle" title="${histOpen ? 'Hide price history' : 'Show past 5 prices'}" aria-expanded="${histOpen}">${histOpen ? '▴' : '▾'}</button></th>` : ''}
+        ${histOpen ? histPubs.map(p => `<th rowspan="2" class="num col-hist"><span class="hist-ver">v${p.version}</span><span class="hist-date">${fmtDate(p.publishedAt)}</span></th>`).join('') : ''}
         ${showMargin ? '<th rowspan="2" class="num col-margin">Margin/kg</th>' : ''}
         ${pCols.length ? `<th colspan="${pCols.length + 1}" class="grp-prem">Premiums</th>` : ''}
         ${dCols.length ? `<th colspan="${dCols.length + 1}" class="grp-disc">Discounts</th>` : ''}
@@ -155,33 +158,19 @@ export function html(s) {
     </table>` : '<p class="muted">No clients match the filter or price range.</p>'}`;
 }
 
-function pastPricesFor(s, a, limit = 5) {
-  if (!a.primarySkuId) return [];
+function pastPublications(s, channelId, limit = 5) {
   const curVer = currentPublication(s)?.version;
-  const sorted = [...s.publications]
-    .filter(p => p.version !== curVer && p.prices?.[a.channelId])
-    .sort((x, y) => y.version - x.version);
-  const results = [];
-  for (const pub of sorted) {
-    const entry = pub.prices[a.channelId].find(p => p.skuId === a.primarySkuId);
-    if (entry?.grossPerCyl != null)
-      results.push({ version: pub.version, publishedAt: pub.publishedAt, grossPerCyl: entry.grossPerCyl });
-    if (results.length >= limit) break;
-  }
-  return results;
+  return [...s.publications]
+    .filter(p => p.version !== curVer && p.prices?.[channelId])
+    .sort((x, y) => y.version - x.version)
+    .slice(0, limit);
 }
 
-function historyBox(s, a) {
-  const past = pastPricesFor(s, a);
-  if (!past.length) return '<span class="muted small" style="padding:6px 10px;display:block">No past pricing history available.</span>';
-  return `<div class="hist-bar">
-    <span class="hist-label"><span class="small muted">Past prices · </span><span class="small">${esc(skuLabel(s, a.primarySkuId))}</span></span>
-    ${past.map(p => `<span class="hist-entry">
-      <span class="hist-ver">v${p.version}</span>
-      <span class="hist-date">${fmtDate(p.publishedAt)}</span>
-      <span class="hist-price">${fmt(p.grossPerCyl)}</span>
-    </span>`).join('')}
-  </div>`;
+function histPriceCell(s, a, pub) {
+  if (!a.primarySkuId || !pub.prices?.[a.channelId]) return '<span class="muted small">—</span>';
+  const entry = pub.prices[a.channelId].find(p => p.skuId === a.primarySkuId);
+  if (entry?.grossPerCyl == null) return '<span class="muted small">—</span>';
+  return `<span class="cell-price cell-hist">${fmt(entry.grossPerCyl)}</span>`;
 }
 
 function clientRow(s, a, cb, v) {
@@ -194,17 +183,11 @@ function clientRow(s, a, cb, v) {
     price = `<span class="cell-price" title="MPL ${fmt(cb.acqPerKg + margin)} (acq + margin) · margin + buffer ${fmt(margin + buffer)}">${fmt(p.result.grossPerCyl)}</span> <span class="small muted">${esc(skuLabel(s, a.primarySkuId))}</span>`;
   } else if (p?.error) price = `<span class="muted small">${esc(p.error)}</span>`;
 
-  const histOpen = !!ui.histExpanded[a.id];
   const volGen = a.volumeGeneratedKg != null ? Number(a.volumeGeneratedKg).toLocaleString('en-PH') + ' kg' : '—';
   const reqVol = a.reqVolPerMonthKg != null ? Number(a.reqVolPerMonthKg).toLocaleString('en-PH') + ' kg' : '—';
-  const totalCols = 2 + (v.showPrice ? 1 : 0) + (v.showFuture ? 1 : 0) + (v.showMargin ? 1 : 0) + (v.pCols.length ? v.pCols.length + 1 : 0) + (v.dCols.length ? v.dCols.length + 1 : 0);
+  const totalCols = 2 + (v.showFuture ? 1 : 0) + (v.showPrice ? 1 : 0) + v.histPubs.length + (v.showMargin ? 1 : 0) + (v.pCols.length ? v.pCols.length + 1 : 0) + (v.dCols.length ? v.dCols.length + 1 : 0);
 
-  const priceCell = v.showPrice ? `<td class="num">
-      <div class="price-hist-wrap">
-        ${price}
-        <button type="button" class="hist-toggle" data-hist-btn="${esc(a.id)}" title="${histOpen ? 'Hide price history' : 'Show past 5 prices'}" aria-expanded="${histOpen}">${histOpen ? '▴' : '▾'}</button>
-      </div>
-    </td>` : '';
+  const priceCell = v.showPrice ? `<td class="num">${price}</td>` : '';
 
   return `<tr>
       <th scope="row" title="${esc(`${a.clientCode ? a.clientCode + ' · ' : ''}${a.status} · ${a.zone ?? '—'} · Gen vol ${volGen} · Req/mo ${reqVol}`)}">
@@ -212,11 +195,11 @@ function clientRow(s, a, cb, v) {
       </th>
       ${v.showFuture ? `<td class="num col-future" id="fp-${esc(a.id)}">${futurePriceCell(s, a, v.inp)}</td>` : ''}
       ${priceCell}
+      ${v.histPubs.map(pub => `<td class="num col-hist">${histPriceCell(s, a, pub)}</td>`).join('')}
       ${v.showMargin ? `<td class="num col-margin">${marginCell(s, a)}</td>` : ''}
       ${v.pCols.length ? `<td class="num grp-prem-sub" id="tp-${esc(a.id)}">${totalCell(s, a)}</td>${v.pCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
       ${v.dCols.length ? `<td class="num grp-disc-sub" id="td-${esc(a.id)}">${discountCell(a)}</td>${v.dCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
     </tr>
-    ${histOpen ? `<tr class="hist-row"><td colspan="${totalCols}">${historyBox(s, a)}</td></tr>` : ''}
     ${open ? `<tr class="prof"><td colspan="${totalCols}">${profileBox(a)}</td></tr>` : ''}`;
 }
 
@@ -395,11 +378,8 @@ export function bind(root, rerender) {
   const save = root.querySelector('#cg-save');
   if (save) save.onclick = () => saveAll(rerender);
 
-  root.querySelectorAll('[data-hist-btn]').forEach(b => b.onclick = () => {
-    const id = b.dataset.histBtn;
-    ui.histExpanded[id] = !ui.histExpanded[id];
-    rerender();
-  });
+  const histToggle = root.querySelector('#cg-hist-toggle');
+  if (histToggle) histToggle.onclick = () => { ui.histOpen = !ui.histOpen; rerender(); };
 
   // Session inputs: acq / margin / buffer → trigger full rerender so future price column appears/updates
   [['#cg-acq', 'acqInput'], ['#cg-margin', 'marginInput'], ['#cg-buf', 'bufferInput']].forEach(([sel, key]) => {
