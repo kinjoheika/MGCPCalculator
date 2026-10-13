@@ -368,6 +368,13 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 /* ---- Client pricing filter ---- */
 .cg-filter-menu { width: 340px; }
 
+/* ---- Session inputs (Acq / Margin / Buffer) in the grid toolbar ---- */
+.cg-sess { display: flex; gap: 6px; align-items: flex-end; padding: 0 4px; border-left: 1px solid var(--line); margin-left: 2px; }
+.cg-sess-lbl { display: flex; flex-direction: column; gap: 2px; }
+.cg-sess-lbl > span { font-size: 10.5px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.cg-sess-lbl input { min-height: 32px; padding: 3px 7px; font-size: 12.5px; border-radius: 6px; width: 76px; }
+.cell-future { color: var(--tiffany-600); font-weight: 650; }
+
 /* ---- Fatal load error bar ---- */
 .fatal { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 16px; background: var(--red-bg); color: var(--red); border-bottom: 2px solid var(--red); position: sticky; top: 0; z-index: 100; }
 .fatal button { border-color: var(--red); color: var(--red); background: #fff; }
@@ -376,10 +383,12 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .grid-table { table-layout: fixed; width: 100%; }
 .grid-table th, .grid-table td { padding: 5px 6px; }
 .grid-table tbody th { min-width: 0; font-size: 12.5px; }
-.grid-table .col-client { width: 16%; }
-.grid-table .col-price { width: 12%; }
-.grid-table .col-total { width: 8.5%; }
-.grid-table .col-line { width: 11%; }
+.grid-table .col-client { width: 14%; }
+.grid-table .col-price { width: 11%; }
+.grid-table .col-future { width: 10%; }
+.grid-table .col-margin { width: 7%; }
+.grid-table .col-total { width: 7.5%; }
+.grid-table .col-line { width: 8.5%; }
 .grid-table td.grp-disc-sub, .grid-table th.grp-disc-sub { background: var(--amber-bg); }
 .grid-table tbody tr:hover > td.grp-disc-sub { background: #FBE7C4; }
 .cellfields input[type=number] { -moz-appearance: textfield; }
@@ -690,8 +699,10 @@ table.grid-table { table-layout: fixed; width: 100%; }
 table.grid-table th, table.grid-table td { overflow: hidden; }
 table.grid-table thead th { white-space: normal; line-height: 1.2; vertical-align: bottom; }
 table.grid-table .col-client { width: 190px; }
-table.grid-table .col-price { width: 150px; }
-table.grid-table .col-total { width: 84px; }
+table.grid-table .col-price { width: 140px; }
+table.grid-table .col-future { width: 140px; }
+table.grid-table .col-margin { width: 90px; }
+table.grid-table .col-total { width: 80px; }
 table.grid-table .cellfields input, table.grid-table .cellfields input.mini { width: 100%; min-width: 0; }
 table.grid-table tbody th { max-width: none; }
 table.grid-table th.col-client, table.grid-table th.col-price { width: auto; }

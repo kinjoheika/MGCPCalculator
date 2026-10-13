@@ -5,14 +5,14 @@
 import * as store from '../store.js';
 import { fmt, fmtKg, toCentavos, toInput } from '../money.js';
 import { esc, toast, preserveFocus } from '../ui.js';
-import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel } from '../pricing.js';
+import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel, marginRule } from '../pricing.js';
 import { derivePremiumPerKg } from '../engine.js';
 import { FIELDS, labelFor, displayValue } from '../clientterms.js';
 import { inRange, rangeActive, rangeBar } from '../pricerange.js';
 import * as wizard from './priceroom-wizard.js';
 import { level } from '../access.js';
 
-const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0 };
+const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '' };
 
 // Two column groups, each with its own subcolumns. Every cell takes as many rows as the client needs.
 const PREMIUM_COLS = [
@@ -102,7 +102,10 @@ export function html(s) {
   // Columns the user may see; the rest are left out entirely.
   const pCols = PREMIUM_COLS.filter(c => lvl(s, c.code) >= 1), dCols = DISCOUNT_COLS.filter(c => lvl(s, c.code) >= 1);
   const showPrice = level(s, store.currentUser(), 'cp_price') >= 1;
-  const v = { pCols, dCols, showPrice };
+  const inp = sessionInputs();
+  const showFuture = showPrice && !!inp;
+  const showMargin = showPrice;
+  const v = { pCols, dCols, showPrice, showFuture, showMargin, inp };
 
   const chSel = `<select id="cg-ch" aria-label="Channel">${s.channels.map(c => `<option value="${esc(c.id)}"${c.id === ui.channelId ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select>`;
 
@@ -124,7 +127,14 @@ export function html(s) {
       </div>` : ''}
     </div>`;
 
+  const sessInputs = `<span class="cg-sess">
+      <label class="cg-sess-lbl"><span>Acq ₱/kg</span><input type="number" id="cg-acq" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${esc(ui.acqInput)}"></label>
+      <label class="cg-sess-lbl"><span>Margin ₱/kg</span><input type="number" id="cg-margin" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${esc(ui.marginInput)}"></label>
+      <label class="cg-sess-lbl"><span>Buffer ₱/kg</span><input type="number" id="cg-buf" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${esc(ui.bufferInput)}"></label>
+    </span>`;
+
   return `<div class="one-row">${chSel}${filterHtml}${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
+      ${sessInputs}
       <span class="small muted nowrap">${clients.length}${edits ? ` · ${edits} unsaved` : ''}</span>
       <button type="button" id="cg-save" class="primary small" ${edits ? '' : 'disabled'}>Save</button>
       <button type="button" class="small" data-open-mpl>MPL calculator</button></div>
@@ -133,6 +143,8 @@ export function html(s) {
       <tr class="grp">
         <th rowspan="2" class="col-client">Client</th>
         ${showPrice ? '<th rowspan="2" class="num col-price">Current price</th>' : ''}
+        ${showFuture ? '<th rowspan="2" class="num col-price col-future">Future price</th>' : ''}
+        ${showMargin ? '<th rowspan="2" class="num col-margin">Margin/kg</th>' : ''}
         ${pCols.length ? `<th colspan="${pCols.length + 1}" class="grp-prem">Premiums</th>` : ''}
         ${dCols.length ? `<th colspan="${dCols.length + 1}" class="grp-disc">Discounts</th>` : ''}
       </tr>
@@ -162,10 +174,12 @@ function clientRow(s, a, cb, v) {
         <button type="button" class="link exp" data-cg-exp="${esc(a.id)}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(a.name)}</button>
       </th>
       ${v.showPrice ? `<td class="num">${price}</td>` : ''}
+      ${v.showFuture ? `<td class="num col-future" id="fp-${esc(a.id)}">${futurePriceCell(s, a, v.inp)}</td>` : ''}
+      ${v.showMargin ? `<td class="num col-margin">${marginCell(s, a)}</td>` : ''}
       ${v.pCols.length ? `<td class="num grp-prem-sub" id="tp-${esc(a.id)}">${totalCell(s, a)}</td>${v.pCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
       ${v.dCols.length ? `<td class="num grp-disc-sub" id="td-${esc(a.id)}">${discountCell(a)}</td>${v.dCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
     </tr>
-    ${open ? `<tr class="prof"><td colspan="${2 + (v.showPrice ? 1 : 0) + (v.pCols.length ? v.pCols.length + 1 : 0) + (v.dCols.length ? v.dCols.length + 1 : 0)}">${profileBox(a)}</td></tr>` : ''}`;
+    ${open ? `<tr class="prof"><td colspan="${2 + (v.showPrice ? 1 : 0) + (v.showFuture ? 1 : 0) + (v.showMargin ? 1 : 0) + (v.pCols.length ? v.pCols.length + 1 : 0) + (v.dCols.length ? v.dCols.length + 1 : 0)}">${profileBox(a)}</td></tr>` : ''}`;
 }
 
 function totalCell(s, a) {
@@ -186,6 +200,38 @@ export function discountTotal(a) {
 function discountCell(a) {
   const { total, otherTotal, otherCount } = discountTotal(a);
   return `<span class="cell-price" ${otherCount ? `title="incl. ${otherCount} other ${fmt(otherTotal)}"` : ''}>${total ? '−' : ''}${fmt(total)}</span>`;
+}
+
+function sessionInputs() {
+  const acq = toCentavos(ui.acqInput);
+  const mar = toCentavos(ui.marginInput);
+  const buf = toCentavos(ui.bufferInput);
+  if (acq == null || mar == null || buf == null) return null;
+  return { acq, mar, buf };
+}
+
+function futurePriceCell(s, a, inp) {
+  if (!inp || !a.primarySkuId) return '<span class="muted small">—</span>';
+  const sku = s.skus.find(k => k.id === a.primarySkuId);
+  if (!sku) return '<span class="muted small">—</span>';
+  const { total: premC } = premiumTotal(s, a);
+  const { total: discC } = discountTotal(a);
+  // Formula: MPL (acq + margin + buffer) + premiums - discounts
+  const netPerKg = inp.acq + inp.mar + inp.buf + premC - discC;
+  const netPerCyl = Math.round(netPerKg * sku.contentKg);
+  const vatRate = s.settings.vatRate || 0;
+  const vatInclusive = s.settings.vatInclusive !== false;
+  const vatPerCyl = vatInclusive ? Math.round(netPerCyl * vatRate) : 0;
+  const grossPerCyl = netPerCyl + vatPerCyl;
+  return `<span class="cell-price cell-future">${fmt(grossPerCyl)}</span> <span class="small muted">${esc(skuLabel(s, a.primarySkuId))}</span>`;
+}
+
+function marginCell(s, a) {
+  if (!a.primarySkuId) return '<span class="muted small">—</span>';
+  const mr = marginRule(s, a.channelId, a.primarySkuId);
+  const mPerKg = a.fixedMarginPerKg ?? mr?.perKg;
+  if (mPerKg == null) return '<span class="muted small">—</span>';
+  return `<span class="cell-price">${fmt(mPerKg)}/kg</span>${a.fixedMarginPerKg != null ? ' <span class="small muted">fixed</span>' : ''}`;
 }
 
 // One row of fields per client and line type. Any extra rows a client already carries are kept as they are.
@@ -297,6 +343,9 @@ export function bind(root, rerender) {
       if (prem && PREMIUM_COLS.some(c => c.code === code)) prem.innerHTML = totalCell(store.get(), a);
       const disc = root.querySelector(`#td-${CSS.escape(accId)}`);
       if (disc && DISCOUNT_COLS.some(c => c.code === code)) disc.innerHTML = discountCell(a);
+      const fut = root.querySelector(`#fp-${CSS.escape(accId)}`);
+      const inp = sessionInputs();
+      if (fut && inp) fut.innerHTML = futurePriceCell(store.get(), a, inp);
     };
     // Leave the field showing centavos, the way every other amount in the app reads.
     if (field === 'perKg') el.onblur = () => {
@@ -307,4 +356,16 @@ export function bind(root, rerender) {
   });
   const save = root.querySelector('#cg-save');
   if (save) save.onclick = () => saveAll(rerender);
+
+  // Session inputs: acq / margin / buffer → trigger full rerender so future price column appears/updates
+  [['#cg-acq', 'acqInput'], ['#cg-margin', 'marginInput'], ['#cg-buf', 'bufferInput']].forEach(([sel, key]) => {
+    const el = root.querySelector(sel);
+    if (!el) return;
+    el.oninput = () => { ui[key] = el.value; rerender(); };
+    el.onblur = () => {
+      const c = toCentavos(el.value);
+      el.value = c == null ? '' : toInput(c);
+      ui[key] = el.value;
+    };
+  });
 }
