@@ -5,14 +5,14 @@
 import * as store from '../store.js';
 import { fmt, fmtKg, toCentavos, toInput } from '../money.js';
 import { esc, toast, preserveFocus } from '../ui.js';
-import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel, marginRule } from '../pricing.js';
+import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel, marginRule, fmtDate, currentPublication } from '../pricing.js';
 import { derivePremiumPerKg } from '../engine.js';
 import { FIELDS, labelFor, displayValue } from '../clientterms.js';
 import { inRange, rangeActive, rangeBar } from '../pricerange.js';
 import * as wizard from './priceroom-wizard.js';
 import { level } from '../access.js';
 
-const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '' };
+const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histExpanded: {} };
 
 // Two column groups, each with its own subcolumns. Every cell takes as many rows as the client needs.
 const PREMIUM_COLS = [
@@ -133,8 +133,7 @@ export function html(s) {
       <label class="cg-sess-lbl"><span>Buffer ₱/kg</span><input type="number" id="cg-buf" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${esc(ui.bufferInput)}"></label>
     </span>`;
 
-  return `<div class="one-row">${chSel}${filterHtml}${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
-      ${sessInputs}
+  return `<div class="one-row">${chSel}${filterHtml}${sessInputs}${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
       <span class="small muted nowrap">${clients.length}${edits ? ` · ${edits} unsaved` : ''}</span>
       <button type="button" id="cg-save" class="primary small" ${edits ? '' : 'disabled'}>Save</button>
       <button type="button" class="small" data-open-mpl>MPL calculator</button></div>
@@ -156,6 +155,35 @@ export function html(s) {
     </table>` : '<p class="muted">No clients match the filter or price range.</p>'}`;
 }
 
+function pastPricesFor(s, a, limit = 5) {
+  if (!a.primarySkuId) return [];
+  const curVer = currentPublication(s)?.version;
+  const sorted = [...s.publications]
+    .filter(p => p.version !== curVer && p.prices?.[a.channelId])
+    .sort((x, y) => y.version - x.version);
+  const results = [];
+  for (const pub of sorted) {
+    const entry = pub.prices[a.channelId].find(p => p.skuId === a.primarySkuId);
+    if (entry?.grossPerCyl != null)
+      results.push({ version: pub.version, publishedAt: pub.publishedAt, grossPerCyl: entry.grossPerCyl });
+    if (results.length >= limit) break;
+  }
+  return results;
+}
+
+function historyBox(s, a) {
+  const past = pastPricesFor(s, a);
+  if (!past.length) return '<span class="muted small" style="padding:6px 10px;display:block">No past pricing history available.</span>';
+  return `<div class="hist-bar">
+    <span class="hist-label"><span class="small muted">Past prices · </span><span class="small">${esc(skuLabel(s, a.primarySkuId))}</span></span>
+    ${past.map(p => `<span class="hist-entry">
+      <span class="hist-ver">v${p.version}</span>
+      <span class="hist-date">${fmtDate(p.publishedAt)}</span>
+      <span class="hist-price">${fmt(p.grossPerCyl)}</span>
+    </span>`).join('')}
+  </div>`;
+}
+
 function clientRow(s, a, cb, v) {
   const open = !!ui.expanded[a.id];
   const p = a.primarySkuId ? priceFor(s, { accountId: a.id, skuId: a.primarySkuId }) : null;
@@ -166,20 +194,30 @@ function clientRow(s, a, cb, v) {
     price = `<span class="cell-price" title="MPL ${fmt(cb.acqPerKg + margin)} (acq + margin) · margin + buffer ${fmt(margin + buffer)}">${fmt(p.result.grossPerCyl)}</span> <span class="small muted">${esc(skuLabel(s, a.primarySkuId))}</span>`;
   } else if (p?.error) price = `<span class="muted small">${esc(p.error)}</span>`;
 
+  const histOpen = !!ui.histExpanded[a.id];
   const volGen = a.volumeGeneratedKg != null ? Number(a.volumeGeneratedKg).toLocaleString('en-PH') + ' kg' : '—';
   const reqVol = a.reqVolPerMonthKg != null ? Number(a.reqVolPerMonthKg).toLocaleString('en-PH') + ' kg' : '—';
+  const totalCols = 2 + (v.showPrice ? 1 : 0) + (v.showFuture ? 1 : 0) + (v.showMargin ? 1 : 0) + (v.pCols.length ? v.pCols.length + 1 : 0) + (v.dCols.length ? v.dCols.length + 1 : 0);
+
+  const priceCell = v.showPrice ? `<td class="num">
+      <div class="price-hist-wrap">
+        ${price}
+        <button type="button" class="hist-toggle" data-hist-btn="${esc(a.id)}" title="${histOpen ? 'Hide price history' : 'Show past 5 prices'}" aria-expanded="${histOpen}">${histOpen ? '▴' : '▾'}</button>
+      </div>
+    </td>` : '';
 
   return `<tr>
       <th scope="row" title="${esc(`${a.clientCode ? a.clientCode + ' · ' : ''}${a.status} · ${a.zone ?? '—'} · Gen vol ${volGen} · Req/mo ${reqVol}`)}">
         <button type="button" class="link exp" data-cg-exp="${esc(a.id)}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(a.name)}</button>
       </th>
       ${v.showFuture ? `<td class="num col-future" id="fp-${esc(a.id)}">${futurePriceCell(s, a, v.inp)}</td>` : ''}
-      ${v.showPrice ? `<td class="num">${price}</td>` : ''}
+      ${priceCell}
       ${v.showMargin ? `<td class="num col-margin">${marginCell(s, a)}</td>` : ''}
       ${v.pCols.length ? `<td class="num grp-prem-sub" id="tp-${esc(a.id)}">${totalCell(s, a)}</td>${v.pCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
       ${v.dCols.length ? `<td class="num grp-disc-sub" id="td-${esc(a.id)}">${discountCell(a)}</td>${v.dCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
     </tr>
-    ${open ? `<tr class="prof"><td colspan="${2 + (v.showPrice ? 1 : 0) + (v.showFuture ? 1 : 0) + (v.showMargin ? 1 : 0) + (v.pCols.length ? v.pCols.length + 1 : 0) + (v.dCols.length ? v.dCols.length + 1 : 0)}">${profileBox(a)}</td></tr>` : ''}`;
+    ${histOpen ? `<tr class="hist-row"><td colspan="${totalCols}">${historyBox(s, a)}</td></tr>` : ''}
+    ${open ? `<tr class="prof"><td colspan="${totalCols}">${profileBox(a)}</td></tr>` : ''}`;
 }
 
 function totalCell(s, a) {
@@ -356,6 +394,12 @@ export function bind(root, rerender) {
   });
   const save = root.querySelector('#cg-save');
   if (save) save.onclick = () => saveAll(rerender);
+
+  root.querySelectorAll('[data-hist-btn]').forEach(b => b.onclick = () => {
+    const id = b.dataset.histBtn;
+    ui.histExpanded[id] = !ui.histExpanded[id];
+    rerender();
+  });
 
   // Session inputs: acq / margin / buffer → trigger full rerender so future price column appears/updates
   [['#cg-acq', 'acqInput'], ['#cg-margin', 'marginInput'], ['#cg-buf', 'bufferInput']].forEach(([sel, key]) => {
