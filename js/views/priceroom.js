@@ -13,6 +13,7 @@ import {
 import { inRange, rangeActive, rangeBar, bindRange } from '../pricerange.js';
 import * as wizard from './priceroom-wizard.js';
 import * as grid from './clientgrid.js';
+import * as dealer from './dealersheet.js';
 
 const DAY = 86400000;
 const MAX = 5;
@@ -75,7 +76,7 @@ export function render(root, ctx) {
     ${showAppr ? `<button type="button" id="pr-appr" class="small ${ui.open && ui.panel === 'exceptions' ? 'on' : ''}">Approvals ${exc.length}</button>` : ''}
   </footer>`;
 
-  const bodies = { competitors: competitorsBoard, channels: channelsBoard, grid: st => grid.html(st), history: priceHistoryTab, notices: noticesTab };
+  const bodies = { competitors: competitorsBoard, channels: channelsBoard, grid: st => grid.html(st), dealer: st => dealer.html(st), history: priceHistoryTab, notices: noticesTab };
   const shift = ui.open && !ui.animate;
 
   root.innerHTML = `<div class="pr ${shift ? 'pr-shift' : ''}"><section class="page wide">
@@ -135,6 +136,7 @@ export function render(root, ctx) {
 
   bindMain(root.querySelector('#pr-main'), rerender);
   if (ui.tab === 'grid') grid.bind(root.querySelector('#pr-main'), rerender);
+  if (ui.tab === 'dealer') dealer.bind(root.querySelector('#pr-main'), rerender);
   if (ui.panel === 'mpl') wizard.bind(root.querySelector('#pr-drawer'), user, rerender);
   else bindExceptions(root, rerender);
   // "Bulk clients" / "Commercial clients" in the calculator open the grid for that channel.

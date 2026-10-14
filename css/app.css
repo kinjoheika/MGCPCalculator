@@ -755,3 +755,28 @@ table.access tr.grp-row th { background: var(--bg); font-size: 11.5px; text-tran
 .props-sheet.open { transform: none; }
 .props-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 12px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); }
 .props-sheet table thead th { position: static; }
+
+/* ---- Dealer Sheet ---- */
+.ds-head { gap: 8px; flex-wrap: wrap; padding-bottom: 8px; }
+.ds-tabs { display: flex; gap: 4px; }
+.ds-tabs .tab-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--line-2); background: var(--surface); font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text); }
+.ds-tabs .tab-btn.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.ds-tabs .tab-btn:hover:not(.on) { background: var(--bg); }
+.ds-sess { border-left: 1px solid var(--line); margin-left: 4px; padding-left: 8px; }
+.ds-table td.ds-td, .ds-table th { vertical-align: middle; }
+.ds-table th.ds-prod-th, .ds-table td.ds-prod-th { text-align: left; font-weight: 600; min-width: 120px; }
+.ds-table .ds-future-col { background: var(--tiffany-50); }
+.ds-table thead tr:first-child .ds-future-col { background: var(--tiffany-50); color: var(--tiffany-600); border-bottom: 2px solid var(--tiffany-200); }
+.ds-table .ds-comp-grp { background: var(--amber-bg); color: var(--amber); border-bottom: 2px solid #F6C97A; font-weight: 600; }
+.ds-table .ds-comp-sub { background: var(--amber-bg); color: var(--amber); font-size: 12px; font-weight: 600; white-space: nowrap; min-width: 90px; }
+.ds-table td.ds-comp-td { background: #FFFCF5; }
+.ds-table tbody tr:hover td.ds-comp-td { background: #FFF5DC; }
+.ds-table .ds-final-col { background: var(--green-bg); }
+.ds-table thead tr:first-child .ds-final-col { background: var(--green-bg); color: var(--green); border-bottom: 2px solid #A3D9BC; font-weight: 600; }
+.ds-table .ds-final-col input.mini { width: 90px; }
+.ds-diff { font-size: 11.5px; font-weight: 600; margin-left: 4px; white-space: nowrap; }
+.ds-diff.pos { color: var(--green); }
+.ds-diff.neg { color: var(--red); }
+.ds-pkg { display: block; margin-top: 1px; line-height: 1.2; }
+.ds-stale-pill { font-size: 10px; margin-left: 3px; }
+.ds-td { padding: 7px 8px; line-height: 1.35; }
