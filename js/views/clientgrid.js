@@ -12,7 +12,7 @@ import { inRange, rangeActive, rangeBar } from '../pricerange.js';
 import * as wizard from './priceroom-wizard.js';
 import * as dealer from './dealersheet.js';
 import * as session from '../session.js';
-import { level } from '../access.js';
+import { level, canEdit as canEditPart } from '../access.js';
 
 const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, margins: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histOpen: false };
 
@@ -121,7 +121,7 @@ export function html(s) {
   const chSel = `<select id="cg-ch" aria-label="Channel">${s.channels.map(c => `<option value="${esc(c.id)}"${c.id === ui.channelId ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select>`;
 
   // Dealer (pick-up) is priced product by product against CODO, semi-dealer and competitor prices: the dealer sheet.
-  if (ui.channelId === 'DEALER') return `${session.barHtml(s)}<div class="one-row">${chSel}</div>${dealer.html(s)}`;
+  if (ui.channelId === 'DEALER') return `${session.barHtml(s, { saveDisabled: !rowChanges(s).length })}<div class="one-row">${chSel}</div>${dealer.html(s)}`;
 
   const q = ui.filterQuery.toLowerCase();
   const filtered = q ? allClients.filter(a => a.name.toLowerCase().includes(q) || (a.zone || '').toLowerCase().includes(q)) : allClients;
@@ -141,7 +141,7 @@ export function html(s) {
       </div>` : ''}
     </div>`;
 
-  return `${session.barHtml(s, { saveDisabled: !edits })}<div class="one-row">${chSel}${filterHtml}${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
+  return `${session.barHtml(s, { saveDisabled: !(edits || rowChanges(s).length) })}<div class="one-row">${chSel}${filterHtml}${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
       <span class="small muted nowrap">${clients.length}${edits ? ` · ${edits} unsaved` : ''}</span>
       <button type="button" class="small" data-open-mpl>MPL calculator</button></div>
     ${clients.length && simple ? `<table class="matrix grid-table simple${histOpen ? ' hist-open' : ''}">
@@ -376,9 +376,24 @@ function profileBox(a) {
 
 // ---- Save ----
 
+// The top row's Acq, Hauling cost and Buffer, as proposed price changes when they differ from what is in force.
+// Margin in that row only drives the Future price; it is a per-product lever and is set in the margin column.
+function rowChanges(s) {
+  const me = store.currentUser();
+  const v = session.values();
+  const cb = currentCostBasis(s);
+  const out = [];
+  if (canEditPart(s, me, 'mpl_cost')) {
+    if (v.acq != null && v.acq > 0 && v.acq !== cb.acqPerKg) out.push({ type: 'ACQ', perKg: v.acq });
+    if (v.hauling != null && v.hauling > 0 && v.hauling !== cb.haulingPerKg) out.push({ type: 'HAULING', perKg: v.hauling });
+  }
+  if (canEditPart(s, me, 'mpl_buffer') && v.buffer != null && v.buffer !== bufferFor(s, ui.channelId)) out.push({ type: 'BUFFER', channelId: ui.channelId, perKg: v.buffer });
+  return out;
+}
+
 async function saveAll(rerender) {
   const s = store.get();
-  const changes = [];
+  const changes = rowChanges(s);
 
   // Premium and discount rows → one change per client and code.
   for (const [key, rows] of Object.entries(ui.rows)) {
@@ -417,7 +432,7 @@ async function saveAll(rerender) {
 export function bind(root, rerender) {
   const chSel = root.querySelector('#cg-ch');
   if (chSel) chSel.onchange = () => { ui.channelId = chSel.value; ui.selectedIds = null; ui.filterQuery = ''; ui.filterOpen = false; rerender(); };
-  if (ui.channelId === 'DEALER') { session.bind(root, rerender, { onSave: session.savedToast }); dealer.bind(root, rerender); return; }
+  if (ui.channelId === 'DEALER') { session.bind(root, rerender, { onSave: () => saveAll(rerender) }); dealer.bind(root, rerender); return; }
   root.querySelectorAll('[data-cg-exp]').forEach(b => b.onclick = () => {
     const id = b.dataset.cgExp;
     // Commercial clients start open, so "closed" is the stored state there; elsewhere "open" is.

@@ -20,6 +20,11 @@ export function get(s) {
   return { acq: acq + haulingOf(s), mar, buf };
 }
 
+// What was typed, in centavos; null where a field is blank.
+export function values() {
+  return { acq: toCentavos(v.acq), hauling: toCentavos(v.hauling), margin: toCentavos(v.margin), buffer: toCentavos(v.buffer) };
+}
+
 export function barHtml(s, { saveDisabled = false } = {}) {
   const cb = currentCostBasis(s);
   const acq = toCentavos(v.acq);
