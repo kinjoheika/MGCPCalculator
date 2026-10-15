@@ -836,3 +836,8 @@ td[data-note]:hover::after { content: attr(data-note); position: absolute; right
 .rw-lbl input { width: 96px; min-height: 30px; height: 30px; padding: 2px 7px; font-size: 12.5px; text-align: right; }
 .rw-lbl input.rw-total { background: var(--bg); font-weight: 600; width: 104px; }
 .row-inputs button { height: 30px; min-height: 30px; }
+
+/* Client numbering on the left (Commercial and Bulk) */
+table.grid-table .col-no { width: 38px; min-width: 38px; max-width: 38px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; padding-right: 6px; }
+table.grid-table thead th.col-no { text-align: right; }
+table.grid-table tr.pr-row > td.col-no { background: transparent; }

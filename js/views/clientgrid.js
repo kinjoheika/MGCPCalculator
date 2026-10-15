@@ -119,7 +119,9 @@ export function html(s) {
   const simple = ui.channelId === 'COMMERCIAL';
   const showPrem = simple && !coverC && PREMIUM_COLS.some(c => lvl(s, c.code) >= 1);
   const showDisc = simple && !coverC && DISCOUNT_COLS.some(c => lvl(s, c.code) >= 1);
-  const v = { pCols, dCols, showPrice, showFuture, showMargin, inp, histOpen, histPubs, simple, showPrem, showDisc };
+  // Commercial and Bulk list the clients with a running number on the left.
+  const numbered = ['COMMERCIAL', 'BULK'].includes(ui.channelId);
+  const v = { pCols, dCols, showPrice, showFuture, showMargin, inp, histOpen, histPubs, simple, showPrem, showDisc, numbered };
 
   const chSel = `<select id="cg-ch" aria-label="Channel">${s.channels.map(c => `<option value="${esc(c.id)}"${c.id === ui.channelId ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select>`;
 
@@ -165,6 +167,7 @@ export function html(s) {
       <button type="button" class="small" data-open-mpl>MPL calculator</button></div>
     ${clients.length && simple ? `<table class="matrix grid-table simple${histOpen ? ' hist-open' : ''}">
       <thead><tr class="grp">
+        ${numbered ? '<th class="col-no">#</th>' : ''}
         <th class="col-client">Client</th>
         ${showFuture ? '<th class="num col-price col-future">Future price</th>' : ''}
         ${showPrice ? `<th class="num col-price">Current price <button type="button" id="cg-hist-toggle" class="hist-col-toggle" title="${histOpen ? 'Hide price history' : 'Show past prices'}" aria-expanded="${histOpen}">${histOpen ? '▴' : '▾'}</button></th>` : ''}
@@ -173,10 +176,11 @@ export function html(s) {
         ${showPrem ? '<th class="num grp-prem">Premiums</th>' : ''}
         ${showDisc ? '<th class="num grp-disc">Discounts</th>' : ''}
       </tr></thead>
-      <tbody>${clients.map(a => simpleRows(s, a, v)).join('')}</tbody>
+      <tbody>${clients.map((a, i) => simpleRows(s, a, v, i + 1)).join('')}</tbody>
     </table>` : clients.length ? `<table class="matrix grid-table${histOpen ? ' hist-open' : ''}">
       <thead>
       <tr class="grp">
+        ${numbered ? '<th rowspan="2" class="col-no">#</th>' : ''}
         <th rowspan="2" class="col-client">Client</th>
         ${showFuture ? '<th rowspan="2" class="num col-price col-future">Future price</th>' : ''}
         ${showPrice ? `<th rowspan="2" class="num col-price">Current price <button type="button" id="cg-hist-toggle" class="hist-col-toggle" title="${histOpen ? 'Hide price history' : 'Show past 5 prices'}" aria-expanded="${histOpen}">${histOpen ? '▴' : '▾'}</button></th>` : ''}
@@ -190,7 +194,7 @@ export function html(s) {
         ${pCols.length ? `<th class="num grp-prem-sub col-total">Total premium</th>${pCols.map(c => `<th class="col-line">${esc(c.title)}</th>`).join('')}` : ''}
         ${dCols.length ? `<th class="num grp-disc-sub col-total">Total discounts</th>${dCols.map(c => `<th class="col-line">${esc(c.title)}</th>`).join('')}` : ''}
       </tr></thead>
-      <tbody>${clients.map(a => clientRow(s, a, cb, v)).join('')}</tbody>
+      <tbody>${clients.map((a, i) => clientRow(s, a, cb, v, i + 1)).join('')}</tbody>
     </table>` : '<p class="muted">No clients match the filter or price range.</p>'}`;
 }
 
@@ -229,7 +233,7 @@ function priceNote(s, a, skuId, whenIso) {
   return [line('Margin', margin), line('Acquisition cost', cbRow?.acqPerKg), line('Hauling', cbRow?.haulingPerKg), line('Buffer', buf ? buf.perKg : (now ? 0 : null))].join('\n');
 }
 
-function clientRow(s, a, cb, v) {
+function clientRow(s, a, cb, v, n) {
   const open = !!ui.expanded[a.id];
   const p = a.primarySkuId ? priceFor(s, { accountId: a.id, skuId: a.primarySkuId }) : null;
   let price = '<span class="muted small">No main product</span>';
@@ -241,13 +245,13 @@ function clientRow(s, a, cb, v) {
 
   const volGen = a.volumeGeneratedKg != null ? Number(a.volumeGeneratedKg).toLocaleString('en-PH') + ' kg' : '—';
   const reqVol = a.reqVolPerMonthKg != null ? Number(a.reqVolPerMonthKg).toLocaleString('en-PH') + ' kg' : '—';
-  const totalCols = 2 + (v.showFuture ? 1 : 0) + (v.showPrice ? 1 : 0) + v.histPubs.length + (v.showMargin ? 1 : 0) + (v.pCols.length ? v.pCols.length + 1 : 0) + (v.dCols.length ? v.dCols.length + 1 : 0);
+  const totalCols = (v.numbered ? 3 : 2) + (v.showFuture ? 1 : 0) + (v.showPrice ? 1 : 0) + v.histPubs.length + (v.showMargin ? 1 : 0) + (v.pCols.length ? v.pCols.length + 1 : 0) + (v.dCols.length ? v.dCols.length + 1 : 0);
 
   const bulk = ui.channelId === 'BULK';
   const priceCell = v.showPrice ? `<td class="num"${bulk ? ` data-note="${esc(priceNote(s, a, a.primarySkuId, null))}"` : ''}>${price}</td>` : '';
 
   return `<tr>
-      <th scope="row" title="${esc(`${a.clientCode ? a.clientCode + ' · ' : ''}${a.status} · ${a.zone ?? '—'} · Gen vol ${volGen} · Req/mo ${reqVol}`)}">
+      ${v.numbered ? `<td class="col-no">${n}</td>` : ''}<th scope="row" title="${esc(`${a.clientCode ? a.clientCode + ' · ' : ''}${a.status} · ${a.zone ?? '—'} · Gen vol ${volGen} · Req/mo ${reqVol}`)}">
         <button type="button" class="link exp" data-cg-exp="${esc(a.id)}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(a.name)}</button>
       </th>
       ${v.showFuture ? `<td class="num col-future" id="fp-${esc(a.id)}">${futurePriceCell(s, a, v.inp)}</td>` : ''}
@@ -269,7 +273,7 @@ function clientProducts(s, a) {
 
 const kgText = n => (n == null ? '—' : `${Number(n).toLocaleString('en-PH')} kg`);
 
-function simpleRows(s, a, v) {
+function simpleRows(s, a, v, n) {
   const open = ui.expanded[a.id] !== false; // every client opens by default
   const span = (v.showFuture ? 1 : 0) + (v.showPrice ? 1 : 0) + v.histPubs.length + (v.showMargin ? 1 : 0) + (v.showPrem ? 1 : 0) + (v.showDisc ? 1 : 0);
   const used = a.trmvKg && a.volumeGeneratedKg != null ? `${Math.round(a.volumeGeneratedKg / a.trmvKg * 100)}% of TRMV` : '—';
@@ -280,8 +284,9 @@ function simpleRows(s, a, v) {
     ['Volume used', used],
     ['Competitor', a.competitorBrand || '—'],
   ];
+  const no = v.numbered ? `<td class="col-no">${n}</td>` : '';
   const head = `<tr class="cl-row">
-      <th scope="row" title="${esc(`${a.clientCode ? a.clientCode + ' · ' : ''}${a.status} · ${a.zone ?? '—'}`)}">
+      ${no}<th scope="row" title="${esc(`${a.clientCode ? a.clientCode + ' · ' : ''}${a.status} · ${a.zone ?? '—'}`)}">
         <button type="button" class="link exp" data-cg-exp="${esc(a.id)}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(a.name)}</button>
       </th>
       <td colspan="${span}"><div class="cd-line">${items.map(([k, val]) => `<span><i>${k}</i> ${esc(val)}</span>`).join('')}</div></td>
@@ -294,7 +299,7 @@ function simpleRows(s, a, v) {
     const first = i === 0; // margin, premiums and discounts belong to the client: shown once, on its main product
     const none = '<td class="num muted">·</td>';
     return `<tr class="pr-row">
-      <th scope="row" class="pr-th">${esc(sku.label)}</th>
+      ${v.numbered ? '<td class="col-no"></td>' : ''}<th scope="row" class="pr-th">${esc(sku.label)}</th>
       ${v.showFuture ? `<td class="num col-future" data-fp="${esc(a.id)}" data-fpsku="${esc(sku.id)}">${futurePriceCell(s, a, v.inp, sku.id)}</td>` : ''}
       ${v.showPrice ? `<td class="num">${price}</td>` : ''}
       ${v.histPubs.map(pub => `<td class="num col-hist">${histPriceCell(s, a, pub, sku.id)}</td>`).join('')}
