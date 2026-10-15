@@ -196,6 +196,20 @@ function histPriceCell(s, a, pub, skuId = a.primarySkuId) {
   return `<span class="cell-price cell-hist">${fmt(entry.grossPerCyl)}</span>`;
 }
 
+// Bulk: hovering a price shows what it was made of at the time. Four lines: margin, acquisition cost, hauling, buffer.
+// (The lines can be changed later; they are all read from the history the app already keeps.)
+const inForce = (row, at) => new Date(row.effectiveFrom) <= at && (row.effectiveTo == null || at < new Date(row.effectiveTo));
+function priceNote(s, a, skuId, whenIso) {
+  const at = whenIso ? new Date(whenIso) : new Date();
+  const now = !whenIso;
+  const cbRow = now ? currentCostBasis(s) : s.costBasis.find(r => inForce(r, at));
+  const rule = s.marginRules.find(r => r.channelId === a.channelId && r.skuId === skuId && (now ? r.effectiveTo == null : inForce(r, at)));
+  const buf = (s.buffers || []).find(r => r.channelId === a.channelId && (now ? r.effectiveTo == null : inForce(r, at)));
+  const margin = now && a.fixedMarginPerKg != null ? a.fixedMarginPerKg : rule?.perKg;
+  const line = (label, c) => `${label}: ${c == null ? '—' : fmt(c) + '/kg'}`;
+  return [line('Margin', margin), line('Acquisition cost', cbRow?.acqPerKg), line('Hauling', cbRow?.haulingPerKg), line('Buffer', buf ? buf.perKg : (now ? 0 : null))].join('\n');
+}
+
 function clientRow(s, a, cb, v) {
   const open = !!ui.expanded[a.id];
   const p = a.primarySkuId ? priceFor(s, { accountId: a.id, skuId: a.primarySkuId }) : null;
@@ -210,7 +224,8 @@ function clientRow(s, a, cb, v) {
   const reqVol = a.reqVolPerMonthKg != null ? Number(a.reqVolPerMonthKg).toLocaleString('en-PH') + ' kg' : '—';
   const totalCols = 2 + (v.showFuture ? 1 : 0) + (v.showPrice ? 1 : 0) + v.histPubs.length + (v.showMargin ? 1 : 0) + (v.pCols.length ? v.pCols.length + 1 : 0) + (v.dCols.length ? v.dCols.length + 1 : 0);
 
-  const priceCell = v.showPrice ? `<td class="num">${price}</td>` : '';
+  const bulk = ui.channelId === 'BULK';
+  const priceCell = v.showPrice ? `<td class="num"${bulk ? ` data-note="${esc(priceNote(s, a, a.primarySkuId, null))}"` : ''}>${price}</td>` : '';
 
   return `<tr>
       <th scope="row" title="${esc(`${a.clientCode ? a.clientCode + ' · ' : ''}${a.status} · ${a.zone ?? '—'} · Gen vol ${volGen} · Req/mo ${reqVol}`)}">
@@ -218,7 +233,7 @@ function clientRow(s, a, cb, v) {
       </th>
       ${v.showFuture ? `<td class="num col-future" id="fp-${esc(a.id)}">${futurePriceCell(s, a, v.inp)}</td>` : ''}
       ${priceCell}
-      ${v.histPubs.map(pub => `<td class="num col-hist">${histPriceCell(s, a, pub)}</td>`).join('')}
+      ${v.histPubs.map(pub => `<td class="num col-hist"${bulk ? ` data-note="${esc(priceNote(s, a, a.primarySkuId, pub.publishedAt))}"` : ''}>${histPriceCell(s, a, pub)}</td>`).join('')}
       ${v.showMargin ? `<td class="num grp-margin-sub col-margin">${marginCell(s, a)}</td>` : ''}
       ${v.pCols.length ? `<td class="num grp-prem-sub" id="tp-${esc(a.id)}">${totalCell(s, a)}</td>${v.pCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
       ${v.dCols.length ? `<td class="num grp-disc-sub" id="td-${esc(a.id)}">${discountCell(a)}</td>${v.dCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}

@@ -801,3 +801,7 @@ table.grid-table.simple tr.cl-row > th, table.grid-table.simple tr.cl-row > td {
 .cd-line i { font-style: normal; color: var(--muted); margin-right: 4px; }
 table.grid-table.simple tr.pr-row > th.pr-th { padding-left: 24px; font-weight: 500; color: var(--text); }
 table.grid-table.simple td input.mini { width: 100%; max-width: 120px; }
+
+/* Hover note on Bulk prices */
+td[data-note] { position: relative; cursor: help; }
+td[data-note]:hover::after { content: attr(data-note); position: absolute; right: 4px; bottom: calc(100% - 2px); z-index: 20; white-space: pre; text-align: left; background: var(--ink); color: #fff; font-size: 12px; line-height: 1.5; padding: 6px 10px; border-radius: 4px; box-shadow: 0 4px 14px rgba(15, 23, 42, .25); pointer-events: none; font-weight: 400; }
