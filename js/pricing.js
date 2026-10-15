@@ -381,3 +381,32 @@ export function exceptions(s, now = new Date()) {
 
   return rows;
 }
+
+// ---- Sub-versions: an approved price request becomes v{major}.{n} under the major version in force when it was approved ----
+
+export const subLabel = r => `v${r.subOf}.${r.subNo}`;
+
+export function subVersionsOf(s, version) {
+  return s.priceRequests.filter(r => r.status === 'approved' && r.subOf === version).sort((a, b) => a.subNo - b.subNo);
+}
+
+// What to approve for a request: the client's asked price, kept above the floor and below today's price, in whole pesos.
+export function recommendRequest(s, r) {
+  const live = priceFor(s, { accountId: r.accountId, channelId: r.channelId, skuId: r.skuId, quantity: r.qty, ignoreException: true });
+  if (live.error || !live.result) return null;
+  const sku = byId(s.skus, r.skuId);
+  const kg = sku?.contentKg;
+  if (!kg) return null;
+  const vat = s.settings.vatInclusive === false ? 0 : (s.settings.vatRate || 0);
+  const cur = live.result.grossPerCyl;
+  const floorGross = Math.ceil(live.result.floorPerKg * kg * (1 + vat) / 100) * 100;
+  const wanted = Math.min(cur, r.targetGrossPerCyl);
+  const gross = Math.min(cur, Math.max(floorGross, Math.ceil(wanted / 100) * 100));
+  const reading = s.competitorReadings.find(x => x.id === r.competitorReadingId);
+  let why;
+  if (gross >= cur) why = `The floor ${fmt(floorGross)} leaves no room to go below today's ${fmt(cur)}.`;
+  else if (gross > r.targetGrossPerCyl) why = `Client asks ${fmt(r.targetGrossPerCyl)}, but the floor is ${fmt(floorGross)}, so this is the lowest allowed.`;
+  else why = `Client's asked price is above the floor ${fmt(floorGross)}, so it can be given in full.`;
+  if (reading) why += ` ${reading.brand} was at ${fmt(reading.pricePerCyl)}${gross <= reading.pricePerCyl ? ', and this price meets it' : ', and this price stays above it'}.`;
+  return { cur, gross, floorGross, kg, vat, perKg: roundHalfUp((cur - gross) / (kg * (1 + vat))), why };
+}

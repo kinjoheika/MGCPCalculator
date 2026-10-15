@@ -805,3 +805,34 @@ table.grid-table.simple td input.mini { width: 100%; max-width: 120px; }
 /* Hover note on Bulk prices */
 td[data-note] { position: relative; cursor: help; }
 td[data-note]:hover::after { content: attr(data-note); position: absolute; right: 4px; bottom: calc(100% - 2px); z-index: 20; white-space: pre; text-align: left; background: var(--ink); color: #fff; font-size: 12px; line-height: 1.5; padding: 6px 10px; border-radius: 4px; box-shadow: 0 4px 14px rgba(15, 23, 42, .25); pointer-events: none; font-weight: 400; }
+
+/* Notifications: bell at the top right */
+.bellwrap { position: relative; display: inline-flex; }
+.bell { position: relative; min-height: 28px; width: 32px; padding: 0; background: transparent; color: #E2E8F0; border-color: rgba(255, 255, 255, .25); }
+.bell:hover { background: rgba(255, 255, 255, .1); border-color: #fff; }
+.bell-n { position: absolute; top: -6px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: #DC2626; color: #fff; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; }
+.bell-panel { position: absolute; right: 0; top: calc(100% + 8px); width: 460px; max-width: 94vw; max-height: 76vh; overflow: auto; background: var(--surface); color: var(--text); border: 1px solid var(--ink); box-shadow: 0 12px 30px rgba(15, 23, 42, .25); z-index: 80; padding: 8px 10px 10px; font-size: 13px; }
+.nf-h { font-size: 13px; margin: 6px 0 4px; }
+.nf-card { border: 1px solid var(--line); padding: 8px 10px; margin: 6px 0; }
+.nf-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.nf-reason { margin: 4px 0; font-size: 12.5px; }
+.nf-prices { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; }
+.nf-prices .rec { color: var(--blue); }
+.nf-prices b { font-variant-numeric: tabular-nums; }
+.nf-prices small { color: var(--muted); }
+.nf-why { margin: 3px 0; }
+.nf-act { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.nf-price { display: flex; align-items: center; gap: 4px; font-size: 12.5px; }
+.nf-price input { width: 110px; height: 28px; min-height: 28px; text-align: right; }
+.nf-line { font-size: 12.5px; padding: 2px 0; border-bottom: 1px solid var(--line); }
+.nf-rev { margin-top: 8px; }
+.nf-rev summary { cursor: pointer; font-weight: 600; font-size: 12.5px; }
+.sub-v { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 3px; background: #EDF3FF; color: #1848B0; font-size: 11px; font-weight: 600; white-space: nowrap; }
+
+/* The shared row at the top of Bulk, Commercial and Dealer */
+.row-inputs { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 6px; }
+.rw-lbl { display: flex; flex-direction: column; gap: 2px; }
+.rw-lbl > span { font-size: 10.5px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.rw-lbl input { width: 96px; min-height: 30px; height: 30px; padding: 2px 7px; font-size: 12.5px; text-align: right; }
+.rw-lbl input.rw-total { background: var(--bg); font-weight: 600; width: 104px; }
+.row-inputs button { height: 30px; min-height: 30px; }

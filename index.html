@@ -13,6 +13,7 @@
   <a class="brand" href="#/"><span class="mark" aria-hidden="true">M</span>MGC Pricing</a>
   <nav id="nav" aria-label="Screens"></nav>
   <div class="tools">
+    <span id="bellwrap" class="bellwrap"></span>
     <span id="dbstat" class="small dbstat"></span>
     <label class="row small"><span class="muted">Acting as</span>
       <select id="who" aria-label="Acting as (prototype role switcher)"></select></label>
@@ -26,6 +27,7 @@ import * as store from './js/store.js';
 import * as router from './js/router.js';
 import { esc, toast } from './js/ui.js';
 import * as db from './js/db.js';
+import * as notify from './js/notify.js';
 
 const app = document.getElementById('app');
 
@@ -131,6 +133,7 @@ who.addEventListener('change', () => {
   location.hash = router.defaultHash(store.get(), store.currentUser());
 });
 
+notify.mount(document.getElementById('bellwrap'));
 router.start(app, paintHeader);
 </script>
 </body>

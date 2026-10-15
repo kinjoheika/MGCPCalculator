@@ -5,6 +5,7 @@
 import { fmt, toCentavos, toInput } from '../money.js';
 import { esc } from '../ui.js';
 import { byId, currentPublication, priceFor, marginRule, isStaleReading, fmtDate } from '../pricing.js';
+import * as session from '../session.js';
 
 const OWN_COLS = [
   { id: 'DEALER',       label: 'Current price',        note: 'Published' },
@@ -26,12 +27,8 @@ const ui = {
   finalPrices: {},
 };
 
-function sessionInputs() {
-  const acq = toCentavos(ui.acqInput);
-  const mar = toCentavos(ui.marginInput);
-  const buf = toCentavos(ui.bufferInput);
-  if (acq == null || mar == null || buf == null) return null;
-  return { acq, mar, buf };
+function sessionInputs(s) {
+  return session.get(s);
 }
 
 function computedFuturePrice(s, sku, inp) {
@@ -91,7 +88,7 @@ function futureTd(grossPerCyl, contentKg) {
 }
 
 export function html(s) {
-  const inp = sessionInputs();
+  const inp = sessionInputs(s);
   const { tab } = ui;
   const skus = skusForTab(s, tab);
   const now = new Date();
@@ -100,18 +97,6 @@ export function html(s) {
     <button type="button" class="tab-btn${tab === 'mgas'  ? ' on' : ''}" data-ds-tab="mgas">Mgas</button>
     <button type="button" class="tab-btn${tab === 'sulit' ? ' on' : ''}" data-ds-tab="sulit">Sulit Gas</button>
     <button type="button" class="tab-btn${tab === 'both'  ? ' on' : ''}" data-ds-tab="both">Both</button>
-  </div>`;
-
-  const toolbar = `<div class="cg-sess ds-sess">
-    <label class="cg-sess-lbl"><span>Acq ₱/kg</span>
-      <input type="number" min="0" step="0.01" inputmode="decimal" id="ds-acq"
-        placeholder="0.00" value="${esc(ui.acqInput)}"></label>
-    <label class="cg-sess-lbl"><span>Margin ₱/kg</span>
-      <input type="number" min="0" step="0.01" inputmode="decimal" id="ds-mar"
-        placeholder="0.00" value="${esc(ui.marginInput)}"></label>
-    <label class="cg-sess-lbl"><span>Buffer ₱/kg</span>
-      <input type="number" min="0" step="0.01" inputmode="decimal" id="ds-buf"
-        placeholder="0.00" value="${esc(ui.bufferInput)}"></label>
   </div>`;
 
   const rows = skus.map(sku => {
@@ -153,7 +138,7 @@ export function html(s) {
   const ownHead = OWN_COLS.map(col => `<th rowspan="2" class="num">${esc(col.label)}</th>`).join('');
   const compHead = COMP_BRANDS.map(b => `<th class="num ds-comp-sub">${esc(b)}</th>`).join('');
 
-  return `<div class="ds-head one-row">${tabBar}${toolbar}</div>
+  return `<div class="ds-head one-row">${tabBar}</div>
   <div class="card" style="padding:0;margin-top:12px">
     <div class="table-wrap"><table class="matrix ds-table">
       <thead>
@@ -181,15 +166,6 @@ export function bind(root, rerender) {
   root.querySelectorAll('[data-ds-tab]').forEach(b => {
     b.onclick = () => { ui.tab = b.dataset.dsTab; rerender(); };
   });
-
-  const wire = (id, key) => {
-    const el = root.querySelector(`#${id}`);
-    if (!el) return;
-    el.oninput = e => { ui[key] = e.target.value; rerender(); };
-  };
-  wire('ds-acq', 'acqInput');
-  wire('ds-mar', 'marginInput');
-  wire('ds-buf', 'bufferInput');
 
   root.querySelectorAll('[data-ds-final]').forEach(el => {
     const skuId = el.dataset.dsFinal;

@@ -5,12 +5,13 @@
 import * as store from '../store.js';
 import { fmt, fmtKg, toCentavos, toInput } from '../money.js';
 import { esc, toast, preserveFocus } from '../ui.js';
-import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel, marginRule, fmtDate, currentPublication } from '../pricing.js';
+import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel, marginRule, fmtDate, currentPublication, subVersionsOf, subLabel } from '../pricing.js';
 import { derivePremiumPerKg } from '../engine.js';
 import { FIELDS, labelFor, displayValue } from '../clientterms.js';
 import { inRange, rangeActive, rangeBar } from '../pricerange.js';
 import * as wizard from './priceroom-wizard.js';
 import * as dealer from './dealersheet.js';
+import * as session from '../session.js';
 import { level } from '../access.js';
 
 const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, margins: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histOpen: false };
@@ -120,7 +121,7 @@ export function html(s) {
   const chSel = `<select id="cg-ch" aria-label="Channel">${s.channels.map(c => `<option value="${esc(c.id)}"${c.id === ui.channelId ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select>`;
 
   // Dealer (pick-up) is priced product by product against CODO, semi-dealer and competitor prices: the dealer sheet.
-  if (ui.channelId === 'DEALER') return `<div class="one-row">${chSel}</div>${dealer.html(s)}`;
+  if (ui.channelId === 'DEALER') return `${session.barHtml(s)}<div class="one-row">${chSel}</div>${dealer.html(s)}`;
 
   const q = ui.filterQuery.toLowerCase();
   const filtered = q ? allClients.filter(a => a.name.toLowerCase().includes(q) || (a.zone || '').toLowerCase().includes(q)) : allClients;
@@ -140,15 +141,8 @@ export function html(s) {
       </div>` : ''}
     </div>`;
 
-  const sessInputs = `<span class="cg-sess">
-      <label class="cg-sess-lbl"><span>Acq ₱/kg</span><input type="number" id="cg-acq" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${esc(ui.acqInput)}"></label>
-      <label class="cg-sess-lbl"><span>Margin ₱/kg</span><input type="number" id="cg-margin" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${esc(ui.marginInput)}"></label>
-      <label class="cg-sess-lbl"><span>Buffer ₱/kg</span><input type="number" id="cg-buf" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${esc(ui.bufferInput)}"></label>
-    </span>`;
-
-  return `<div class="one-row">${chSel}${filterHtml}${sessInputs}${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
+  return `${session.barHtml(s, { saveDisabled: !edits })}<div class="one-row">${chSel}${filterHtml}${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
       <span class="small muted nowrap">${clients.length}${edits ? ` · ${edits} unsaved` : ''}</span>
-      <button type="button" id="cg-save" class="primary small" ${edits ? '' : 'disabled'}>Save</button>
       <button type="button" class="small" data-open-mpl>MPL calculator</button></div>
     ${clients.length && simple ? `<table class="matrix grid-table simple${histOpen ? ' hist-open' : ''}">
       <thead><tr class="grp">
@@ -189,11 +183,17 @@ function pastPublications(s, channelId, limit = 5) {
     .slice(0, limit);
 }
 
+// Approved price requests for this client and product, shown inside the major version they were approved under.
+function subPrices(s, a, skuId, version) {
+  return subVersionsOf(s, version).filter(r => r.accountId === a.id && r.skuId === skuId)
+    .map(r => `<span class="sub-v" title="Approved ${esc(fmtDate(r.decidedAt))}: ${esc(r.decisionReason || '')}">${esc(subLabel(r))} ${fmt(r.approvedGrossPerCyl ?? r.currentGrossPerCyl)}</span>`).join('');
+}
+
 function histPriceCell(s, a, pub, skuId = a.primarySkuId) {
   if (!skuId || !pub.prices?.[a.channelId]) return '<span class="muted small">—</span>';
   const entry = pub.prices[a.channelId].find(p => p.skuId === skuId);
   if (entry?.grossPerCyl == null) return '<span class="muted small">—</span>';
-  return `<span class="cell-price cell-hist">${fmt(entry.grossPerCyl)}</span>`;
+  return `<span class="cell-price cell-hist">${fmt(entry.grossPerCyl)}</span>${subPrices(s, a, skuId, pub.version)}`;
 }
 
 // Bulk: hovering a price shows what it was made of at the time. Four lines: margin, acquisition cost, hauling, buffer.
@@ -217,7 +217,7 @@ function clientRow(s, a, cb, v) {
   if (p && !p.error) {
     const margin = p.input.marginPerKg;
     const buffer = p.input.bufferPerKg || 0;
-    price = `<span class="cell-price" title="MPL ${fmt(cb.acqPerKg + margin)} (acq + margin) · margin + buffer ${fmt(margin + buffer)}">${fmt(p.result.grossPerCyl)}</span>`;
+    price = `<span class="cell-price" title="MPL ${fmt(cb.acqPerKg + margin)} (acq + margin) · margin + buffer ${fmt(margin + buffer)}">${fmt(p.result.grossPerCyl)}</span>${subPrices(s, a, a.primarySkuId, currentPublication(s).version)}`;
   } else if (p?.error) price = `<span class="muted small">${esc(p.error)}</span>`;
 
   const volGen = a.volumeGeneratedKg != null ? Number(a.volumeGeneratedKg).toLocaleString('en-PH') + ' kg' : '—';
@@ -271,7 +271,7 @@ function simpleRows(s, a, v) {
   const prods = clientProducts(s, a);
   return head + prods.map((sku, i) => {
     const p = priceFor(s, { accountId: a.id, skuId: sku.id });
-    const price = p && !p.error ? `<span class="cell-price">${fmt(p.result.grossPerCyl)}</span>` : '<span class="muted small">—</span>';
+    const price = p && !p.error ? `<span class="cell-price">${fmt(p.result.grossPerCyl)}</span>${subPrices(s, a, sku.id, currentPublication(s).version)}` : '<span class="muted small">—</span>';
     const first = i === 0; // margin, premiums and discounts belong to the client: shown once, on its main product
     const none = '<td class="num muted">·</td>';
     return `<tr class="pr-row">
@@ -317,12 +317,9 @@ function discountCell(a) {
   return `<span class="cell-price" ${otherCount ? `title="incl. ${otherCount} other ${fmt(otherTotal)}"` : ''}>${total ? '−' : ''}${fmt(total)}</span>`;
 }
 
+// The shared row of Acq, Hauling cost, Total Acq, Margin and Buffer at the top (see js/session.js).
 function sessionInputs() {
-  const acq = toCentavos(ui.acqInput);
-  const mar = toCentavos(ui.marginInput);
-  const buf = toCentavos(ui.bufferInput);
-  if (acq == null || mar == null || buf == null) return null;
-  return { acq, mar, buf };
+  return session.get(store.get());
 }
 
 function futurePriceCell(s, a, inp, skuId = a.primarySkuId) {
@@ -420,7 +417,7 @@ async function saveAll(rerender) {
 export function bind(root, rerender) {
   const chSel = root.querySelector('#cg-ch');
   if (chSel) chSel.onchange = () => { ui.channelId = chSel.value; ui.selectedIds = null; ui.filterQuery = ''; ui.filterOpen = false; rerender(); };
-  if (ui.channelId === 'DEALER') { dealer.bind(root, rerender); return; }
+  if (ui.channelId === 'DEALER') { session.bind(root, rerender, { onSave: session.savedToast }); dealer.bind(root, rerender); return; }
   root.querySelectorAll('[data-cg-exp]').forEach(b => b.onclick = () => {
     const id = b.dataset.cgExp;
     // Commercial clients start open, so "closed" is the stored state there; elsewhere "open" is.
@@ -536,15 +533,5 @@ export function bind(root, rerender) {
     };
   });
 
-  // Session inputs: acq / margin / buffer → trigger full rerender so future price column appears/updates
-  [['#cg-acq', 'acqInput'], ['#cg-margin', 'marginInput'], ['#cg-buf', 'bufferInput']].forEach(([sel, key]) => {
-    const el = root.querySelector(sel);
-    if (!el) return;
-    el.oninput = () => { ui[key] = el.value; rerender(); };
-    el.onblur = () => {
-      const c = toCentavos(el.value);
-      el.value = c == null ? '' : toInput(c);
-      ui[key] = el.value;
-    };
-  });
+  session.bind(root, rerender);
 }
