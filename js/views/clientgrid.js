@@ -110,7 +110,12 @@ export function html(s) {
   const showMargin = showPrice && !coverC;
   const histOpen = ui.histOpen;
   const histPubs = histOpen ? pastPublications(s, ui.channelId) : [];
-  const v = { pCols, dCols, showPrice, showFuture, showMargin, inp, histOpen, histPubs };
+  // Commercial is laid out by product: one line of client details, then one line per product (1 to 3).
+  // Margin, Premiums and Discounts are one column each.
+  const simple = ui.channelId === 'COMMERCIAL';
+  const showPrem = simple && !coverC && PREMIUM_COLS.some(c => lvl(s, c.code) >= 1);
+  const showDisc = simple && !coverC && DISCOUNT_COLS.some(c => lvl(s, c.code) >= 1);
+  const v = { pCols, dCols, showPrice, showFuture, showMargin, inp, histOpen, histPubs, simple, showPrem, showDisc };
 
   const chSel = `<select id="cg-ch" aria-label="Channel">${s.channels.map(c => `<option value="${esc(c.id)}"${c.id === ui.channelId ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select>`;
 
@@ -145,7 +150,18 @@ export function html(s) {
       <span class="small muted nowrap">${clients.length}${edits ? ` · ${edits} unsaved` : ''}</span>
       <button type="button" id="cg-save" class="primary small" ${edits ? '' : 'disabled'}>Save</button>
       <button type="button" class="small" data-open-mpl>MPL calculator</button></div>
-    ${clients.length ? `<table class="matrix grid-table${histOpen ? ' hist-open' : ''}">
+    ${clients.length && simple ? `<table class="matrix grid-table simple${histOpen ? ' hist-open' : ''}">
+      <thead><tr class="grp">
+        <th class="col-client">Client</th>
+        ${showFuture ? '<th class="num col-price col-future">Future price</th>' : ''}
+        ${showPrice ? `<th class="num col-price">Current price <button type="button" id="cg-hist-toggle" class="hist-col-toggle" title="${histOpen ? 'Hide price history' : 'Show past prices'}" aria-expanded="${histOpen}">${histOpen ? '▴' : '▾'}</button></th>` : ''}
+        ${histOpen ? histPubs.map(p => `<th class="num col-hist"><span class="hist-ver">v${p.version}</span><span class="hist-date">${fmtDate(p.publishedAt)}</span></th>`).join('') : ''}
+        ${showMargin ? '<th class="num grp-margin">Margin</th>' : ''}
+        ${showPrem ? '<th class="num grp-prem">Premiums</th>' : ''}
+        ${showDisc ? '<th class="num grp-disc">Discounts</th>' : ''}
+      </tr></thead>
+      <tbody>${clients.map(a => simpleRows(s, a, v)).join('')}</tbody>
+    </table>` : clients.length ? `<table class="matrix grid-table${histOpen ? ' hist-open' : ''}">
       <thead>
       <tr class="grp">
         <th rowspan="2" class="col-client">Client</th>
@@ -173,9 +189,9 @@ function pastPublications(s, channelId, limit = 5) {
     .slice(0, limit);
 }
 
-function histPriceCell(s, a, pub) {
-  if (!a.primarySkuId || !pub.prices?.[a.channelId]) return '<span class="muted small">—</span>';
-  const entry = pub.prices[a.channelId].find(p => p.skuId === a.primarySkuId);
+function histPriceCell(s, a, pub, skuId = a.primarySkuId) {
+  if (!skuId || !pub.prices?.[a.channelId]) return '<span class="muted small">—</span>';
+  const entry = pub.prices[a.channelId].find(p => p.skuId === skuId);
   if (entry?.grossPerCyl == null) return '<span class="muted small">—</span>';
   return `<span class="cell-price cell-hist">${fmt(entry.grossPerCyl)}</span>`;
 }
@@ -210,6 +226,62 @@ function clientRow(s, a, cb, v) {
     ${open ? `<tr class="prof"><td colspan="${totalCols}">${profileBox(a)}</td></tr>` : ''}`;
 }
 
+// The products a client buys, main product first: the main product plus any the client's terms list (volume per drop), up to three.
+const DROP_SKU = { '50kg': a => `50KG_${a.profile?.contentClass || 'A'}`, '22kgRegular': () => '22KG_A', '22kgForklift': () => '22KG_FL_A', '11kg': () => '11KG_MGAS', '2.7kg': () => '2.7KG' };
+function clientProducts(s, a) {
+  const ids = [a.primarySkuId, ...Object.keys(a.profile?.volumePerDrop || {}).map(k => DROP_SKU[k]?.(a))].filter(Boolean);
+  return [...new Set(ids)].map(id => byId(s.skus, id)).filter(Boolean).slice(0, 3);
+}
+
+const kgText = n => (n == null ? '—' : `${Number(n).toLocaleString('en-PH')} kg`);
+
+function simpleRows(s, a, v) {
+  const open = ui.expanded[a.id] !== false; // every client opens by default
+  const span = (v.showFuture ? 1 : 0) + (v.showPrice ? 1 : 0) + v.histPubs.length + (v.showMargin ? 1 : 0) + (v.showPrem ? 1 : 0) + (v.showDisc ? 1 : 0);
+  const used = a.trmvKg && a.volumeGeneratedKg != null ? `${Math.round(a.volumeGeneratedKg / a.trmvKg * 100)}% of TRMV` : '—';
+  const items = [
+    ['Last month', kgText(a.lastMonthKg)],
+    ['Avg per month', kgText(a.avgMonthlyVolumeKg)],
+    ['Contract ends', a.contractEnd ? fmtDate(a.contractEnd) : '—'],
+    ['Volume used', used],
+    ['Competitor', a.competitorBrand || '—'],
+  ];
+  const head = `<tr class="cl-row">
+      <th scope="row" title="${esc(`${a.clientCode ? a.clientCode + ' · ' : ''}${a.status} · ${a.zone ?? '—'}`)}">
+        <button type="button" class="link exp" data-cg-exp="${esc(a.id)}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(a.name)}</button>
+      </th>
+      <td colspan="${span}"><div class="cd-line">${items.map(([k, val]) => `<span><i>${k}</i> ${esc(val)}</span>`).join('')}</div></td>
+    </tr>`;
+  if (!open) return head;
+  const prods = clientProducts(s, a);
+  return head + prods.map((sku, i) => {
+    const p = priceFor(s, { accountId: a.id, skuId: sku.id });
+    const price = p && !p.error ? `<span class="cell-price">${fmt(p.result.grossPerCyl)}</span>` : '<span class="muted small">—</span>';
+    const first = i === 0; // margin, premiums and discounts belong to the client: shown once, on its main product
+    const none = '<td class="num muted">·</td>';
+    return `<tr class="pr-row">
+      <th scope="row" class="pr-th">${esc(sku.label)}</th>
+      ${v.showFuture ? `<td class="num col-future" data-fp="${esc(a.id)}" data-fpsku="${esc(sku.id)}">${futurePriceCell(s, a, v.inp, sku.id)}</td>` : ''}
+      ${v.showPrice ? `<td class="num">${price}</td>` : ''}
+      ${v.histPubs.map(pub => `<td class="num col-hist">${histPriceCell(s, a, pub, sku.id)}</td>`).join('')}
+      ${v.showMargin ? (first ? `<td class="num grp-margin-sub col-margin">${marginCell(s, a, sku.id)}</td>` : none) : ''}
+      ${v.showPrem ? (first ? `<td class="num grp-prem-sub">${simpleAdjCell(s, a, 'P')}</td>` : none) : ''}
+      ${v.showDisc ? (first ? `<td class="num grp-disc-sub">${simpleAdjCell(s, a, 'D')}</td>` : none) : ''}
+    </tr>`;
+  }).join('');
+}
+
+// One number for all premiums (or all discounts). Typing it sets the client's credit-risk premium (or its supply-only or
+// competition discount) to whatever makes the total match; every other premium or discount the client carries stays.
+const adjCode = (a, kind) => (kind === 'P' ? 'CREDIT_RISK' : a.competitorBrand ? 'DUAL_SUPPLIER' : 'SUPPLY_ONLY');
+function adjTotal(s, a, kind) { return kind === 'P' ? premiumTotal(s, a).total : discountTotal(a).total; }
+function simpleAdjCell(s, a, kind) {
+  const code = adjCode(a, kind);
+  const total = adjTotal(s, a, kind);
+  const ro = editable(s, code) ? '' : ' readonly tabindex="-1"';
+  return `<input class="mini" type="number" min="0" step="0.01" inputmode="decimal" placeholder="-" value="${total ? esc(toInput(total)) : ''}" aria-label="${kind === 'P' ? 'Premiums' : 'Discounts'} ₱/kg" data-cgs="${esc(a.id)}|${kind}"${ro}>`;
+}
+
 function totalCell(s, a) {
   const { total, otherTotal, otherCount } = premiumTotal(s, a);
   return `<span class="cell-price" ${otherCount ? `title="incl. ${otherCount} other premium${otherCount === 1 ? '' : 's'} ${fmt(otherTotal)}"` : ''}>${fmt(total)}</span>`;
@@ -238,9 +310,9 @@ function sessionInputs() {
   return { acq, mar, buf };
 }
 
-function futurePriceCell(s, a, inp) {
-  if (!inp || !a.primarySkuId) return '<span class="muted small">—</span>';
-  const sku = s.skus.find(k => k.id === a.primarySkuId);
+function futurePriceCell(s, a, inp, skuId = a.primarySkuId) {
+  if (!inp || !skuId) return '<span class="muted small">—</span>';
+  const sku = s.skus.find(k => k.id === skuId);
   if (!sku) return '<span class="muted small">—</span>';
   const { total: premC } = premiumTotal(s, a);
   const { total: discC } = discountTotal(a);
@@ -254,9 +326,9 @@ function futurePriceCell(s, a, inp) {
   return `<span class="cell-price cell-future">${fmt(grossPerCyl)}</span>`;
 }
 
-function marginCell(s, a) {
-  if (!a.primarySkuId) return '<span class="muted small">—</span>';
-  const mr = marginRule(s, a.channelId, a.primarySkuId);
+function marginCell(s, a, skuId = a.primarySkuId) {
+  if (!skuId) return '<span class="muted small">—</span>';
+  const mr = marginRule(s, a.channelId, skuId);
   const rulePerKg = mr?.perKg;
   const draftVal = ui.margins[a.id] ?? (a.fixedMarginPerKg != null ? toInput(a.fixedMarginPerKg) : '');
   const pastHtml = rulePerKg != null
@@ -264,7 +336,7 @@ function marginCell(s, a) {
     : '';
   return `<div class="cellfields">
     ${pastHtml}
-    <input class="mini" type="number" min="0" step="0.01" inputmode="decimal" placeholder="₱/kg" value="${esc(draftVal)}" aria-label="Margin ₱/kg" data-mg="${esc(a.id)}">
+    <input class="mini" type="number" min="0" step="0.01" inputmode="decimal" placeholder="-" value="${esc(draftVal)}" aria-label="Margin ₱/kg" data-mg="${esc(a.id)}">
   </div>`;
 }
 
@@ -275,7 +347,7 @@ function cellRows(s, a, col) {
   const rows = draftRows(a, col.code);
   const r = rows[0] || { perKg: '', investment: '', note: '' };
   const extra = Math.max(0, rows.length - 1);
-  const amount = `<input class="mini" type="number" min="0" step="0.01" inputmode="decimal" placeholder="₱/kg" value="${esc(r.perKg)}" aria-label="Per kg" data-cg="${esc(a.id)}|${col.code}|0|perKg"${ro}>`;
+  const amount = `<input class="mini" type="number" min="0" step="0.01" inputmode="decimal" placeholder="-" value="${esc(r.perKg)}" aria-label="Per kg" data-cg="${esc(a.id)}|${col.code}|0|perKg"${ro}>`;
   return `<div class="cellfields">
     ${amount}
   </div>`;
@@ -334,7 +406,12 @@ export function bind(root, rerender) {
   const chSel = root.querySelector('#cg-ch');
   if (chSel) chSel.onchange = () => { ui.channelId = chSel.value; ui.selectedIds = null; ui.filterQuery = ''; ui.filterOpen = false; rerender(); };
   if (ui.channelId === 'DEALER') { dealer.bind(root, rerender); return; }
-  root.querySelectorAll('[data-cg-exp]').forEach(b => b.onclick = () => { const id = b.dataset.cgExp; ui.expanded[id] = !ui.expanded[id]; rerender(); });
+  root.querySelectorAll('[data-cg-exp]').forEach(b => b.onclick = () => {
+    const id = b.dataset.cgExp;
+    // Commercial clients start open, so "closed" is the stored state there; elsewhere "open" is.
+    ui.expanded[id] = ui.channelId === 'COMMERCIAL' ? ui.expanded[id] === false : !ui.expanded[id];
+    rerender();
+  });
 
   const toggle = root.querySelector('#cg-toggle');
   if (toggle) toggle.onclick = () => {
@@ -398,6 +475,30 @@ export function bind(root, rerender) {
       const v = toCentavos(el.value);
       el.value = v == null || v < 0 ? '' : toInput(v);
       editRows(a, code)[+i].perKg = el.value;
+    };
+  });
+  root.querySelectorAll('[data-cgs]').forEach(el => {
+    const [accId, kind] = el.dataset.cgs.split('|');
+    el.oninput = () => {
+      const s = store.get();
+      const a = byId(s.accounts, accId);
+      if (!a) return;
+      if (el.value.startsWith('-')) el.value = el.value.replace(/-/g, '');
+      const code = adjCode(a, kind);
+      const row = editRows(a, code)[0];
+      const own = toCentavos(row.perKg) || 0;
+      const others = adjTotal(s, a, kind) - own;
+      const typed = toCentavos(el.value) || 0;
+      row.perKg = typed - others > 0 ? toInput(typed - others) : '';
+      const inp = sessionInputs();
+      if (inp) root.querySelectorAll(`[data-fp="${CSS.escape(accId)}"]`).forEach(td => { td.innerHTML = futurePriceCell(s, a, inp, td.dataset.fpsku); });
+      const saveBtn = root.querySelector('#cg-save');
+      if (saveBtn) saveBtn.disabled = false;
+    };
+    el.onblur = () => {
+      const a = byId(store.get().accounts, accId);
+      const total = a ? adjTotal(store.get(), a, kind) : 0;
+      el.value = total ? toInput(total) : '';
     };
   });
   const save = root.querySelector('#cg-save');

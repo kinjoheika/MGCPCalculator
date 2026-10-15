@@ -789,3 +789,15 @@ table.grid-table .col-hist { width: auto; }
 /* Opening the price history keeps the header and rows the same size as before */
 table.grid-table.hist-open thead th { height: 78px; vertical-align: bottom; }
 table.grid-table tbody tr { height: 37px; }
+
+/* Commercial: client details line, then product rows */
+table.grid-table.simple thead th { height: 34px; vertical-align: middle; white-space: nowrap; }
+table.grid-table.simple.hist-open thead th { height: 34px; }
+table.grid-table.simple thead th.grp-margin { color: #0E6B3F; }
+table.grid-table.simple thead th.grp-prem { color: #1848B0; }
+table.grid-table.simple thead th.grp-disc { color: #8A5200; }
+table.grid-table.simple tr.cl-row > th, table.grid-table.simple tr.cl-row > td { background: var(--bg); border-top: 1px solid var(--line-2); }
+.cd-line { display: flex; gap: 22px; flex-wrap: nowrap; font-size: 12px; white-space: nowrap; overflow: hidden; }
+.cd-line i { font-style: normal; color: var(--muted); margin-right: 4px; }
+table.grid-table.simple tr.pr-row > th.pr-th { padding-left: 24px; font-weight: 500; color: var(--text); }
+table.grid-table.simple td input.mini { width: 100%; max-width: 120px; }
