@@ -10,6 +10,7 @@ import { derivePremiumPerKg } from '../engine.js';
 import { FIELDS, labelFor, displayValue } from '../clientterms.js';
 import { inRange, rangeActive, rangeBar } from '../pricerange.js';
 import * as wizard from './priceroom-wizard.js';
+import * as dealer from './dealersheet.js';
 import { level } from '../access.js';
 
 const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, margins: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histOpen: false };
@@ -100,16 +101,21 @@ export function html(s) {
   const cb = currentCostBasis(s);
   const edits = pendingEdits();
   // Columns the user may see; the rest are left out entirely.
-  const pCols = PREMIUM_COLS.filter(c => lvl(s, c.code) >= 1), dCols = DISCOUNT_COLS.filter(c => lvl(s, c.code) >= 1);
+  // With the price history open, it takes the place of margin, premiums and discounts entirely.
+  const coverC = ui.histOpen;
+  const pCols = coverC ? [] : PREMIUM_COLS.filter(c => lvl(s, c.code) >= 1), dCols = coverC ? [] : DISCOUNT_COLS.filter(c => lvl(s, c.code) >= 1);
   const showPrice = level(s, store.currentUser(), 'cp_price') >= 1;
   const inp = sessionInputs();
   const showFuture = showPrice;
-  const showMargin = showPrice;
+  const showMargin = showPrice && !coverC;
   const histOpen = ui.histOpen;
   const histPubs = histOpen ? pastPublications(s, ui.channelId) : [];
   const v = { pCols, dCols, showPrice, showFuture, showMargin, inp, histOpen, histPubs };
 
   const chSel = `<select id="cg-ch" aria-label="Channel">${s.channels.map(c => `<option value="${esc(c.id)}"${c.id === ui.channelId ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select>`;
+
+  // Dealer (pick-up) is priced product by product against CODO, semi-dealer and competitor prices: the dealer sheet.
+  if (ui.channelId === 'DEALER') return `<div class="one-row">${chSel}</div>${dealer.html(s)}`;
 
   const q = ui.filterQuery.toLowerCase();
   const filtered = q ? allClients.filter(a => a.name.toLowerCase().includes(q) || (a.zone || '').toLowerCase().includes(q)) : allClients;
@@ -181,7 +187,7 @@ function clientRow(s, a, cb, v) {
   if (p && !p.error) {
     const margin = p.input.marginPerKg;
     const buffer = p.input.bufferPerKg || 0;
-    price = `<span class="cell-price" title="MPL ${fmt(cb.acqPerKg + margin)} (acq + margin) · margin + buffer ${fmt(margin + buffer)}">${fmt(p.result.grossPerCyl)}</span> <span class="small muted">${esc(skuLabel(s, a.primarySkuId))}</span>`;
+    price = `<span class="cell-price" title="MPL ${fmt(cb.acqPerKg + margin)} (acq + margin) · margin + buffer ${fmt(margin + buffer)}">${fmt(p.result.grossPerCyl)}</span>`;
   } else if (p?.error) price = `<span class="muted small">${esc(p.error)}</span>`;
 
   const volGen = a.volumeGeneratedKg != null ? Number(a.volumeGeneratedKg).toLocaleString('en-PH') + ' kg' : '—';
@@ -245,7 +251,7 @@ function futurePriceCell(s, a, inp) {
   const vatInclusive = s.settings.vatInclusive !== false;
   const vatPerCyl = vatInclusive ? Math.round(netPerCyl * vatRate) : 0;
   const grossPerCyl = netPerCyl + vatPerCyl;
-  return `<span class="cell-price cell-future">${fmt(grossPerCyl)}</span> <span class="small muted">${esc(skuLabel(s, a.primarySkuId))}</span>`;
+  return `<span class="cell-price cell-future">${fmt(grossPerCyl)}</span>`;
 }
 
 function marginCell(s, a) {
@@ -327,6 +333,7 @@ async function saveAll(rerender) {
 export function bind(root, rerender) {
   const chSel = root.querySelector('#cg-ch');
   if (chSel) chSel.onchange = () => { ui.channelId = chSel.value; ui.selectedIds = null; ui.filterQuery = ''; ui.filterOpen = false; rerender(); };
+  if (ui.channelId === 'DEALER') { dealer.bind(root, rerender); return; }
   root.querySelectorAll('[data-cg-exp]').forEach(b => b.onclick = () => { const id = b.dataset.cgExp; ui.expanded[id] = !ui.expanded[id]; rerender(); });
 
   const toggle = root.querySelector('#cg-toggle');

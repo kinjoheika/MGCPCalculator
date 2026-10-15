@@ -8,3 +8,8 @@ Thumbs.db
 # Nothing is built or installed for this prototype, but keep these out if they appear
 node_modules/
 *.log
+
+# Real logins and keys: never commit
+db/*.private.*
+.env
+.env.*

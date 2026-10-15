@@ -53,7 +53,7 @@ export const canEdit = (s, user, part) => level(s, user, part) >= 2;
 export const canApprove = (s, user, part) => level(s, user, part) >= 3;
 
 // Price room tab → the part that decides whether it shows at all.
-export const TAB_PART = { competitors: 'comp_board', channels: 'channels_board', grid: 'cp_list', dealer: 'channels_board', history: 'history', notices: 'notices' };
+export const TAB_PART = { competitors: 'comp_board', channels: 'channels_board', grid: 'cp_list', history: 'history', notices: 'notices' };
 export const MPL_PARTS = ['mpl_cost', 'mpl_margin', 'mpl_buffer', 'mpl_draft', 'mpl_approve', 'mpl_publish'];
 
 export const canSeeTab = (s, user, tab) => canView(s, user, TAB_PART[tab]);

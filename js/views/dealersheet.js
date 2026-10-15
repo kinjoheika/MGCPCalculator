@@ -150,7 +150,7 @@ export function html(s) {
     </tr>`;
   }).join('');
 
-  const ownHead = OWN_COLS.map(col => `<th class="num">${esc(col.label)}</th>`).join('');
+  const ownHead = OWN_COLS.map(col => `<th rowspan="2" class="num">${esc(col.label)}</th>`).join('');
   const compHead = COMP_BRANDS.map(b => `<th class="num ds-comp-sub">${esc(b)}</th>`).join('');
 
   return `<div class="ds-head one-row">${tabBar}${toolbar}</div>

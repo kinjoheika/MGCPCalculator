@@ -780,3 +780,8 @@ table.access tr.grp-row th { background: var(--bg); font-size: 11.5px; text-tran
 .ds-pkg { display: block; margin-top: 1px; line-height: 1.2; }
 .ds-stale-pill { font-size: 10px; margin-left: 3px; }
 .ds-td { padding: 7px 8px; line-height: 1.35; }
+
+/* Price history slides in over the margin, premium and discount columns */
+@keyframes histSlide { from { opacity: 0; transform: translateX(70px); } to { opacity: 1; transform: none; } }
+.grid-table .col-hist { animation: histSlide .3s ease-out both; }
+table.grid-table .col-hist { width: auto; }

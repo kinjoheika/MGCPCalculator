@@ -43,7 +43,7 @@ export function canAccess(s, user, route) {
 export const configTabs = s => [['users', 'Users'], ['channels', `Channels (${s.channels.length})`], ['zones', `Zones (${s.zones.length})`],
   ['clients', `Clients (${s.accounts.length})`], ['competitors', `Competitors (${s.trackedBrands.length})`], ['products', `Products (${s.skus.length})`]];
 
-export const priceRoomTabs = [['competitors', 'Competitors board'], ['channels', 'Channels board'], ['grid', 'Client Pricing'], ['dealer', 'Dealer Sheet'], ['history', 'Price History'], ['notices', 'PL Notices']];
+export const priceRoomTabs = [['competitors', 'Competitors board'], ['channels', 'Channels board'], ['grid', 'Client Pricing'], ['history', 'Price History'], ['notices', 'PL Notices']];
 
 export const priceRoomTabsFor = (s, user) => priceRoomTabs.filter(([k]) => canSeeTab(s, user, k));
 
