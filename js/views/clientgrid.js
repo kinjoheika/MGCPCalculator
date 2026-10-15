@@ -14,7 +14,7 @@ import * as dealer from './dealersheet.js';
 import * as session from '../session.js';
 import { level, canEdit as canEditPart } from '../access.js';
 
-const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, margins: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histOpen: false };
+const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, margins: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histOpen: false, prodFilter: [], prodOpen: false };
 
 // Two column groups, each with its own subcolumns. Every cell takes as many rows as the client needs.
 const PREMIUM_COLS = [
@@ -38,8 +38,8 @@ export function setChannel(id) {
   ui.channelId = id;
 }
 
-export function isFilterOpen() { return ui.filterOpen; }
-export function closeFilter() { ui.filterOpen = false; }
+export function isFilterOpen() { return ui.filterOpen || ui.prodOpen; }
+export function closeFilter() { ui.filterOpen = false; ui.prodOpen = false; }
 
 // ---- Editing state: drafts start from what is saved, so fields open pre-filled ----
 
@@ -98,7 +98,10 @@ export function html(s) {
   if (ui.selectedIds === null) ui.selectedIds = new Set(allClients.map(a => a.id));
   const selected = allClients.filter(a => ui.selectedIds.has(a.id));
   const grossOf = a => { const p = a.primarySkuId ? priceFor(s, { accountId: a.id, skuId: a.primarySkuId }) : null; return p && !p.error ? p.result.grossPerCyl : null; };
-  const clients = rangeActive() ? selected.filter(a => inRange(grossOf(a))) : selected;
+  const byRange = rangeActive() ? selected.filter(a => inRange(grossOf(a))) : selected;
+  // Commercial only: with products ticked in the Products filter, only the clients that buy one of them are listed.
+  const prodFilter = ui.channelId === 'COMMERCIAL' ? ui.prodFilter : [];
+  const clients = prodFilter.length ? byRange.filter(a => clientProducts(s, a).some(k => prodFilter.includes(k.id))) : byRange;
   const cb = currentCostBasis(s);
   const edits = pendingEdits();
   // Columns the user may see; the rest are left out entirely.
@@ -141,7 +144,23 @@ export function html(s) {
       </div>` : ''}
     </div>`;
 
-  return `${session.barHtml(s, { saveDisabled: !(edits || rowChanges(s).length) })}<div class="one-row">${chSel}${filterHtml}${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
+  // The products Commercial clients buy, for the Products filter.
+  let prodHtml = '';
+  if (ui.channelId === 'COMMERCIAL') {
+    const used = new Map();
+    for (const a of allClients) for (const k of clientProducts(s, a)) used.set(k.id, k);
+    const list = [...used.values()].sort((x, y) => (x.contentKg - y.contentKg) || x.label.localeCompare(y.label));
+    prodHtml = `<div class="multi" id="cg-pmulti">
+      <button type="button" id="cg-ptoggle" class="multi-btn" aria-haspopup="listbox" aria-expanded="${ui.prodOpen}">
+        <span>${ui.prodFilter.length ? `Products <b>${ui.prodFilter.length}</b>/${list.length}` : 'All products'}</span><span aria-hidden="true">▾</span></button>
+      ${ui.prodOpen ? `<div class="multi-menu"><div class="multi-actions small"><span class="muted">Only clients that buy these</span>
+          <button type="button" class="link" id="cg-pclear">Clear</button></div>
+        <div class="multi-list" role="listbox" aria-multiselectable="true" aria-label="Products">${list.map(k =>
+          `<label class="multi-opt"><input type="checkbox" data-cg-prod="${esc(k.id)}" ${ui.prodFilter.includes(k.id) ? 'checked' : ''}><span class="grow">${esc(k.label)}</span></label>`).join('')}</div></div>` : ''}
+    </div>`;
+  }
+
+  return `${session.barHtml(s, { saveDisabled: !(edits || rowChanges(s).length) })}<div class="one-row">${chSel}${filterHtml}${prodHtml}${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
       <span class="small muted nowrap">${clients.length}${edits ? ` · ${edits} unsaved` : ''}</span>
       <button type="button" class="small" data-open-mpl>MPL calculator</button></div>
     ${clients.length && simple ? `<table class="matrix grid-table simple${histOpen ? ' hist-open' : ''}">
@@ -440,9 +459,20 @@ export function bind(root, rerender) {
     rerender();
   });
 
+  const ptoggle = root.querySelector('#cg-ptoggle');
+  if (ptoggle) ptoggle.onclick = () => { ui.prodOpen = !ui.prodOpen; ui.filterOpen = false; rerender(); };
+  root.querySelectorAll('[data-cg-prod]').forEach(cb => cb.onchange = () => {
+    const id = cb.dataset.cgProd;
+    ui.prodFilter = ui.prodFilter.includes(id) ? ui.prodFilter.filter(x => x !== id) : [...ui.prodFilter, id];
+    rerender();
+  });
+  const pclear = root.querySelector('#cg-pclear');
+  if (pclear) pclear.onclick = () => { ui.prodFilter = []; rerender(); };
+
   const toggle = root.querySelector('#cg-toggle');
   if (toggle) toggle.onclick = () => {
     ui.filterOpen = !ui.filterOpen;
+    ui.prodOpen = false;
     ui.filterScroll = 0;
     rerender();
     if (ui.filterOpen) document.getElementById('cg-search')?.focus();

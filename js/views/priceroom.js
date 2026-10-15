@@ -251,11 +251,11 @@ function channelPicker(s) {
 document.addEventListener('click', e => {
   if (ui.chanOpen && e.target.isConnected && !e.target.closest('#ch-multi')) { ui.chanOpen = false; closeMenu?.(); }
   if (!grid.isFilterOpen()) return;
-  if (!document.querySelector('#cg-multi')) { grid.closeFilter(); return; }
-  if (e.target.isConnected && !e.target.closest('#cg-multi')) { grid.closeFilter(); closeMenu?.(); }
+  if (!document.querySelector('#cg-multi, #cg-pmulti')) { grid.closeFilter(); return; }
+  if (e.target.isConnected && !e.target.closest('#cg-multi, #cg-pmulti')) { grid.closeFilter(); closeMenu?.(); }
 });
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape' || !grid.isFilterOpen() || !document.querySelector('#cg-multi')) return;
+  if (e.key !== 'Escape' || !grid.isFilterOpen() || !document.querySelector('#cg-multi, #cg-pmulti')) return;
   grid.closeFilter();
   closeMenu?.();
 });
