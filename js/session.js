@@ -24,7 +24,7 @@ export function barHtml(s, { saveDisabled = false } = {}) {
   const cb = currentCostBasis(s);
   const acq = toCentavos(v.acq);
   const total = acq == null ? '' : toInput(acq + haulingOf(s));
-  const field = (id, label, key, ph) => `<label class="rw-lbl"><span>${label}</span><input type="number" id="${id}" min="0" step="0.01" inputmode="decimal" placeholder="${ph}" value="${esc(v[key])}"></label>`;
+  const field = (id, label, key, ph) => `<label class="rw-lbl"><span>${label}</span><input type="text" id="${id}" inputmode="decimal" autocomplete="off" placeholder="${ph}" value="${esc(v[key])}"></label>`;
   return `<div class="row-inputs">
     ${field('rw-acq', 'Acq ₱/kg', 'acq', '0.00')}
     ${field('rw-haul', 'Hauling cost ₱/kg', 'hauling', cb ? toInput(cb.haulingPerKg) : '0.00')}
@@ -40,8 +40,19 @@ export function bind(root, rerender, { onSave } = {}) {
   [['rw-acq', 'acq'], ['rw-haul', 'hauling'], ['rw-margin', 'margin'], ['rw-buf', 'buffer']].forEach(([id, key]) => {
     const el = root.querySelector('#' + id);
     if (!el) return;
-    el.oninput = () => { v[key] = el.value; persist(); rerender(); };
+    el.oninput = () => {
+      // Digits and one decimal point only; the page redraws for the future prices, and the cursor stays where it was.
+      const clean = el.value.replace(/[^0-9.]/g, '').replace(/^(\d*\.\d*)\..*$/, '$1');
+      if (clean !== el.value) el.value = clean;
+      v[key] = el.value;
+      persist();
+      const id = el.id, pos = el.selectionStart;
+      rerender();
+      const next = document.getElementById(id);
+      if (next) { next.focus(); try { next.setSelectionRange(pos, pos); } catch { /* not supported here */ } }
+    };
     el.onblur = () => {
+      if (!el.isConnected) return; // the field was only replaced by a redraw
       const c = toCentavos(el.value);
       el.value = c == null ? '' : toInput(c);
       v[key] = el.value;
