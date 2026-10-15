@@ -785,3 +785,7 @@ table.access tr.grp-row th { background: var(--bg); font-size: 11.5px; text-tran
 @keyframes histSlide { from { opacity: 0; transform: translateX(70px); } to { opacity: 1; transform: none; } }
 .grid-table .col-hist { animation: histSlide .3s ease-out both; }
 table.grid-table .col-hist { width: auto; }
+
+/* Opening the price history keeps the header and rows the same size as before */
+table.grid-table.hist-open thead th { height: 78px; vertical-align: bottom; }
+table.grid-table tbody tr { height: 37px; }

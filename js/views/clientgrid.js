@@ -145,7 +145,7 @@ export function html(s) {
       <span class="small muted nowrap">${clients.length}${edits ? ` · ${edits} unsaved` : ''}</span>
       <button type="button" id="cg-save" class="primary small" ${edits ? '' : 'disabled'}>Save</button>
       <button type="button" class="small" data-open-mpl>MPL calculator</button></div>
-    ${clients.length ? `<table class="matrix grid-table">
+    ${clients.length ? `<table class="matrix grid-table${histOpen ? ' hist-open' : ''}">
       <thead>
       <tr class="grp">
         <th rowspan="2" class="col-client">Client</th>
