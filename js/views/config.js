@@ -45,7 +45,10 @@ export function render(root, ctx) {
 // ---------------- Users ----------------
 
 function usersHtml(s, me) {
+  if (me.role !== 'admin') return '<div class="card"><p class="muted">Only an Admin manages users and access.</p></div>';
+  const live = store.status().mode === 'database';
   return `<div class="card">
+    ${live ? '<p class="small muted">Logins live in Supabase. To add a person, add them to db/users.private.csv and run tools/provision.mjs; roles and access are edited here.</p>' : ''}
     <div class="card-head"><div><h2>Users and roles</h2>
 </div>
       <div class="row"><button type="button" id="u-add" class="small">Add user</button>

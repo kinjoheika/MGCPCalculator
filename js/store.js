@@ -14,7 +14,7 @@ export const ACTIONS = [
 
 let state = null;
 let seed = null;
-// 'database' (Supabase), 'local' (no database configured) or 'offline' (configured, but unreachable: using this browser's copy).
+// 'database' (Supabase, signed in) or 'local' (no database configured: demo data in this browser).
 let mode = 'local';
 let modeNote = '';
 const listeners = new Set();
@@ -50,7 +50,27 @@ export async function sha256(value) {
   return 'fnv1a-' + (h >>> 0).toString(16).padStart(8, '0');
 }
 
+// With a database configured the app has no local copy and no demo data: it signs in, loads what the database
+// holds, and refuses to run if it cannot. (Without one it runs on this browser's localStorage, as a demo.)
+let authUserId = null;
+async function initDatabase() {
+  const session = await db.getSession();
+  if (!session) throw new Error('Not signed in');
+  authUserId = session.user.id;
+  const remote = await db.loadAll();
+  if (!remote) throw new Error('The database is empty. Run tools/provision.mjs to set it up.');
+  state = remote;
+  state.accessRoles ||= {};
+  state.buffers ||= [];
+  state.plEmailLog ||= [];
+  if (!state.users.some(u => u.authId === authUserId)) throw new Error('This login is not linked to a user. Ask an Admin to run tools/provision.mjs.');
+  mode = 'database';
+  watch();
+  return state;
+}
+
 export async function init() {
+  if (db.enabled) return initDatabase();
   const res = await fetch('data/seed.json', { cache: 'no-store' });
   if (!res.ok) throw new Error(`Could not load data/seed.json (${res.status})`);
   seed = await res.json();
@@ -66,22 +86,8 @@ export async function init() {
     }
   } catch { /* no mock data file */ }
 
-  let remote = null;
-  if (db.enabled) {
-    try {
-      remote = await db.loadAll();
-      mode = 'database';
-    } catch (e) {
-      mode = 'offline';
-      modeNote = e.message;
-      console.warn('Database unavailable, using the local copy:', e);
-    }
-  }
-  const loaded = remote ? clone(remote) : null;
-  const raw = remote ? null : lsGet(KEY);
-  if (remote) {
-    state = remote;
-  } else if (raw) {
+  const raw = lsGet(KEY);
+  if (raw) {
     try { state = JSON.parse(raw); } catch { state = clone(seed); }
     // Bring saved sessions up to date with channels added to the seed later.
     for (const c of seed.channels) if (!state.channels.some(x => x.id === c.id)) state.channels.push(clone(c));
@@ -119,17 +125,6 @@ export async function init() {
     do code = 'C-' + String(n++).padStart(4, '0'); while (used.has(code.toLowerCase()));
     a.clientCode = code;
     used.add(code.toLowerCase());
-  }
-  // The database starts empty: the first browser to connect loads the demo data into it.
-  if (mode === 'database') {
-    if (!remote) {
-      try { await db.saveDiff(null, state); } catch (e) { mode = 'offline'; modeNote = e.message; }
-    }
-    else if (loaded) {
-      // Persist what the start-up backfills added (a new user, access settings) so other browsers see it.
-      try { await db.saveDiff(loaded, state); } catch (e) { console.warn('Could not save start-up updates:', e); }
-    }
-    if (mode === 'database') watch();
   }
   return state;
 }
@@ -195,11 +190,13 @@ export function subscribe(fn) {
 // ---- Current user (prototype stand-in for auth; not part of the data) ----
 
 export function currentUser() {
+  if (authUserId) return state.users.find(u => u.authId === authUserId);
   const id = lsGet(USER_KEY) || 'u_mgr_1';
   return state.users.find(u => u.id === id) || state.users[0];
 }
 
 export function setCurrentUser(id) {
+  if (authUserId) return; // signed-in sessions cannot switch user
   lsSet(USER_KEY, id);
   emit();
 }
