@@ -101,7 +101,10 @@ dbstat.classList.toggle('ok', live);
 if (live) {
   // Signed in: the person is who they logged in as, not a dropdown.
   const me = store.currentUser();
-  document.getElementById('who').closest('label').outerHTML = `<span class="small"><b>${esc(me.name)}</b> <span class="muted">${esc(me.role)}</span></span><button type="button" id="signout" class="small">Sign out</button>`;
+  // Hide the account dropdown rather than remove it: the page still uses it below.
+  const lab = document.getElementById('who').closest('label');
+  lab.hidden = true;
+  lab.insertAdjacentHTML('afterend', `<span class="small"><b>${esc(me.name)}</b> <span class="muted">${esc(me.role)}</span></span><button type="button" id="signout" class="small">Sign out</button>`);
   document.getElementById('signout').onclick = async () => { await db.signOut(); location.reload(); };
 }
 
