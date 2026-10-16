@@ -77,6 +77,8 @@ export async function loadAll() {
     rows += list.length;
     state[key] = list.map(r => r.data);
   }));
+  // Dated client price history from the worksheets (db/private-6-history.sql). Empty until that table exists.
+  state.clientPriceHistory = await readAll(c, 'client_price_history').then(l => l.map(r => r.data)).catch(() => []);
   const { data: settings, error } = await c.from('settings').select('key,data');
   if (error) throw fail('Could not read settings', error);
   rows += settings.length;

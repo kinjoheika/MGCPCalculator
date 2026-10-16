@@ -113,7 +113,7 @@ export function html(s) {
   const showFuture = showPrice;
   const showMargin = showPrice && !coverC;
   const histOpen = ui.histOpen;
-  const histPubs = histOpen ? pastPublications(s, ui.channelId) : [];
+  const histPubs = histOpen ? historyDates(s, ui.channelId) : [];
   // Commercial is laid out by product: one line of client details, then one line per product (1 to 3).
   // Margin, Premiums and Discounts are one column each.
   const simple = ui.channelId === 'COMMERCIAL';
@@ -171,7 +171,7 @@ export function html(s) {
         <th class="col-client">Client</th>
         ${showFuture ? '<th class="num col-price col-future">Future price</th>' : ''}
         ${showPrice ? `<th class="num col-price">Current price <button type="button" id="cg-hist-toggle" class="hist-col-toggle" title="${histOpen ? 'Hide price history' : 'Show past prices'}" aria-expanded="${histOpen}">${histOpen ? '▴' : '▾'}</button></th>` : ''}
-        ${histOpen ? histPubs.map(p => `<th class="num col-hist"><span class="hist-ver">v${p.version}</span><span class="hist-date">${fmtDate(p.publishedAt)}</span></th>`).join('') : ''}
+        ${histOpen ? histPubs.map(p => `<th class="num col-hist"><span class="hist-ver">${esc(p.label)}</span></th>`).join('') : ''}
         ${showMargin ? '<th class="num grp-margin">Margin</th>' : ''}
         ${showPrem ? '<th class="num grp-prem">Premiums</th>' : ''}
         ${showDisc ? '<th class="num grp-disc">Discounts</th>' : ''}
@@ -184,7 +184,7 @@ export function html(s) {
         <th rowspan="2" class="col-client">Client</th>
         ${showFuture ? '<th rowspan="2" class="num col-price col-future">Future price</th>' : ''}
         ${showPrice ? `<th rowspan="2" class="num col-price">Current price <button type="button" id="cg-hist-toggle" class="hist-col-toggle" title="${histOpen ? 'Hide price history' : 'Show past 5 prices'}" aria-expanded="${histOpen}">${histOpen ? '▴' : '▾'}</button></th>` : ''}
-        ${histOpen ? histPubs.map(p => `<th rowspan="2" class="num col-hist"><span class="hist-ver">v${p.version}</span><span class="hist-date">${fmtDate(p.publishedAt)}</span></th>`).join('') : ''}
+        ${histOpen ? histPubs.map(p => `<th rowspan="2" class="num col-hist"><span class="hist-ver">${esc(p.label)}</span></th>`).join('') : ''}
         ${showMargin ? '<th colspan="1" class="grp-margin">Margin/kg</th>' : ''}
         ${pCols.length ? `<th colspan="${pCols.length + 1}" class="grp-prem">Premiums</th>` : ''}
         ${dCols.length ? `<th colspan="${dCols.length + 1}" class="grp-disc">Discounts</th>` : ''}
@@ -198,12 +198,10 @@ export function html(s) {
     </table>` : '<p class="muted">No clients match the filter or price range.</p>'}`;
 }
 
-function pastPublications(s, channelId, limit = 5) {
-  const curVer = currentPublication(s)?.version;
-  return [...s.publications]
-    .filter(p => p.version !== curVer && p.prices?.[channelId])
-    .sort((x, y) => y.version - x.version)
-    .slice(0, limit);
+// Dated price history: one column per snapshot date for this channel, newest first.
+function historyDates(s, channelId) {
+  const dates = [...new Set((s.clientPriceHistory || []).filter(r => r.channelId === channelId).map(r => r.effectiveDate))];
+  return dates.sort().reverse().map(d => ({ date: d, label: fmtDate(d) }));
 }
 
 // Approved price requests for this client and product, shown inside the major version they were approved under.
@@ -212,11 +210,12 @@ function subPrices(s, a, skuId, version) {
     .map(r => `<span class="sub-v" title="Approved ${esc(fmtDate(r.decidedAt))}: ${esc(r.decisionReason || '')}">${esc(subLabel(r))} ${fmt(r.approvedGrossPerCyl ?? r.currentGrossPerCyl)}</span>`).join('');
 }
 
-function histPriceCell(s, a, pub, skuId = a.primarySkuId) {
-  if (!skuId || !pub.prices?.[a.channelId]) return '<span class="muted small">—</span>';
-  const entry = pub.prices[a.channelId].find(p => p.skuId === skuId);
-  if (entry?.grossPerCyl == null) return '<span class="muted small">—</span>';
-  return `<span class="cell-price cell-hist">${fmt(entry.grossPerCyl)}</span>${subPrices(s, a, skuId, pub.version)}`;
+// The price this client had on that snapshot date, from the worksheets.
+function histPriceCell(s, a, date, skuId = a.primarySkuId) {
+  if (!skuId) return '<span class="muted small">—</span>';
+  const r = (s.clientPriceHistory || []).find(x => x.accountId === a.id && x.channelId === a.channelId && x.effectiveDate === date && x.skuId === skuId);
+  if (!r) return '<span class="muted small">—</span>';
+  return `<span class="cell-price cell-hist">${fmt(r.grossCentavos)}</span>`;
 }
 
 // Bulk: hovering a price shows what it was made of at the time. Four lines: margin, acquisition cost, hauling, buffer.
@@ -256,7 +255,7 @@ function clientRow(s, a, cb, v, n) {
       </th>
       ${v.showFuture ? `<td class="num col-future" id="fp-${esc(a.id)}">${futurePriceCell(s, a, v.inp)}</td>` : ''}
       ${priceCell}
-      ${v.histPubs.map(pub => `<td class="num col-hist"${bulk ? ` data-note="${esc(priceNote(s, a, a.primarySkuId, pub.publishedAt))}"` : ''}>${histPriceCell(s, a, pub)}</td>`).join('')}
+      ${v.histPubs.map(pub => `<td class="num col-hist"${bulk ? ` data-note="${esc(priceNote(s, a, a.primarySkuId, pub.date))}"` : ''}>${histPriceCell(s, a, pub.date)}</td>`).join('')}
       ${v.showMargin ? `<td class="num grp-margin-sub col-margin">${marginCell(s, a)}</td>` : ''}
       ${v.pCols.length ? `<td class="num grp-prem-sub" id="tp-${esc(a.id)}">${totalCell(s, a)}</td>${v.pCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
       ${v.dCols.length ? `<td class="num grp-disc-sub" id="td-${esc(a.id)}">${discountCell(a)}</td>${v.dCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
@@ -302,7 +301,7 @@ function simpleRows(s, a, v, n) {
       ${v.numbered ? '<td class="col-no"></td>' : ''}<th scope="row" class="pr-th">${esc(sku.label)}</th>
       ${v.showFuture ? `<td class="num col-future" data-fp="${esc(a.id)}" data-fpsku="${esc(sku.id)}">${futurePriceCell(s, a, v.inp, sku.id)}</td>` : ''}
       ${v.showPrice ? `<td class="num">${price}</td>` : ''}
-      ${v.histPubs.map(pub => `<td class="num col-hist">${histPriceCell(s, a, pub, sku.id)}</td>`).join('')}
+      ${v.histPubs.map(pub => `<td class="num col-hist">${histPriceCell(s, a, pub.date, sku.id)}</td>`).join('')}
       ${v.showMargin ? (first ? `<td class="num grp-margin-sub col-margin">${marginCell(s, a, sku.id)}</td>` : none) : ''}
       ${v.showPrem ? (first ? `<td class="num grp-prem-sub">${simpleAdjCell(s, a, 'P')}</td>` : none) : ''}
       ${v.showDisc ? (first ? `<td class="num grp-disc-sub">${simpleAdjCell(s, a, 'D')}</td>` : none) : ''}
