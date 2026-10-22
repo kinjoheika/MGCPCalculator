@@ -360,13 +360,37 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .grid-table tr.grp th { text-align: center; font-size: 12px; letter-spacing: .02em; background: var(--surface); }
 .grid-table .grp-prem { background: var(--tiffany-50); color: var(--tiffany-600); border-bottom: 2px solid var(--tiffany); }
 .grid-table .grp-disc { background: var(--amber-bg); color: var(--amber); border-bottom: 2px solid #E0A33A; }
+.grid-table .grp-margin { background: var(--green-bg); color: var(--green); border-bottom: 2px solid var(--green); }
 .grid-table td.grp-prem-sub, .grid-table th.grp-prem-sub { background: var(--tiffany-50); }
 .grid-table tbody tr:hover > td.grp-prem-sub { background: #D9F2F0; }
+.grid-table td.grp-margin-sub, .grid-table th.grp-margin-sub { background: var(--green-bg); }
+.grid-table tbody tr:hover > td.grp-margin-sub { background: #CBF0DF; }
 .prof-head { margin-bottom: 6px; }
 .prof-f .prof-v { display: block; font-size: 13px; font-variant-numeric: tabular-nums; }
 
 /* ---- Client pricing filter ---- */
 .cg-filter-menu { width: 340px; }
+
+/* ---- Session inputs (Acq / Margin / Buffer) in the grid toolbar ---- */
+.cg-sess { display: flex; gap: 6px; align-items: flex-end; padding: 0 4px; border-left: 1px solid var(--line); margin-left: 2px; }
+.cg-sess-lbl { display: flex; flex-direction: column; gap: 2px; }
+.cg-sess-lbl > span { font-size: 10.5px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.cg-sess-lbl input { min-height: 32px; padding: 3px 7px; font-size: 12.5px; border-radius: 6px; width: 76px; }
+.cell-future { color: var(--tiffany-600); font-weight: 650; }
+.mg-rule { display: block; margin-bottom: 2px; }
+
+/* ---- Price history toggle (in Current price column header) ---- */
+.hist-col-toggle { min-height: 20px; padding: 1px 5px; font-size: 11px; border-radius: 5px; background: var(--blue-50); border-color: var(--blue-100); color: var(--blue); margin-left: 4px; vertical-align: middle; }
+.hist-col-toggle:hover { background: var(--blue-100); border-color: var(--blue); }
+.hist-col-toggle[aria-expanded="true"] { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+/* ---- History columns ---- */
+.grid-table .col-hist { width: 8%; }
+table.grid-table .col-hist { width: 90px; }
+.grid-table th.col-hist { text-align: center; padding: 6px 4px; white-space: nowrap; }
+.hist-ver { display: block; font-size: 10px; font-weight: 600; letter-spacing: .06em; color: var(--tiffany); text-transform: uppercase; }
+.hist-date { display: block; font-size: 10px; color: var(--muted); }
+.cell-hist { color: var(--muted); }
 
 /* ---- Fatal load error bar ---- */
 .fatal { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 16px; background: var(--red-bg); color: var(--red); border-bottom: 2px solid var(--red); position: sticky; top: 0; z-index: 100; }
@@ -376,10 +400,12 @@ tr.prof > td { background: var(--blue-50); border-bottom: 2px solid var(--line);
 .grid-table { table-layout: fixed; width: 100%; }
 .grid-table th, .grid-table td { padding: 5px 6px; }
 .grid-table tbody th { min-width: 0; font-size: 12.5px; }
-.grid-table .col-client { width: 16%; }
-.grid-table .col-price { width: 12%; }
-.grid-table .col-total { width: 8.5%; }
-.grid-table .col-line { width: 11%; }
+.grid-table .col-client { width: 14%; }
+.grid-table .col-price { width: 11%; }
+.grid-table .col-future { width: 10%; }
+.grid-table .col-margin { width: 8.5%; }
+.grid-table .col-total { width: 7.5%; }
+.grid-table .col-line { width: 8.5%; }
 .grid-table td.grp-disc-sub, .grid-table th.grp-disc-sub { background: var(--amber-bg); }
 .grid-table tbody tr:hover > td.grp-disc-sub { background: #FBE7C4; }
 .cellfields input[type=number] { -moz-appearance: textfield; }
@@ -690,8 +716,10 @@ table.grid-table { table-layout: fixed; width: 100%; }
 table.grid-table th, table.grid-table td { overflow: hidden; }
 table.grid-table thead th { white-space: normal; line-height: 1.2; vertical-align: bottom; }
 table.grid-table .col-client { width: 190px; }
-table.grid-table .col-price { width: 150px; }
-table.grid-table .col-total { width: 84px; }
+table.grid-table .col-price { width: 140px; }
+table.grid-table .col-future { width: 140px; }
+table.grid-table .col-margin { width: 110px; }
+table.grid-table .col-total { width: 80px; }
 table.grid-table .cellfields input, table.grid-table .cellfields input.mini { width: 100%; min-width: 0; }
 table.grid-table tbody th { max-width: none; }
 table.grid-table th.col-client, table.grid-table th.col-price { width: auto; }
@@ -727,3 +755,89 @@ table.access tr.grp-row th { background: var(--bg); font-size: 11.5px; text-tran
 .props-sheet.open { transform: none; }
 .props-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 12px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); }
 .props-sheet table thead th { position: static; }
+
+/* ---- Dealer Sheet ---- */
+.ds-head { gap: 8px; flex-wrap: wrap; padding-bottom: 8px; }
+.ds-tabs { display: flex; gap: 4px; }
+.ds-tabs .tab-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--line-2); background: var(--surface); font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text); }
+.ds-tabs .tab-btn.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.ds-tabs .tab-btn:hover:not(.on) { background: var(--bg); }
+.ds-sess { border-left: 1px solid var(--line); margin-left: 4px; padding-left: 8px; }
+.ds-table td.ds-td, .ds-table th { vertical-align: middle; }
+.ds-table th.ds-prod-th, .ds-table td.ds-prod-th { text-align: left; font-weight: 600; min-width: 120px; }
+.ds-table .ds-future-col { background: var(--tiffany-50); }
+.ds-table thead tr:first-child .ds-future-col { background: var(--tiffany-50); color: var(--tiffany-600); border-bottom: 2px solid var(--tiffany-200); }
+.ds-table .ds-comp-grp { background: var(--amber-bg); color: var(--amber); border-bottom: 2px solid #F6C97A; font-weight: 600; }
+.ds-table .ds-comp-sub { background: var(--amber-bg); color: var(--amber); font-size: 12px; font-weight: 600; white-space: nowrap; min-width: 90px; }
+.ds-table td.ds-comp-td { background: #FFFCF5; }
+.ds-table tbody tr:hover td.ds-comp-td { background: #FFF5DC; }
+.ds-table .ds-final-col { background: var(--green-bg); }
+.ds-table thead tr:first-child .ds-final-col { background: var(--green-bg); color: var(--green); border-bottom: 2px solid #A3D9BC; font-weight: 600; }
+.ds-table .ds-final-col input.mini { width: 90px; }
+.ds-diff { font-size: 11.5px; font-weight: 600; margin-left: 4px; white-space: nowrap; }
+.ds-diff.pos { color: var(--green); }
+.ds-diff.neg { color: var(--red); }
+.ds-pkg { display: block; margin-top: 1px; line-height: 1.2; }
+.ds-stale-pill { font-size: 10px; margin-left: 3px; }
+.ds-td { padding: 7px 8px; line-height: 1.35; }
+
+/* Price history slides in over the margin, premium and discount columns */
+@keyframes histSlide { from { opacity: 0; transform: translateX(70px); } to { opacity: 1; transform: none; } }
+.grid-table .col-hist { animation: histSlide .3s ease-out both; }
+table.grid-table .col-hist { width: auto; }
+
+/* Opening the price history keeps the header and rows the same size as before */
+table.grid-table.hist-open thead th { height: 78px; vertical-align: bottom; }
+table.grid-table tbody tr { height: 37px; }
+
+/* Commercial: client details line, then product rows */
+table.grid-table.simple thead th { height: 34px; vertical-align: middle; white-space: nowrap; }
+table.grid-table.simple.hist-open thead th { height: 34px; }
+table.grid-table.simple thead th.grp-margin { color: #0E6B3F; }
+table.grid-table.simple thead th.grp-prem { color: #1848B0; }
+table.grid-table.simple thead th.grp-disc { color: #8A5200; }
+table.grid-table.simple tr.cl-row > th, table.grid-table.simple tr.cl-row > td { background: var(--bg); border-top: 1px solid var(--line-2); }
+.cd-line { display: flex; gap: 22px; flex-wrap: nowrap; font-size: 12px; white-space: nowrap; overflow: hidden; }
+.cd-line i { font-style: normal; color: var(--muted); margin-right: 4px; }
+table.grid-table.simple tr.pr-row > th.pr-th { padding-left: 24px; font-weight: 500; color: var(--text); }
+table.grid-table.simple td input.mini { width: 100%; max-width: 120px; }
+
+/* Hover note on Bulk prices */
+td[data-note] { position: relative; cursor: help; }
+td[data-note]:hover::after { content: attr(data-note); position: absolute; right: 4px; bottom: calc(100% - 2px); z-index: 20; white-space: pre; text-align: left; background: var(--ink); color: #fff; font-size: 12px; line-height: 1.5; padding: 6px 10px; border-radius: 4px; box-shadow: 0 4px 14px rgba(15, 23, 42, .25); pointer-events: none; font-weight: 400; }
+
+/* Notifications: bell at the top right */
+.bellwrap { position: relative; display: inline-flex; }
+.bell { position: relative; min-height: 28px; width: 32px; padding: 0; background: transparent; color: #E2E8F0; border-color: rgba(255, 255, 255, .25); }
+.bell:hover { background: rgba(255, 255, 255, .1); border-color: #fff; }
+.bell-n { position: absolute; top: -6px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: #DC2626; color: #fff; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; }
+.bell-panel { position: absolute; right: 0; top: calc(100% + 8px); width: 460px; max-width: 94vw; max-height: 76vh; overflow: auto; background: var(--surface); color: var(--text); border: 1px solid var(--ink); box-shadow: 0 12px 30px rgba(15, 23, 42, .25); z-index: 80; padding: 8px 10px 10px; font-size: 13px; }
+.nf-h { font-size: 13px; margin: 6px 0 4px; }
+.nf-card { border: 1px solid var(--line); padding: 8px 10px; margin: 6px 0; }
+.nf-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.nf-reason { margin: 4px 0; font-size: 12.5px; }
+.nf-prices { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; }
+.nf-prices .rec { color: var(--blue); }
+.nf-prices b { font-variant-numeric: tabular-nums; }
+.nf-prices small { color: var(--muted); }
+.nf-why { margin: 3px 0; }
+.nf-act { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.nf-price { display: flex; align-items: center; gap: 4px; font-size: 12.5px; }
+.nf-price input { width: 110px; height: 28px; min-height: 28px; text-align: right; }
+.nf-line { font-size: 12.5px; padding: 2px 0; border-bottom: 1px solid var(--line); }
+.nf-rev { margin-top: 8px; }
+.nf-rev summary { cursor: pointer; font-weight: 600; font-size: 12.5px; }
+.sub-v { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 3px; background: #EDF3FF; color: #1848B0; font-size: 11px; font-weight: 600; white-space: nowrap; }
+
+/* The shared row at the top of Bulk, Commercial and Dealer */
+.row-inputs { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 6px; }
+.rw-lbl { display: flex; flex-direction: column; gap: 2px; }
+.rw-lbl > span { font-size: 10.5px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.rw-lbl input { width: 96px; min-height: 30px; height: 30px; padding: 2px 7px; font-size: 12.5px; text-align: right; }
+.rw-lbl input.rw-total { background: var(--bg); font-weight: 600; width: 104px; }
+.row-inputs button { height: 30px; min-height: 30px; }
+
+/* Client numbering on the left (Commercial and Bulk) */
+table.grid-table .col-no { width: 38px; min-width: 38px; max-width: 38px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; padding-right: 6px; }
+table.grid-table thead th.col-no { text-align: right; }
+table.grid-table tr.pr-row > td.col-no { background: transparent; }

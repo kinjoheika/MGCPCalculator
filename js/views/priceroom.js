@@ -8,7 +8,7 @@ import { parse, priceRoomTabs, priceRoomTabsFor } from '../router.js';
 import { level, canView, canEdit, canApprove, canSeeMpl, canSeeApprovals } from '../access.js';
 import {
   byId, currentCostBasis, currentPublication, daysSince, exceptions, priceFor, marginRule, applyChanges,
-  skuLabel, channelLabel, userName, fmtDate, fmtDateTime, userChannels, isStaleReading, boardIsStale, allBoardPrices, newestReading,
+  skuLabel, channelLabel, userName, fmtDate, fmtDateTime, userChannels, isStaleReading, boardIsStale, allBoardPrices, newestReading, subVersionsOf, subLabel,
 } from '../pricing.js';
 import { inRange, rangeActive, rangeBar, bindRange } from '../pricerange.js';
 import * as wizard from './priceroom-wizard.js';
@@ -19,7 +19,7 @@ const MAX = 5;
 const TABS = priceRoomTabs;
 const me = () => store.currentUser();
 const ui = {
-  tab: 'competitors', open: false, lastChanges: 0, panel: 'exceptions', wide: false, animate: false, lastSim: null, scrollTop: null, excAll: false,
+  tab: 'competitors', open: false, lastChanges: 0, panel: 'mpl', wide: false, animate: false, lastSim: null, scrollTop: null, excAll: false,
   compDecisions: {}, compChannel: '', compZone: null, histProducts: [], histFrom: '', histTo: '',
   chanOpen: false, channels: ['DEALER', 'COMMERCIAL', 'END_USER'],
   reasons: {}, errors: {},
@@ -50,16 +50,14 @@ export function render(root, ctx) {
 
   const tabs = priceRoomTabsFor(s, user);
   if (!tabs.some(([k]) => k === ui.tab)) ui.tab = tabs[0]?.[0] ?? null;
-  const showMpl = canSeeMpl(s, user), showAppr = canSeeApprovals(s, user);
-  if (!showMpl && ui.panel === 'mpl') ui.panel = 'exceptions';
-  if (!showAppr && ui.panel === 'exceptions') ui.panel = 'mpl';
-  if (!showMpl && !showAppr) ui.open = false;
+  const showMpl = canSeeMpl(s, user);
+  ui.panel = 'mpl';
+  if (!showMpl) ui.open = false;
   const changes = wizard.pendingChanges();
   // The panel opens by itself the first time a change is proposed; otherwise it stays out of the way.
   if (showMpl && changes.length > ui.lastChanges && !ui.open) { ui.open = true; ui.animate = true; ui.panel = 'mpl'; }
   ui.lastChanges = changes.length;
   const proposed = changes.length ? applyChanges(s, changes, new Date().toISOString()) : null;
-  const exc = exceptions(s);
   const cb = currentCostBasis(s), pub = currentPublication(s);
   const pcb = proposed ? currentCostBasis(proposed) : cb;
   const arrow = (a, b) => (a !== b ? ` <em>→ ${fmt(b)}</em>` : '');
@@ -72,7 +70,6 @@ export function render(root, ctx) {
     <span>Total <b>${fmtKg(cb.acqPerKg + cb.haulingPerKg)}</b>${arrow(cb.acqPerKg + cb.haulingPerKg, pcb.acqPerKg + pcb.haulingPerKg)}</span>
     <span class="grow"></span>
     ${changes.length || unsaved ? `<span class="edit-note">${changes.length ? `${changes.length} proposed` : ''}${changes.length && unsaved ? ' · ' : ''}${unsaved ? `${unsaved} unsaved` : ''}</span>` : ''}
-    ${showAppr ? `<button type="button" id="pr-appr" class="small ${ui.open && ui.panel === 'exceptions' ? 'on' : ''}">Approvals ${exc.length}</button>` : ''}
   </footer>`;
 
   const bodies = { competitors: competitorsBoard, channels: channelsBoard, grid: st => grid.html(st), history: priceHistoryTab, notices: noticesTab };
@@ -82,16 +79,15 @@ export function render(root, ctx) {
       <div class="page-head"><h1>Price room${ui.tab ? ' · ' + esc(TABS.find(([k]) => k === ui.tab)[1]) : ''}</h1></div>
       <div id="pr-main">${ui.tab ? bodies[ui.tab](s, proposed) : '<p class="muted">Your access does not include a Price room board. The panel on the right has what you can use.</p>'}</div>
     </section></div>
-    <aside id="pr-aside" class="drawer ${ui.open && !ui.animate ? 'open' : ''} ${ui.wide ? 'wide' : ''}" aria-label="MPL calculator and approvals" ${ui.open ? '' : 'inert'}>
+    <aside id="pr-aside" class="drawer ${ui.open && !ui.animate ? 'open' : ''} ${ui.wide ? 'wide' : ''}" aria-label="MPL calculator" ${ui.open ? '' : 'inert'}>
       <div class="drawer-head">
         <div class="drawer-tabs">
           ${showMpl ? `<button type="button" data-panel="mpl" class="${ui.panel === 'mpl' ? 'on' : ''}">MPL calculator${changes.length ? ` <span class="count">${changes.length}</span>` : ''}</button>` : ''}
-          ${showAppr ? `<button type="button" data-panel="exceptions" class="${ui.panel === 'exceptions' ? 'on' : ''}">Approvals <span class="count">${exc.length}</span></button>` : ''}
         </div>
         <button type="button" id="pr-wide" class="icon" aria-label="${ui.wide ? 'Narrow the panel' : 'Widen the panel'}" title="${ui.wide ? 'Narrow' : 'Widen'}">${ui.wide ? '⇥' : '⇤'}</button>
         <button type="button" id="pr-close" class="icon" aria-label="Close panel" title="Close">✕</button>
       </div>
-      <div class="drawer-body" id="pr-drawer">${ui.panel === 'mpl' ? wizard.html(s, user) : exceptionsPanel(s, exc, user)}</div>
+      <div class="drawer-body" id="pr-drawer">${wizard.html(s, user)}</div>
     </aside>
     ${ui.open || !showMpl ? '' : `<button type="button" id="pr-handle" class="drawer-handle">MPL calculator${changes.length ? ` · ${changes.length}` : ''}</button>`}
     ${statusbar}`;
@@ -124,8 +120,6 @@ export function render(root, ctx) {
   };
   const toggleTo = panel => (ui.open && ui.panel === panel ? closePanel() : openPanel(panel));
   root.querySelectorAll('[data-open-mpl]').forEach(b => b.onclick = () => toggleTo('mpl'));
-  const apprBtn = root.querySelector('#pr-appr');
-  if (apprBtn) apprBtn.onclick = () => toggleTo('exceptions');
   root.querySelector('#pr-close').onclick = closePanel;
   root.querySelector('#pr-wide').onclick = () => { ui.wide = !ui.wide; rerender(); };
   const handle = root.querySelector('#pr-handle');
@@ -135,95 +129,13 @@ export function render(root, ctx) {
 
   bindMain(root.querySelector('#pr-main'), rerender);
   if (ui.tab === 'grid') grid.bind(root.querySelector('#pr-main'), rerender);
-  if (ui.panel === 'mpl') wizard.bind(root.querySelector('#pr-drawer'), user, rerender);
-  else bindExceptions(root, rerender);
+  wizard.bind(root.querySelector('#pr-drawer'), user, rerender);
   // "Bulk clients" / "Commercial clients" in the calculator open the grid for that channel.
   root.querySelectorAll('[data-grid]').forEach(b => b.onclick = () => {
     grid.setChannel(b.dataset.grid);
     ui.tab = 'grid';
     setQuery('tab', 'grid');
     rerender();
-  });
-}
-
-// ---------------- Approvals (panel) ----------------
-
-function label(kind) {
-  return { below_floor: 'Below floor', contract: 'Contract', trmv: 'TRMV pace', no_reading: 'No reading', competitor_below: 'Competitor lower', request: 'Request' }[kind] || kind;
-}
-
-function exceptionsPanel(s, rows, user) {
-  const seeReview = canView(s, user, 'appr_review'), seeReq = canView(s, user, 'appr_requests'), canDecide = canApprove(s, user, 'appr_requests');
-  const pending = s.priceRequests.filter(r => r.status === 'pending');
-  const readings = [...s.competitorReadings].sort((a, b) => (a.capturedAt < b.capturedAt ? 1 : -1)).slice(0, 15);
-  // With a full client list this can run to hundreds; show the worst first and open the rest on demand.
-  const order = { red: 0, amber: 1 };
-  const sorted = [...rows].sort((a, b) => (order[a.severity] ?? 2) - (order[b.severity] ?? 2));
-  const shown = ui.excAll ? sorted : sorted.slice(0, 25);
-  const counts = rows.reduce((m, r) => ({ ...m, [r.kind]: (m[r.kind] || 0) + 1 }), {});
-  const reviewHtml = !seeReview ? '' : `<h2 class="sub-h first">Needs review <span class="muted">(${rows.length})</span></h2>
-    ${rows.length ? `<div class="row small" style="gap:6px;margin-bottom:8px">${Object.entries(counts).map(([k, n]) => `<span class="pill grey">${esc(label(k))} ${n}</span>`).join('')}</div>` : ''}
-    ${shown.map(r => `<div class="exc"><span class="pill ${r.severity}">${esc(label(r.kind))}</span>
-      <div><div class="subject">${esc(r.subject)}</div><div class="small">${esc(r.text)}</div>
-      ${r.requestId ? `<button type="button" class="link small" data-jump="${esc(r.requestId)}">Decide</button>`
-        : ''}</div></div>`).join('')}
-    ${rows.length === 0 ? '<p class="muted">Nothing needs attention.</p>' : ''}
-    ${rows.length > shown.length || ui.excAll ? `<button type="button" id="pr-exc-all" class="small" style="margin-top:8px">${ui.excAll ? 'Show fewer' : `Show all ${rows.length}`}</button>` : ''}`;
-  const reqHtml = !seeReq ? '' : `<h2 class="sub-h ${seeReview ? '' : 'first'}">Pending price requests <span class="muted">(${pending.length})</span></h2>
-    ${canDecide ? '' : '<p class="small muted">You can see requests but not decide them.</p>'}
-    ${pending.length ? pending.map(r => requestCard(s, r, canDecide)).join('') : '<p class="muted">None pending.</p>'}`;
-  return reviewHtml + reqHtml + `
-    <details class="collapse"><summary>Latest competitor readings (${readings.length})</summary>
-      <div class="table-wrap"><table class="mini"><thead><tr><th>Brand · zone</th><th>Product</th><th class="num">Per cyl</th><th>Captured</th></tr></thead><tbody>
-      ${readings.map(r => { const st = isStaleReading(s, r); return `<tr class="${st ? 'stale' : ''}"><td>${esc(r.brand)}<br><span class="small">${esc(r.zone)}</span></td><td>${esc(skuLabel(s, r.skuId))}</td>
-        <td class="num">${fmt(r.pricePerCyl)}</td><td class="nowrap">${fmtDate(r.capturedAt)}<br><span class="small">${esc(userName(s, r.capturedBy))}</span>${st ? `<br><span class="pill grey">${daysSince(r.capturedAt)} days old</span>` : ''}</td></tr>`; }).join('')}
-      </tbody></table></div></details>`;
-}
-
-function requestCard(s, r, canDecide = false) {
-  const reading = s.competitorReadings.find(x => x.id === r.competitorReadingId);
-  const subject = r.accountId ? byId(s.accounts, r.accountId)?.name ?? r.accountId : `Walk-in, ${channelLabel(s, r.channelId)}`;
-  const stale = reading && isStaleReading(s, reading);
-  return `<div class="card" style="margin-bottom:12px">
-    <b>${esc(subject)}</b>
-    <div class="small muted">${esc(skuLabel(s, r.skuId))} × ${r.qty} · ${fmtDateTime(r.requestedAt)} · by ${esc(userName(s, r.requestedBy))}</div>
-    <div class="price-sub"><span>Now <b>${fmt(r.currentGrossPerCyl)}</b></span><span>Target <b>${fmt(r.targetGrossPerCyl)}</b></span></div>
-    <p class="small">Needs a discount of ${fmt(r.impliedDiscountPerKg)}/kg, valid ${s.settings.quoteValidityDays} days if approved.</p>
-    <p>“${esc(r.reason)}”</p>
-    ${reading ? `<p class="small ${stale ? 'stale' : ''}">Competitor: ${esc(reading.brand)}, ${esc(reading.zone)} at ${fmt(reading.pricePerCyl)} on ${fmtDate(reading.capturedAt)}${stale ? ` — stale, ${daysSince(reading.capturedAt)} days old` : ''}</p>` : ''}
-    ${canDecide ? `<label class="field"><span>Decision reason (required)</span><textarea id="reason-${esc(r.id)}" data-reason="${esc(r.id)}">${esc(ui.reasons[r.id] || '')}</textarea></label>
-    ${ui.errors[r.id] ? `<p class="err" role="alert">${esc(ui.errors[r.id])}</p>` : ''}
-    <div class="row" style="margin-top:8px"><button type="button" class="primary" data-decide="approved" data-req="${esc(r.id)}">Approve</button>
-      <button type="button" data-decide="declined" data-req="${esc(r.id)}">Decline</button></div>` : ''}</div>`;
-}
-
-async function decide(id, status) {
-  const s = store.get();
-  if (!canApprove(s, me(), 'appr_requests')) { toast('Your access does not include deciding price requests', 'bad'); return; }
-  const r = s.priceRequests.find(x => x.id === id);
-  const reason = (ui.reasons[id] || '').trim();
-  if (!reason) { ui.errors[id] = `Write the reason for ${status === 'approved' ? 'approving' : 'declining'} — it is required`; return; }
-  delete ui.errors[id];
-  const validUntil = status === 'approved' ? new Date(Date.now() + (s.settings.quoteValidityDays || 7) * DAY).toISOString() : null;
-  const approvedDiscountPerKg = status === 'approved' ? r.impliedDiscountPerKg : null;
-  await store.commit({
-    action: 'REQUEST_DECIDED', entity: 'priceRequest', entityId: r.accountId ?? r.lineKey, field: 'status', before: 'pending',
-    after: { requestId: id, status, decisionReason: reason, accountId: r.accountId, skuId: r.skuId, approvedDiscountPerKg },
-  }, (d, ev) => {
-    Object.assign(d.priceRequests.find(x => x.id === id), { status, decidedBy: ev.actorId, decidedAt: ev.timestamp, decisionReason: reason, approvedDiscountPerKg, validUntil });
-  });
-  delete ui.reasons[id];
-  toast(status === 'approved' ? 'Request approved' : 'Request declined');
-}
-
-function bindExceptions(root, rerender) {
-  const all = root.querySelector('#pr-exc-all');
-  if (all) all.onclick = () => { ui.excAll = !ui.excAll; rerender(); };
-  root.querySelectorAll('[data-reason]').forEach(t => t.oninput = e => { ui.reasons[t.dataset.reason] = e.target.value; });
-  root.querySelectorAll('[data-decide]').forEach(b => b.onclick = async () => { await decide(b.dataset.req, b.dataset.decide); rerender(); });
-  root.querySelectorAll('[data-jump]').forEach(b => b.onclick = () => {
-    const el = document.getElementById('reason-' + b.dataset.jump);
-    if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus({ preventScroll: true }); }
   });
 }
 
@@ -339,11 +251,11 @@ function channelPicker(s) {
 document.addEventListener('click', e => {
   if (ui.chanOpen && e.target.isConnected && !e.target.closest('#ch-multi')) { ui.chanOpen = false; closeMenu?.(); }
   if (!grid.isFilterOpen()) return;
-  if (!document.querySelector('#cg-multi')) { grid.closeFilter(); return; }
-  if (e.target.isConnected && !e.target.closest('#cg-multi')) { grid.closeFilter(); closeMenu?.(); }
+  if (!document.querySelector('#cg-multi, #cg-pmulti')) { grid.closeFilter(); return; }
+  if (e.target.isConnected && !e.target.closest('#cg-multi, #cg-pmulti')) { grid.closeFilter(); closeMenu?.(); }
 });
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape' || !grid.isFilterOpen() || !document.querySelector('#cg-multi')) return;
+  if (e.key !== 'Escape' || !grid.isFilterOpen() || !document.querySelector('#cg-multi, #cg-pmulti')) return;
   grid.closeFilter();
   closeMenu?.();
 });
@@ -405,7 +317,20 @@ function priceHistoryTab(s) {
         <tr class="sub"><th class="sticky">Approved by</th>${cols.map(v => `<th>${esc(approver(v))}</th>`).join('')}</tr>
       </thead>
       <tbody>${skus.map(k => ({ k, chs: s.channels.filter(c => cols.some(v => priceAt(v, c.id, k.id) != null)) })).filter(x => x.chs.length).map(({ k, chs }) => `<tr class="grp-row"><th class="sticky" colspan="${cols.length + 1}">${esc(k.label)}</th></tr>
-        ${chs.map(c => `<tr><td class="sticky ch">${esc(c.label)}</td>${cols.map(v => cell(v, c.id, k.id)).join('')}</tr>`).join('')}`).join('')}</tbody></table></div>` : '<p class="muted">No versions in this range.</p>'}`;
+        ${chs.map(c => `<tr><td class="sticky ch">${esc(c.label)}</td>${cols.map(v => cell(v, c.id, k.id)).join('')}</tr>`).join('')}`).join('')}</tbody></table></div>` : '<p class="muted">No versions in this range.</p>'}
+    ${subTable(s, cols)}`;
+}
+
+// Sub-versions: approved price requests, grouped under their major version.
+function subTable(s, versions) {
+  const groups = versions.map(v => ({ v, list: subVersionsOf(s, v.version) })).filter(g => g.list.length);
+  if (!groups.length) return '';
+  return `<h2 class="sub-h">Sub-versions</h2><div class="table-wrap"><table class="raw"><thead><tr><th>Version</th><th>Client</th><th>Product</th><th class="num">Before</th><th class="num">After</th><th>Approved by</th><th>Date</th><th>Reason</th></tr></thead><tbody>
+    ${groups.map(g => `<tr class="grp-row"><th colspan="8">v${g.v.version} · ${fmtDate(g.v.publishedAt)}</th></tr>${g.list.map(r => `<tr>
+      <td><b>${esc(subLabel(r))}</b></td><td>${esc(byId(s.accounts, r.accountId)?.name ?? 'Walk-in')}</td><td>${esc(skuLabel(s, r.skuId))}</td>
+      <td class="num">${fmt(r.currentGrossPerCyl)}</td><td class="num">${fmt(r.approvedGrossPerCyl ?? r.currentGrossPerCyl)}</td>
+      <td>${esc(userName(s, r.decidedBy))}</td><td>${fmtDate(r.decidedAt)}</td><td>${esc(r.decisionReason || '')}</td></tr>`).join('')}`).join('')}
+  </tbody></table></div>`;
 }
 
 // ---------------- PL notices ----------------

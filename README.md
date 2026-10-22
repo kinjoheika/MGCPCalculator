@@ -23,18 +23,23 @@ Open http://localhost:8000/. Engine tests: http://localhost:8000/engine.test.htm
 
 Serve it over HTTP. Browsers block ES modules and `fetch` on `file://`, and `crypto.subtle` (SHA-256 snapshot hashes) needs `localhost` or HTTPS.
 
-## Shared database (Supabase)
+## Shared database (Supabase) — real data, with logins
 
-By default the app keeps its data in the browser (localStorage). To share one real database between people:
+With `js/config.js` blank the app is a demo: data stays in the browser. With a Supabase URL and key in it, the app requires a login, keeps **no local copy and no demo data**, and refuses to run if the database cannot be reached.
 
-1. Create a free project at supabase.com.
-2. Open **SQL editor**, paste `db/schema.sql`, run it. It creates one table per collection (each row is `id` plus the record as `jsonb`), turns on row-level security, makes `events` append-only and enables live updates.
-3. In **Project settings → API** copy the Project URL and the `anon` key into `js/config.js`.
-4. Open the app. The first browser to connect loads the demo data into the empty database; the top bar shows **● Database** when it is connected, **○ Local only** when `config.js` is empty and **○ Offline, local copy** when the database cannot be reached.
+One-time setup, on your own computer:
 
-Every change is written to the database before it appears on screen; if the database refuses, nothing changes and the page says so. Other open browsers pick up changes within a second or so.
+1. **Supabase project** (Singapore region). Authentication → Sign In / Providers: turn **off** "Allow new users to sign up". URL Configuration: Site URL `https://kinjoheika.github.io/MGCPCalculator/`.
+2. **Database rules.** SQL editor → paste `db/schema.sql` → Run. It removes the open demo rules, turns on row-level security and makes every table readable and writable only by a signed-in user whose role allows it. The event log is insert-only. Safe to run again.
+3. **Logins.** `node tools/make-credentials.mjs` writes `db/users.private.csv` (git-ignored): one login per person with a random password. Change the emails to real ones before the next step.
+4. **Provision.** Put the project's **service_role** key (Project settings → API Keys) in your shell only, never in a file:
+   `$env:SUPABASE_SERVICE_KEY = "…"` (PowerShell), then `node tools/provision.mjs --wipe --yes`. This deletes the demo data, creates the logins in Supabase Auth, and writes the structure the app needs (users linked to their logins, channels, products, premium and discount components, zones, the access table, a zero cost basis and an empty v1). It adds no clients, margins or prices. Without `--wipe` it keeps any data already there; add `--demo` to load the demo clients and history for testing instead.
+5. **js/config.js**: the Project URL and the publishable key (this key is public by design; the rules in step 2 are what protect the data). The repo keeps this file blank; keep your values local, or commit them once step 2 is done.
+6. Open the app and sign in. Enter the cost basis and margins through the MPL calculator, and import real clients from Configuration → Clients (CSV).
 
-**Demo data only.** The stage-1 policies in `schema.sql` let anyone with the anon key read and write. Before any real MGC data goes in, turn on Supabase Auth and replace those policies with role checks (an example is at the bottom of `schema.sql`).
+Adding a person later: add a row to `db/users.private.csv`, run `node tools/provision.mjs`. Their role and access are edited in Configuration → Users (Admin only).
+
+What each role may do follows the Price room access table (`js/access.js`, edited in Configuration → Users) and is enforced by the database, not just the screens.
 
 **Price history.** The seed holds five published versions (v1–v5, April–August 2026) with their proposals, approvals, past cost basis and margins, v5 notice acknowledgements and a few notice emails. `node tools/make-versions.mjs` rebuilds them in `data/seed.json`; v5 is always today's price list. A browser saved before this existed is upgraded to the five versions on its next load.
 

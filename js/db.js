@@ -11,7 +11,7 @@ export class DbError extends Error {
 }
 
 // state key → table, and how to name a record. Records without an id of their own get a composed one.
-const COLLECTIONS = {
+export const COLLECTIONS = {
   skus: ['skus', r => r.id],
   channels: ['channels', r => r.id],
   costBasis: ['cost_basis', r => r.id],
@@ -29,14 +29,30 @@ const COLLECTIONS = {
   events: ['events', r => r.id],
 };
 // Single-document items (an object or a plain list) live in `settings`, one row each.
-const SINGLETONS = ['settings', 'premiumComponents', 'discountComponents', 'trackedBrands', 'zones', 'accessRoles'];
+export const SINGLETONS = ['settings', 'premiumComponents', 'discountComponents', 'trackedBrands', 'zones', 'accessRoles'];
 
 let client = null;
 async function sb() {
   if (client) return client;
   const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm');
-  client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+  client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
   return client;
+}
+
+// ---- Login ----
+export async function getSession() {
+  const c = await sb();
+  const { data } = await c.auth.getSession();
+  return data.session || null;
+}
+export async function signIn(email, password) {
+  const c = await sb();
+  const { error } = await c.auth.signInWithPassword({ email: email.trim(), password });
+  if (error) throw new DbError(error.message === 'Invalid login credentials' ? 'Wrong email or password' : error.message);
+}
+export async function signOut() {
+  const c = await sb();
+  await c.auth.signOut();
 }
 
 const fail = (what, error) => new DbError(`${what}: ${error?.message || error}`);
@@ -61,6 +77,8 @@ export async function loadAll() {
     rows += list.length;
     state[key] = list.map(r => r.data);
   }));
+  // Dated client price history from the worksheets (db/private-6-history.sql). Empty until that table exists.
+  state.clientPriceHistory = await readAll(c, 'client_price_history').then(l => l.map(r => r.data)).catch(() => []);
   const { data: settings, error } = await c.from('settings').select('key,data');
   if (error) throw fail('Could not read settings', error);
   rows += settings.length;

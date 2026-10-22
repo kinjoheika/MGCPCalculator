@@ -13,6 +13,7 @@
   <a class="brand" href="#/"><span class="mark" aria-hidden="true">M</span>MGC Pricing</a>
   <nav id="nav" aria-label="Screens"></nav>
   <div class="tools">
+    <span id="bellwrap" class="bellwrap"></span>
     <span id="dbstat" class="small dbstat"></span>
     <label class="row small"><span class="muted">Acting as</span>
       <select id="who" aria-label="Acting as (prototype role switcher)"></select></label>
@@ -25,6 +26,8 @@
 import * as store from './js/store.js';
 import * as router from './js/router.js';
 import { esc, toast } from './js/ui.js';
+import * as db from './js/db.js';
+import * as notify from './js/notify.js';
 
 const app = document.getElementById('app');
 
@@ -50,9 +53,40 @@ window.addEventListener('unhandledrejection', e => {
   showFatal(e.reason?.message ?? e.reason);
 });
 
+// With a database configured, nobody gets in without a login.
+function showLogin(message = '') {
+  app.innerHTML = `<section class="page narrow login"><h1>Sign in</h1>
+    <p class="muted">MGC Pricing</p>
+    <form id="login" class="stack" autocomplete="on">
+      <label class="field"><span>Email</span><input type="email" id="lg-email" autocomplete="username" required autofocus></label>
+      <label class="field"><span>Password</span><input type="password" id="lg-pass" autocomplete="current-password" required></label>
+      <p id="lg-err" class="err" role="alert">${esc(message)}</p>
+      <button type="submit" class="primary">Sign in</button>
+    </form></section>`;
+  const form = document.getElementById('login');
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const err = document.getElementById('lg-err');
+    err.textContent = '';
+    try {
+      await db.signIn(document.getElementById('lg-email').value, document.getElementById('lg-pass').value);
+      location.reload();
+    } catch (ex) { err.textContent = ex.message; }
+  };
+}
+if (db.enabled && !(await db.getSession().catch(() => null))) {
+  showLogin();
+  await new Promise(() => {}); // stay on the login screen until the page reloads after signing in
+}
+
 try {
   await store.init();
 } catch (e) {
+  if (db.enabled) {
+    app.innerHTML = `<section class="page narrow"><h1>Could not open the app</h1><p>${esc(e.message)}</p><button type="button" id="lg-out">Sign out</button></section>`;
+    document.getElementById('lg-out').onclick = async () => { await db.signOut(); location.reload(); };
+    throw e;
+  }
   app.innerHTML = `<section class="page narrow"><h1>Could not start</h1>
     <p>${esc(e.message)}</p>
     <p>Serve the folder over HTTP: <code>python3 -m http.server 8000</code>, then open <code>http://localhost:8000/</code>.</p></section>`;
@@ -60,12 +94,18 @@ try {
 }
 
 const dbstat = document.getElementById('dbstat');
-{
-  const { mode, note } = store.status();
-  dbstat.textContent = mode === 'database' ? '● Database' : mode === 'offline' ? '○ Offline, local copy' : '○ Local only';
-  dbstat.title = mode === 'database' ? 'Saved to the shared database' : mode === 'offline' ? 'Database unreachable: ' + note : 'No database configured (js/config.js). Data stays in this browser.';
-  dbstat.classList.toggle('ok', mode === 'database');
-  dbstat.classList.toggle('warn', mode === 'offline');
+const live = store.status().mode === 'database';
+dbstat.textContent = live ? '● Database' : '○ Local only';
+dbstat.title = live ? 'Saved to the shared database' : 'No database configured (js/config.js). Data stays in this browser.';
+dbstat.classList.toggle('ok', live);
+if (live) {
+  // Signed in: the person is who they logged in as, not a dropdown.
+  const me = store.currentUser();
+  // Hide the account dropdown rather than remove it: the page still uses it below.
+  const lab = document.getElementById('who').closest('label');
+  lab.hidden = true;
+  lab.insertAdjacentHTML('afterend', `<span class="small"><b>${esc(me.name)}</b> <span class="muted">${esc(me.role)}</span></span><button type="button" id="signout" class="small">Sign out</button>`);
+  document.getElementById('signout').onclick = async () => { await db.signOut(); location.reload(); };
 }
 
 // Sliding panels sit below the header, whose height changes when it wraps.
@@ -77,7 +117,7 @@ const nav = document.getElementById('nav');
 
 function paintHeader(route, user) {
   const s = store.get();
-  who.innerHTML = s.users.map(u =>
+  if (who.isConnected) who.innerHTML = s.users.map(u =>
     `<option value="${esc(u.id)}"${u.id === user.id ? ' selected' : ''}>${esc(u.name)} — ${esc(u.role)}</option>`).join('');
   nav.innerHTML = router.navFor(s, user).map(([href, label]) => {
     const on = href.slice(2) === route.name;
@@ -91,10 +131,12 @@ function paintHeader(route, user) {
 }
 
 who.addEventListener('change', () => {
+  if (!who.isConnected) return;
   store.setCurrentUser(who.value);
   location.hash = router.defaultHash(store.get(), store.currentUser());
 });
 
+notify.mount(document.getElementById('bellwrap'));
 router.start(app, paintHeader);
 </script>
 </body>
