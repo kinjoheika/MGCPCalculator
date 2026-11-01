@@ -5,7 +5,7 @@
 import * as store from '../store.js';
 import { fmt, fmtKg, toCentavos, toInput } from '../money.js';
 import { esc, toast, preserveFocus } from '../ui.js';
-import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel, marginRule, fmtDate, currentPublication, subVersionsOf, subLabel } from '../pricing.js';
+import { byId, priceFor, currentCostBasis, bufferFor, channelLabel, skuLabel, marginRule, fmtDate, currentPublication, subVersionsOf, subLabel, VOLUME_BANDS, clientSkus, latestSubVersion, approvedPrice } from '../pricing.js';
 import { derivePremiumPerKg } from '../engine.js';
 import { FIELDS, labelFor, displayValue } from '../clientterms.js';
 import { inRange, rangeActive, rangeBar } from '../pricerange.js';
@@ -14,7 +14,22 @@ import * as dealer from './dealersheet.js';
 import * as session from '../session.js';
 import { level, canEdit as canEditPart } from '../access.js';
 
-const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, margins: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histOpen: false, prodFilter: [], prodOpen: false };
+const ui = { channelId: 'COMMERCIAL', expanded: {}, rows: {}, prod: {}, filterQuery: '', selectedIds: null, filterOpen: false, filterScroll: 0, acqInput: '', marginInput: '', bufferInput: '', histOpen: false, prodFilter: [], prodQuery: '', prodOpen: false, termsFor: null, termsOpen: false };
+
+// Every product any Commercial client buys, smallest pack first.
+function commercialProducts(s) {
+  const used = new Map();
+  for (const a of s.accounts.filter(x => x.channelId === 'COMMERCIAL')) for (const k of clientProducts(s, a)) used.set(k.id, k);
+  return [...used.values()].sort((x, y) => (x.contentKg - y.contentKg) || x.label.localeCompare(y.label));
+}
+
+// Product options for the Products filter, narrowed by its search box.
+function prodOptions(list) {
+  const q = ui.prodQuery.trim().toLowerCase();
+  return list.filter(k => !q || k.label.toLowerCase().includes(q)).map(k =>
+    `<label class="multi-opt"><input type="checkbox" data-cg-prod="${esc(k.id)}" ${ui.prodFilter.includes(k.id) ? 'checked' : ''}><span class="grow">${esc(k.label)}</span></label>`).join('')
+    || '<span class="muted small">No product matches</span>';
+}
 
 // Two column groups, each with its own subcolumns. Every cell takes as many rows as the client needs.
 const PREMIUM_COLS = [
@@ -88,7 +103,7 @@ export function premiumTotal(s, a) {
 }
 
 export function pendingEdits() {
-  return Object.keys(ui.rows).length + Object.keys(ui.margins).length;
+  return Object.keys(ui.rows).length + Object.keys(ui.prod).length;
 }
 
 // ---- Render ----
@@ -101,7 +116,7 @@ export function html(s) {
   const byRange = rangeActive() ? selected.filter(a => inRange(grossOf(a))) : selected;
   // Commercial only: with products ticked in the Products filter, only the clients that buy one of them are listed.
   const prodFilter = ui.channelId === 'COMMERCIAL' ? ui.prodFilter : [];
-  const clients = prodFilter.length ? byRange.filter(a => clientProducts(s, a).some(k => prodFilter.includes(k.id))) : byRange;
+  const clients = prodFilter.length ? byRange.filter(a => rowProducts(s, a, prodFilter).length) : byRange;
   const cb = currentCostBasis(s);
   const edits = pendingEdits();
   // Columns the user may see; the rest are left out entirely.
@@ -126,7 +141,7 @@ export function html(s) {
   const chSel = `<select id="cg-ch" aria-label="Channel">${s.channels.map(c => `<option value="${esc(c.id)}"${c.id === ui.channelId ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select>`;
 
   // Dealer (pick-up) is priced product by product against CODO, semi-dealer and competitor prices: the dealer sheet.
-  if (ui.channelId === 'DEALER') return `${session.barHtml(s, { saveDisabled: !rowChanges(s).length })}<div class="one-row">${chSel}</div>${dealer.html(s)}`;
+  if (ui.channelId === 'DEALER') return `${wizard.summaryHtml(s)}${session.barHtml(s, { saveDisabled: !rowChanges(s).length })}<div class="one-row">${chSel}</div>${dealer.html(s)}`;
 
   const q = ui.filterQuery.toLowerCase();
   const filtered = q ? allClients.filter(a => a.name.toLowerCase().includes(q) || (a.zone || '').toLowerCase().includes(q)) : allClients;
@@ -149,26 +164,25 @@ export function html(s) {
   // The products Commercial clients buy, for the Products filter.
   let prodHtml = '';
   if (ui.channelId === 'COMMERCIAL') {
-    const used = new Map();
-    for (const a of allClients) for (const k of clientProducts(s, a)) used.set(k.id, k);
-    const list = [...used.values()].sort((x, y) => (x.contentKg - y.contentKg) || x.label.localeCompare(y.label));
+    const list = commercialProducts(s);
     prodHtml = `<div class="multi" id="cg-pmulti">
       <button type="button" id="cg-ptoggle" class="multi-btn" aria-haspopup="listbox" aria-expanded="${ui.prodOpen}">
         <span>${ui.prodFilter.length ? `Products <b>${ui.prodFilter.length}</b>/${list.length}` : 'All products'}</span><span aria-hidden="true">▾</span></button>
-      ${ui.prodOpen ? `<div class="multi-menu"><div class="multi-actions small"><span class="muted">Only clients that buy these</span>
+      ${ui.prodOpen ? `<div class="multi-menu">
+          <div class="multi-actions small"><input id="cg-psearch" type="search" autocomplete="off" placeholder="Search product" aria-label="Search products" value="${esc(ui.prodQuery)}">
           <button type="button" class="link" id="cg-pclear">Clear</button></div>
-        <div class="multi-list" role="listbox" aria-multiselectable="true" aria-label="Products">${list.map(k =>
-          `<label class="multi-opt"><input type="checkbox" data-cg-prod="${esc(k.id)}" ${ui.prodFilter.includes(k.id) ? 'checked' : ''}><span class="grow">${esc(k.label)}</span></label>`).join('')}</div></div>` : ''}
+          <div class="multi-list" id="cg-plist" role="listbox" aria-multiselectable="true" aria-label="Products">${prodOptions(list)}</div></div>` : ''}
     </div>`;
   }
 
-  return `${session.barHtml(s, { saveDisabled: !(edits || rowChanges(s).length) })}<div class="one-row">${chSel}${filterHtml}${prodHtml}${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
+  return `${wizard.summaryHtml(s)}${session.barHtml(s, { saveDisabled: !(edits || rowChanges(s).length) })}<div class="one-row">${chSel}${filterHtml}${prodHtml}${rangeBar(clients.length, selected.length, 'clients', selected.map(grossOf))}
       <span class="small muted nowrap">${clients.length}${edits ? ` · ${edits} unsaved` : ''}</span>
       <button type="button" class="small" data-open-mpl>MPL calculator</button></div>
     ${clients.length && simple ? `<table class="matrix grid-table simple${histOpen ? ' hist-open' : ''}">
       <thead><tr class="grp">
         ${numbered ? '<th class="col-no">#</th>' : ''}
         <th class="col-client">Client</th>
+        <th class="col-product">Product</th>
         ${showFuture ? '<th class="num col-price col-future">Future price</th>' : ''}
         ${showPrice ? `<th class="num col-price">Current price <button type="button" id="cg-hist-toggle" class="hist-col-toggle" title="${histOpen ? 'Hide price history' : 'Show past prices'}" aria-expanded="${histOpen}">${histOpen ? '▴' : '▾'}</button></th>` : ''}
         ${histOpen ? histPubs.map(p => `<th class="num col-hist"><span class="hist-ver">${esc(p.label)}</span></th>`).join('') : ''}
@@ -176,7 +190,7 @@ export function html(s) {
         ${showPrem ? '<th class="num grp-prem">Premiums</th>' : ''}
         ${showDisc ? '<th class="num grp-disc">Discounts</th>' : ''}
       </tr></thead>
-      <tbody>${clients.map((a, i) => simpleRows(s, a, v, i + 1)).join('')}</tbody>
+      <tbody>${clients.map((a, i) => simpleRows(s, a, v, i + 1, prodFilter)).join('')}</tbody>
     </table>` : clients.length ? `<table class="matrix grid-table${histOpen ? ' hist-open' : ''}">
       <thead>
       <tr class="grp">
@@ -195,7 +209,8 @@ export function html(s) {
         ${dCols.length ? `<th class="num grp-disc-sub col-total">Total discounts</th>${dCols.map(c => `<th class="col-line">${esc(c.title)}</th>`).join('')}` : ''}
       </tr></thead>
       <tbody>${clients.map((a, i) => clientRow(s, a, cb, v, i + 1)).join('')}</tbody>
-    </table>` : '<p class="muted">No clients match the filter or price range.</p>'}`;
+    </table>` : '<p class="muted">No clients match the filter or price range.</p>'}
+    ${['BULK', 'COMMERCIAL'].includes(ui.channelId) ? termsDrawer(s) : ''}`;
 }
 
 // Dated price history: one column per snapshot date for this channel, newest first.
@@ -205,9 +220,10 @@ function historyDates(s, channelId) {
 }
 
 // Approved price requests for this client and product, shown inside the major version they were approved under.
+// Only the latest approved sub-version is shown; the full list is in Price History.
 function subPrices(s, a, skuId, version) {
-  return subVersionsOf(s, version).filter(r => r.accountId === a.id && r.skuId === skuId)
-    .map(r => `<span class="sub-v" title="Approved ${esc(fmtDate(r.decidedAt))}: ${esc(r.decisionReason || '')}">${esc(subLabel(r))} ${fmt(r.approvedGrossPerCyl ?? r.currentGrossPerCyl)}</span>`).join('');
+  const r = latestSubVersion(s, a.id, skuId, version);
+  return r ? `<span class="sub-v" title="Approved ${esc(fmtDate(r.decidedAt))}: ${esc(r.decisionReason || '')}">${esc(subLabel(r))} ${fmt(approvedPrice(r))}</span>` : '';
 }
 
 // The price this client had on that snapshot date, from the worksheets.
@@ -251,7 +267,9 @@ function clientRow(s, a, cb, v, n) {
 
   return `<tr>
       ${v.numbered ? `<td class="col-no">${n}</td>` : ''}<th scope="row" title="${esc(`${a.clientCode ? a.clientCode + ' · ' : ''}${a.status} · ${a.zone ?? '—'} · Gen vol ${volGen} · Req/mo ${reqVol}`)}">
-        <button type="button" class="link exp" data-cg-exp="${esc(a.id)}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(a.name)}</button>
+        ${bulk
+          ? `<button type="button" class="link exp" data-cg-terms="${esc(a.id)}" aria-controls="ct-aside">${esc(a.name)}</button>`
+          : `<button type="button" class="link exp" data-cg-exp="${esc(a.id)}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(a.name)}</button>`}
       </th>
       ${v.showFuture ? `<td class="num col-future" id="fp-${esc(a.id)}">${futurePriceCell(s, a, v.inp)}</td>` : ''}
       ${priceCell}
@@ -260,64 +278,150 @@ function clientRow(s, a, cb, v, n) {
       ${v.pCols.length ? `<td class="num grp-prem-sub" id="tp-${esc(a.id)}">${totalCell(s, a)}</td>${v.pCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
       ${v.dCols.length ? `<td class="num grp-disc-sub" id="td-${esc(a.id)}">${discountCell(a)}</td>${v.dCols.map(c => `<td>${cellRows(s, a, c)}</td>`).join('')}` : ''}
     </tr>
-    ${open ? `<tr class="prof"><td colspan="${totalCols}">${profileBox(a)}</td></tr>` : ''}`;
+    ${open && !bulk ? `<tr class="prof"><td colspan="${totalCols}">${profileBox(a)}</td></tr>` : ''}`;
+}
+
+// Bulk only: the client's terms slide in from the right. Main terms sit at the top; the name's hover still lists the status, zone and volumes.
+function termsDrawer(s) {
+  const a = ui.termsFor ? byId(s.accounts, ui.termsFor) : null;
+  const open = ui.termsOpen;
+  const row = f => `<div class="term-row"><span class="term-k">${esc(labelFor(f))}</span><span class="term-v">${esc(displayValue(a, f))}</span></div>`;
+  const body = a
+    ? `<h3 class="sub-h first">Main terms</h3>
+       <div class="term-list">${FIELDS.filter(f => f.top).map(row).join('')}</div>
+       <h3 class="sub-h">Other terms</h3>
+       <div class="term-list">${FIELDS.filter(f => !f.top).map(row).join('')}</div>
+       <p class="small"><a href="#/config">Edit terms</a></p>`
+    : '<p class="muted">Click a client name to see its terms.</p>';
+  return `<aside id="ct-aside" class="drawer ct-drawer ${open ? 'open' : ''}" aria-label="Client terms" ${open ? '' : 'inert'}>
+      <div class="drawer-head">
+        <div class="drawer-tabs"><span class="drawer-title">${a ? esc(a.name) : 'Client terms'}</span></div>
+        <button type="button" id="ct-close" class="icon" aria-label="Close client terms" title="Close">✕</button>
+      </div>
+      <div class="drawer-body">${body}</div>
+    </aside>
+    ${open ? '' : '<button type="button" id="ct-handle" class="drawer-handle">Client terms</button>'}`;
 }
 
 // The products a client buys, main product first: the main product plus any the client's terms list (volume per drop), up to three.
 const DROP_SKU = { '50kg': a => `50KG_${a.profile?.contentClass || 'A'}`, '22kgRegular': () => '22KG_A', '22kgForklift': () => '22KG_FL_A', '11kg': () => '11KG_MGAS', '2.7kg': () => '2.7KG' };
+// The client's products, from its checklist or the worksheet list (see clientSkus in pricing.js).
 function clientProducts(s, a) {
-  const ids = [a.primarySkuId, ...Object.keys(a.profile?.volumePerDrop || {}).map(k => DROP_SKU[k]?.(a))].filter(Boolean);
-  return [...new Set(ids)].map(id => byId(s.skus, id)).filter(Boolean).slice(0, 3);
+  return clientSkus(s, a);
 }
 
 const kgText = n => (n == null ? '—' : `${Number(n).toLocaleString('en-PH')} kg`);
 
-function simpleRows(s, a, v, n) {
-  const open = ui.expanded[a.id] !== false; // every client opens by default
-  const span = (v.showFuture ? 1 : 0) + (v.showPrice ? 1 : 0) + v.histPubs.length + (v.showMargin ? 1 : 0) + (v.showPrem ? 1 : 0) + (v.showDisc ? 1 : 0);
+// Which volume band a drop falls in: 0 = 1–2, 1 = 3–5, 2 = 6–10, 3 = 11 & up, -1 = no volume set.
+const bandIndex = qty => (!qty || qty < 1 ? -1 : qty <= 2 ? 0 : qty <= 5 ? 1 : qty <= 10 ? 2 : 3);
+
+// The volume-per-drop key (worksheet columns X to AB) that belongs to a product, for this client.
+const dropKeyOf = (a, sku) => Object.keys(DROP_SKU).find(k => DROP_SKU[k](a) === sku.id);
+
+// Hover on a Commercial future price: the client's volume per drop, then the product's band prices, its band highlighted.
+// base is the price per cylinder the bands are taken from.
+function bandTip(s, a, sku, base) {
+  const key = dropKeyOf(a, sku);
+  const qty = key ? Number(a.profile?.volumePerDrop?.[key]) || null : null;
+  const cur = bandIndex(qty);
+  const step = sku.volStepCentavos || 0;
+  const bands = VOLUME_BANDS.map((label, k) => `<span class="tip-row${k === cur ? ' on' : ''}"><i>${esc(label)} cyl</i><b>${fmt(Math.max(0, base - step * k))}</b></span>`).join('');
+  return `<span class="tip-name">${esc(sku.label)}</span>
+      <span class="tip-ident">${esc(a.name)}</span>
+      <span class="tip-sec">Volume per drop</span>
+      <span class="tip-row"><i>${qty ? 'Cylinders per drop' : 'Not set'}</i><b>${qty ? qty.toLocaleString('en-PH') : '—'}</b></span>
+      <span class="tip-sec">Price by drop size</span>${bands}`;
+}
+
+// The hover card on a client name: identity, main terms, then the volume and competitor lines.
+function clientTip(s, a) {
   const used = a.trmvKg && a.volumeGeneratedKg != null ? `${Math.round(a.volumeGeneratedKg / a.trmvKg * 100)}% of TRMV` : '—';
-  const items = [
+  const volume = [
     ['Last month', kgText(a.lastMonthKg)],
     ['Avg per month', kgText(a.avgMonthlyVolumeKg)],
     ['Contract ends', a.contractEnd ? fmtDate(a.contractEnd) : '—'],
     ['Volume used', used],
     ['Competitor', a.competitorBrand || '—'],
   ];
-  const no = v.numbered ? `<td class="col-no">${n}</td>` : '';
-  const head = `<tr class="cl-row">
-      ${no}<th scope="row" title="${esc(`${a.clientCode ? a.clientCode + ' · ' : ''}${a.status} · ${a.zone ?? '—'}`)}">
-        <button type="button" class="link exp" data-cg-exp="${esc(a.id)}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(a.name)}</button>
-      </th>
-      <td colspan="${span}"><div class="cd-line">${items.map(([k, val]) => `<span><i>${k}</i> ${esc(val)}</span>`).join('')}</div></td>
-    </tr>`;
-  if (!open) return head;
-  const prods = clientProducts(s, a);
-  return head + prods.map((sku, i) => {
-    const p = priceFor(s, { accountId: a.id, skuId: sku.id });
+  const line = (k, val) => `<span class="tip-row"><i>${esc(k)}</i><b>${esc(val)}</b></span>`;
+  const main = FIELDS.filter(f => f.top).map(f => line(labelFor(f), displayValue(a, f))).join('');
+  const ident = `${a.clientCode ? esc(a.clientCode) + ' · ' : ''}${esc(a.status ?? '—')} · ${esc(a.zone ?? '—')}`;
+  return `<span class="tip-name">${esc(a.name)}</span>
+      <span class="tip-ident">${ident}</span>
+      <span class="tip-sec">Main terms</span>${main}
+      <span class="tip-sec">Volume</span>${volume.map(([k, val]) => line(k, val)).join('')}`;
+}
+
+// The hover card is one floating element on the page body, so the table's scroll box cannot clip it.
+function hideTip() { document.getElementById('cg-float')?.remove(); }
+function showTip(el) {
+  hideTip();
+  const t = document.createElement('div');
+  t.id = 'cg-float';
+  t.className = 'cg-float';
+  t.innerHTML = el.dataset.tip;
+  document.body.appendChild(t);
+  const r = el.getBoundingClientRect();
+  const left = Math.max(8, Math.min(r.left + 8, window.innerWidth - t.offsetWidth - 12));
+  const below = r.bottom + 6;
+  const top = below + t.offsetHeight > window.innerHeight - 8 ? Math.max(8, r.top - t.offsetHeight - 6) : below;
+  t.style.left = `${left}px`;
+  t.style.top = `${top}px`;
+  window.addEventListener('scroll', hideTip, { once: true, capture: true });
+}
+
+// Commercial: one row per product, the client in the first column and the product in the next. The client's name and
+// number span its rows; margin, premium and discount are per product. The product filter narrows the rows.
+function simpleRows(s, a, v, n, prodFilter) {
+  const prods = rowProducts(s, a, prodFilter);
+  const list = prods.length ? prods : [null];
+  const k = list.length;
+  return list.map((sku, i) => {
+    const first = i === 0;
+    const span = first ? ` rowspan="${k}"` : '';
+    const no = v.numbered && first ? `<td class="col-no"${span}>${n}</td>` : '';
+    const name = first ? `<th scope="row" class="cl-tip" data-tip="${esc(clientTip(s, a))}"${span}>
+        <button type="button" class="link exp" data-cg-terms="${esc(a.id)}" aria-controls="ct-aside">${esc(a.name)}</button>
+      </th>` : '';
+    const p = sku ? priceFor(s, { accountId: a.id, skuId: sku.id }) : null;
     const price = p && !p.error ? `<span class="cell-price">${fmt(p.result.grossPerCyl)}</span>${subPrices(s, a, sku.id, currentPublication(s).version)}` : '<span class="muted small">—</span>';
-    const first = i === 0; // margin, premiums and discounts belong to the client: shown once, on its main product
-    const none = '<td class="num muted">·</td>';
-    return `<tr class="pr-row">
-      ${v.numbered ? '<td class="col-no"></td>' : ''}<th scope="row" class="pr-th">${esc(sku.label)}</th>
-      ${v.showFuture ? `<td class="num col-future" data-fp="${esc(a.id)}" data-fpsku="${esc(sku.id)}">${futurePriceCell(s, a, v.inp, sku.id)}</td>` : ''}
-      ${v.showPrice ? `<td class="num">${price}</td>` : ''}
-      ${v.histPubs.map(pub => `<td class="num col-hist">${histPriceCell(s, a, pub.date, sku.id)}</td>`).join('')}
-      ${v.showMargin ? (first ? `<td class="num grp-margin-sub col-margin">${marginCell(s, a, sku.id)}</td>` : none) : ''}
-      ${v.showPrem ? (first ? `<td class="num grp-prem-sub">${simpleAdjCell(s, a, 'P')}</td>` : none) : ''}
-      ${v.showDisc ? (first ? `<td class="num grp-disc-sub">${simpleAdjCell(s, a, 'D')}</td>` : none) : ''}
+    const dash = '<span class="muted small">—</span>';
+    return `<tr class="${first ? 'cl-row' : 'pr-row'}">
+      ${no}${name}
+      <td class="pr-prod">${sku ? esc(sku.label) : dash}</td>
+      ${v.showFuture ? `<td class="num col-future"${sku ? ` data-fp="${esc(a.id)}" data-fpsku="${esc(sku.id)}"` : ''}${sku && futureTip(s, a, v.inp, sku.id) ? ` data-tip="${esc(futureTip(s, a, v.inp, sku.id))}"` : ''}>${sku ? futurePriceCell(s, a, v.inp, sku.id) : dash}</td>` : ''}
+      ${v.showPrice ? `<td class="num">${sku ? price : dash}</td>` : ''}
+      ${v.histPubs.map(pub => `<td class="num col-hist">${sku ? histPriceCell(s, a, pub.date, sku.id) : dash}</td>`).join('')}
+      ${v.showMargin ? `<td class="num grp-margin-sub col-margin">${sku ? marginCell(s, a, sku.id) : dash}</td>` : ''}
+      ${v.showPrem ? `<td class="num grp-prem-sub">${sku ? simpleAdjCell(s, a, 'P', sku.id) : dash}</td>` : ''}
+      ${v.showDisc ? `<td class="num grp-disc-sub">${sku ? simpleAdjCell(s, a, 'D', sku.id) : dash}</td>` : ''}
     </tr>`;
   }).join('');
+}
+
+// The products a client's rows show: all of its products, or only those ticked in the Products filter.
+function rowProducts(s, a, prodFilter) {
+  const all = clientProducts(s, a);
+  return prodFilter.length ? all.filter(k => prodFilter.includes(k.id)) : all;
 }
 
 // One number for all premiums (or all discounts). Typing it sets the client's credit-risk premium (or its supply-only or
 // competition discount) to whatever makes the total match; every other premium or discount the client carries stays.
 const adjCode = (a, kind) => (kind === 'P' ? 'CREDIT_RISK' : a.competitorBrand ? 'DUAL_SUPPLIER' : 'SUPPLY_ONLY');
-function adjTotal(s, a, kind) { return kind === 'P' ? premiumTotal(s, a).total : discountTotal(a).total; }
-function simpleAdjCell(s, a, kind) {
-  const code = adjCode(a, kind);
-  const total = adjTotal(s, a, kind);
-  const ro = editable(s, code) ? '' : ' readonly tabindex="-1"';
-  return `<input class="mini" type="number" min="0" step="0.01" inputmode="decimal" placeholder="-" value="${total ? esc(toInput(total)) : ''}" aria-label="${kind === 'P' ? 'Premiums' : 'Discounts'} ₱/kg" data-cgs="${esc(a.id)}|${kind}"${ro}>`;
+// Per-product terms (margin, premium, discount) live on the client's productPricing map, one entry per product.
+// A typed value waits in ui.prod until the Save button turns it into a proposal change.
+const prodKey = (accId, skuId, field) => `${accId}|${skuId}|${field}`;
+function prodDraft(a, skuId, field) {
+  const k = prodKey(a.id, skuId, field);
+  if (k in ui.prod) return ui.prod[k];
+  const saved = a.productPricing?.[skuId]?.[field];
+  return saved == null ? '' : toInput(saved);
+}
+
+function simpleAdjCell(s, a, kind, skuId) {
+  const field = kind === 'P' ? 'premiumPerKg' : 'discountPerKg';
+  const ro = editable(s, adjCode(a, kind)) ? '' : ' readonly tabindex="-1"';
+  return `<input class="mini" type="number" min="0" step="0.01" inputmode="decimal" placeholder="-" value="${esc(prodDraft(a, skuId, field))}" aria-label="${kind === 'P' ? 'Premium' : 'Discount'} ₱/kg" data-prod="${esc(prodKey(a.id, skuId, field))}"${ro}>`;
 }
 
 function totalCell(s, a) {
@@ -345,33 +449,43 @@ function sessionInputs() {
   return session.get(store.get());
 }
 
-function futurePriceCell(s, a, inp, skuId = a.primarySkuId) {
-  if (!inp || !skuId) return '<span class="muted small">—</span>';
+// The future price per cylinder for a client and product, or null when it cannot be worked out.
+function futureValue(s, a, inp, skuId = a.primarySkuId) {
+  if (!inp || !skuId) return null;
   const sku = s.skus.find(k => k.id === skuId);
-  if (!sku) return '<span class="muted small">—</span>';
+  if (!sku) return null;
   const { total: premC } = premiumTotal(s, a);
   const { total: discC } = discountTotal(a);
+  // This product's own margin, premium and discount, on top of the client's and the session's margin.
+  const own = a.productPricing?.[sku.id] || {};
+  const mar = own.marginPerKg ?? inp.mar;
   // Formula: MPL (acq + margin + buffer) + premiums - discounts
-  const netPerKg = inp.acq + inp.mar + inp.buf + premC - discC;
-  const netPerCyl = Math.round(netPerKg * sku.contentKg);
-  const vatRate = s.settings.vatRate || 0;
-  const vatInclusive = s.settings.vatInclusive !== false;
-  const vatPerCyl = vatInclusive ? Math.round(netPerCyl * vatRate) : 0;
-  const grossPerCyl = netPerCyl + vatPerCyl;
-  return `<span class="cell-price cell-future">${fmt(grossPerCyl)}</span>`;
+  const netPerKg = inp.acq + mar + inp.buf + premC + (own.premiumPerKg ?? 0) - discC - (own.discountPerKg ?? 0);
+  return Math.round(netPerKg * sku.contentKg);
 }
 
-function marginCell(s, a, skuId = a.primarySkuId) {
-  if (!skuId) return '<span class="muted small">—</span>';
+function futurePriceCell(s, a, inp, skuId = a.primarySkuId) {
+  const value = futureValue(s, a, inp, skuId);
+  if (value == null) return '<span class="muted small">—</span>';
+  return `<span class="cell-price cell-future">${fmt(value)}</span>`;
+}
+
+// The hover text for a future price cell: the band prices built from that future price (raw HTML, or null).
+function futureTip(s, a, inp, skuId) {
+  const value = futureValue(s, a, inp, skuId);
+  const sku = s.skus.find(k => k.id === skuId);
+  return value == null || !sku ? null : bandTip(s, a, sku, value);
+}
+
+function marginCell(s, a, skuId) {
   const mr = marginRule(s, a.channelId, skuId);
   const rulePerKg = mr?.perKg;
-  const draftVal = ui.margins[a.id] ?? (a.fixedMarginPerKg != null ? toInput(a.fixedMarginPerKg) : '');
   const pastHtml = rulePerKg != null
     ? `<span class="cell-price muted small mg-rule">${fmt(rulePerKg)}/kg</span>`
     : '';
   return `<div class="cellfields">
     ${pastHtml}
-    <input class="mini" type="number" min="0" step="0.01" inputmode="decimal" placeholder="-" value="${esc(draftVal)}" aria-label="Margin ₱/kg" data-mg="${esc(a.id)}">
+    <input class="mini" type="number" min="0" step="0.01" inputmode="decimal" placeholder="-" value="${esc(prodDraft(a, skuId, 'marginPerKg'))}" aria-label="Margin ₱/kg" data-prod="${esc(prodKey(a.id, skuId, 'marginPerKg'))}">
   </div>`;
 }
 
@@ -431,20 +545,21 @@ async function saveAll(rerender) {
     if (JSON.stringify(before) !== JSON.stringify(next)) changes.push({ type: 'ACCOUNT_COMPONENT', accountId: accId, code, rows: next });
   }
 
-  // Margin overrides → ACCOUNT_FIELD on fixedMarginPerKg
-  for (const [accId, valStr] of Object.entries(ui.margins)) {
+  // Per-product margin, premium and discount → one ACCOUNT_PRODUCT change per value that differs from what is saved.
+  for (const [key, valStr] of Object.entries(ui.prod)) {
+    const [accId, skuId, field] = key.split('|');
     const a = byId(s.accounts, accId);
     if (!a) continue;
-    const val = toCentavos(valStr);
-    const before = a.fixedMarginPerKg ?? null;
-    if ((val ?? null) !== before)
-      changes.push({ type: 'ACCOUNT_FIELD', accountId: accId, field: 'fixedMarginPerKg', value: val ?? null });
+    if (field !== 'marginPerKg' && !editable(s, adjCode(a, field === 'premiumPerKg' ? 'P' : 'D'))) continue;
+    const val = toCentavos(valStr) ?? null;
+    const before = a.productPricing?.[skuId]?.[field] ?? null;
+    if (val !== before) changes.push({ type: 'ACCOUNT_PRODUCT', accountId: accId, skuId, field, value: val });
   }
 
   const total = changes.length ? wizard.addChanges(changes) : 0;
 
   ui.rows = {};
-  ui.margins = {};
+  ui.prod = {};
   rerender();
   if (!changes.length) toast('Nothing changed');
   else toast(`${changes.length} price change${changes.length === 1 ? '' : 's'} added to the proposal (${total} in total) — simulate and publish to apply.`);
@@ -453,8 +568,14 @@ async function saveAll(rerender) {
 // ---- Behaviour ----
 
 export function bind(root, rerender) {
+  hideTip();
+  wizard.bindSummary(root, rerender);
+  root.querySelectorAll('[data-tip]').forEach(el => {
+    el.onmouseenter = () => showTip(el);
+    el.onmouseleave = hideTip;
+  });
   const chSel = root.querySelector('#cg-ch');
-  if (chSel) chSel.onchange = () => { ui.channelId = chSel.value; ui.selectedIds = null; ui.filterQuery = ''; ui.filterOpen = false; rerender(); };
+  if (chSel) chSel.onchange = () => { ui.channelId = chSel.value; ui.selectedIds = null; ui.filterQuery = ''; ui.filterOpen = false; ui.termsOpen = false; rerender(); };
   if (ui.channelId === 'DEALER') { session.bind(root, rerender, { onSave: () => saveAll(rerender) }); dealer.bind(root, rerender); return; }
   root.querySelectorAll('[data-cg-exp]').forEach(b => b.onclick = () => {
     const id = b.dataset.cgExp;
@@ -463,15 +584,32 @@ export function bind(root, rerender) {
     rerender();
   });
 
+  root.querySelectorAll('[data-cg-terms]').forEach(b => b.onclick = () => {
+    ui.termsFor = b.dataset.cgTerms;
+    ui.termsOpen = true;
+    rerender();
+  });
+  const ctClose = root.querySelector('#ct-close');
+  if (ctClose) ctClose.onclick = () => { ui.termsOpen = false; rerender(); };
+  const ctHandle = root.querySelector('#ct-handle');
+  if (ctHandle) ctHandle.onclick = () => { ui.termsOpen = true; rerender(); };
+
   const ptoggle = root.querySelector('#cg-ptoggle');
   if (ptoggle) ptoggle.onclick = () => { ui.prodOpen = !ui.prodOpen; ui.filterOpen = false; rerender(); };
-  root.querySelectorAll('[data-cg-prod]').forEach(cb => cb.onchange = () => {
+  const bindProdOpts = scope => scope.querySelectorAll('[data-cg-prod]').forEach(cb => cb.onchange = () => {
     const id = cb.dataset.cgProd;
     ui.prodFilter = ui.prodFilter.includes(id) ? ui.prodFilter.filter(x => x !== id) : [...ui.prodFilter, id];
     rerender();
   });
+  bindProdOpts(root);
+  const psearch = root.querySelector('#cg-psearch');
+  if (psearch) psearch.oninput = () => {
+    ui.prodQuery = psearch.value;
+    const plist = root.querySelector('#cg-plist');
+    if (plist) { plist.innerHTML = prodOptions(commercialProducts(store.get())); bindProdOpts(plist); }
+  };
   const pclear = root.querySelector('#cg-pclear');
-  if (pclear) pclear.onclick = () => { ui.prodFilter = []; rerender(); };
+  if (pclear) pclear.onclick = () => { ui.prodFilter = []; ui.prodQuery = ''; rerender(); };
 
   const toggle = root.querySelector('#cg-toggle');
   if (toggle) toggle.onclick = () => {
@@ -538,28 +676,28 @@ export function bind(root, rerender) {
       editRows(a, code)[+i].perKg = el.value;
     };
   });
-  root.querySelectorAll('[data-cgs]').forEach(el => {
-    const [accId, kind] = el.dataset.cgs.split('|');
+  // Per-product margin, premium and discount inputs: typing updates that product's future price and waits for Save.
+  root.querySelectorAll('[data-prod]').forEach(el => {
+    const [accId] = el.dataset.prod.split('|');
     el.oninput = () => {
+      if (el.value.startsWith('-')) el.value = el.value.replace(/-/g, '');
+      ui.prod[el.dataset.prod] = el.value;
       const s = store.get();
       const a = byId(s.accounts, accId);
-      if (!a) return;
-      if (el.value.startsWith('-')) el.value = el.value.replace(/-/g, '');
-      const code = adjCode(a, kind);
-      const row = editRows(a, code)[0];
-      const own = toCentavos(row.perKg) || 0;
-      const others = adjTotal(s, a, kind) - own;
-      const typed = toCentavos(el.value) || 0;
-      row.perKg = typed - others > 0 ? toInput(typed - others) : '';
       const inp = sessionInputs();
-      if (inp) root.querySelectorAll(`[data-fp="${CSS.escape(accId)}"]`).forEach(td => { td.innerHTML = futurePriceCell(s, a, inp, td.dataset.fpsku); });
+      if (a && inp) root.querySelectorAll(`[data-fp="${CSS.escape(accId)}"]`).forEach(td => {
+        td.innerHTML = futurePriceCell(s, a, inp, td.dataset.fpsku);
+        const tip = futureTip(s, a, inp, td.dataset.fpsku);
+        if (tip) td.dataset.tip = tip;
+        else delete td.dataset.tip;
+      });
       const saveBtn = root.querySelector('#cg-save');
       if (saveBtn) saveBtn.disabled = false;
     };
     el.onblur = () => {
-      const a = byId(store.get().accounts, accId);
-      const total = a ? adjTotal(store.get(), a, kind) : 0;
-      el.value = total ? toInput(total) : '';
+      const c = toCentavos(el.value);
+      el.value = c == null || c < 0 ? '' : toInput(c);
+      ui.prod[el.dataset.prod] = el.value;
     };
   });
   const save = root.querySelector('#cg-save');
@@ -567,20 +705,6 @@ export function bind(root, rerender) {
 
   const histToggle = root.querySelector('#cg-hist-toggle');
   if (histToggle) histToggle.onclick = () => { ui.histOpen = !ui.histOpen; rerender(); };
-
-  root.querySelectorAll('[data-mg]').forEach(el => {
-    const accId = el.dataset.mg;
-    el.oninput = () => {
-      ui.margins[accId] = el.value;
-      const saveBtn = root.querySelector('#cg-save');
-      if (saveBtn) saveBtn.disabled = false;
-    };
-    el.onblur = () => {
-      const c = toCentavos(el.value);
-      el.value = c == null ? '' : toInput(c);
-      ui.margins[accId] = el.value;
-    };
-  });
 
   session.bind(root, rerender);
 }

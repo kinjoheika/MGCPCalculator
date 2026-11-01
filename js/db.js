@@ -140,3 +140,22 @@ export async function subscribe(onChange) {
     .subscribe();
   return () => c.removeChannel(ch);
 }
+
+// ---- Competitor price photos (private bucket, see db/photos-storage.sql) ----
+const PHOTO_BUCKET = 'competitor-photos';
+
+// Uploads one photo under its reading's folder. Returns the path to store on the reading.
+export async function uploadPhoto(path, file) {
+  const c = await sb();
+  const { error } = await c.storage.from(PHOTO_BUCKET).upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false });
+  if (error) throw new DbError(error.message);
+  return path;
+}
+
+// A short-lived link to a stored photo, made when someone asks to see it.
+export async function photoLink(path) {
+  const c = await sb();
+  const { data, error } = await c.storage.from(PHOTO_BUCKET).createSignedUrl(path, 3600);
+  if (error) throw new DbError(error.message);
+  return data.signedUrl;
+}

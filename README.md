@@ -47,10 +47,10 @@ What each role may do follows the Price room access table (`js/access.js`, edite
 
 | Route | Role | What it is |
 |---|---|---|
-| `#/quote` | seller | Quote desk: customer → **All products** price list, or one product with quantity. No editable price field, no floor or ladder shown. Send quote, Request lower, Print, Save price list, Past quotes |
+| `#/quote` | seller (page only, not in the menu) | Quote desk: customer → **All products** price list, or one product with quantity. No editable price field, no floor or ladder shown. Send quote, Print, Save price list, Past quotes |
 | `#/priceroom` | manager | Clients board, Products board, Channels board (compare up to 5 each), PL notices. The **MPL calculator** and **Exceptions** live in a sliding panel on the right; changes added in the calculator are previewed on every board until published |
 | `#/market` | messenger | Competitor price watch: readings with a required photo. No MGC prices |
-| `#/board/:channelId` | manager, seller (own), viewer (own) | Price list: Acknowledge, Print, Save |
+| `#/board/:channelId` | manager, seller (own), viewer (own) | Price list: client prices with version comparison, Approve channel, Print, Save, Flag (opens a price request) |
 | `#/log` | manager | Append-only event log, four views |
 | `#/config` | manager | Users and roles; channels and their order; clients list with CSV import / export |
 
@@ -83,10 +83,10 @@ Configuration → Clients. Choose a CSV (or paste rows from Google Sheets), chec
 
 ## Checks and balances it enforces
 
-1. **No price typing.** Sellers cannot enter a price. Below floor, Send is disabled; the only route is Request lower, which requires a reason and a competitor reading.
+1. **No price typing.** Sellers cannot enter a price. Below floor, Send is disabled; the only route is a price request, which requires a reason.
 2. **Freshness gate.** If the cost basis is newer than the published board, quotes cannot be sent.
 3. **Simulate before approve.** Price changes go Draft → Simulate → Review → Approve → Publish, in order. Simulation writes nothing but its own log event.
-4. **Four eyes.** Approval needs `instructedBy` and `verifiedBy`, and the verifier cannot be the drafter.
+4. **Two approvers.** A proposal needs two approvers, the users ticked "May approve" in Configuration → Users. Each approves once.
 5. **Immutable quotes and versioned prices.** A sent quote stores the full engine input and output with a SHA-256 hash. Price rows are never updated; publish closes the old version (`effectiveTo`) and inserts a new one.
 6. **The log is not optional.** Every mutation goes through `store.commit(event, mutationFn)`, the same call that changes the data. There is no "add log entry" button.
 
@@ -122,13 +122,13 @@ node tools/make-mock-clients.mjs
 
 It writes 175 clients — **50 Bulk, 120 Commercial** and 5 named ones on the other channels — plus competitor readings, from a fixed random seed, so the same command always produces the same file. Roughly 12% of active clients sit below the floor and a tenth have no volume on record, so the exceptions panel and the "excluded from impact" count have something real to show. Delete the file and the app still runs, with no clients.
 
-It also holds `settings` (VAT 12%, quote validity 7 days), per-channel `buffers`, `primarySkuId` on each client (used for exceptions and monthly impact), `trackedBrands` (drives the weekly competitor checklist), and empty `publications`, `proposals`, `quotes`, `priceRequests`, `acknowledgments`, `events` collections.
+It also holds `settings` (quote validity 7 days), per-channel `buffers`, `primarySkuId` on each client (used for exceptions and monthly impact), `trackedBrands` (drives the weekly competitor checklist), and empty `publications`, `proposals`, `quotes`, `priceRequests`, `acknowledgments`, `events` collections.
 
 ## Pricing rules
 
-- Order: `(acq + hauling) + margin + premiums − discounts + buffer`, then VAT on the per-cylinder net.
-- All money is integer centavos. Each ladder step rounds half-up (away from zero) to a whole centavo; per-cylinder and VAT round once each.
-- On the placeholder figures, the 11 kg MGas dealer price comes to ₱880.00 per cylinder, net of VAT.
+- Order: `(acq + hauling) + margin + premiums − discounts + buffer`. No VAT is added in the computation.
+- All money is integer centavos. Each ladder step rounds half-up (away from zero) to a whole centavo; per-cylinder figures round once.
+- On the placeholder figures, the 11 kg MGas dealer price comes to ₱880.00 per cylinder.
 - An approved price request adds an "Approved price exception" discount for that customer and product for 7 days and allows sending below floor.
 
 ## Demo tools

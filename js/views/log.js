@@ -10,7 +10,7 @@ const ui = { tab: 'week' };
 
 const ACTION_LABEL = {
   DRAFT: 'Draft', SIMULATE: 'Simulate', APPROVE: 'Approve', PUBLISH: 'Publish', QUOTE_SENT: 'Quote sent',
-  REQUEST_LOWER: 'Price request', REQUEST_DECIDED: 'Request decided', READING_CAPTURED: 'Reading captured',
+  CHANNEL_APPROVED: 'Price list approved', REQUEST_LOWER: 'Price request', REQUEST_RAISED: 'Price request sent', REQUEST_DRAFTED: 'Price request drafted', REQUEST_DECIDED: 'Request decided', READING_CAPTURED: 'Reading captured',
   BOARD_ACKNOWLEDGED: 'PL notice acknowledged', ACCOUNTS_IMPORTED: 'Clients imported', CONFIG_CHANGED: 'Configuration', PRICE_LIST_ISSUED: 'Price list issued', CLIENT_TERMS_SAVED: 'Client terms saved',
   PL_EMAIL_SENT: 'Price list emailed',
 };
@@ -20,9 +20,11 @@ export function describeEvent(s, ev) {
   switch (ev.action) {
     case 'DRAFT': return `Proposal drafted. Objective: ${ev.objective}. Changes: ${a.cause ?? '—'}`;
     case 'SIMULATE': return `Simulated ${a.cause}. Estimated monthly impact ${fmt(a.monthlyImpact)} (${a.excludedCount} accounts without volume excluded); ${a.newlyBelowFloor} accounts newly below floor. No prices changed.`;
-    case 'APPROVE': return `Approved. Instructed by ${userName(s, ev.instructedBy)}, verified by ${userName(s, ev.verifiedBy)}.`;
+    case 'APPROVE': return `Approved by ${userName(s, a.approvedBy)}${a.complete ? '. Both approvals in: proposal approved.' : '. Waiting for the second approver.'}`;
     case 'PUBLISH': return `Cause: ${a.cause}. Price list v${a.version} published.`;
     case 'QUOTE_SENT': return `${byId(s.accounts, ev.entityId)?.name ?? ev.entityId}: ${skuLabel(s, a.skuId)} × ${a.qty} quoted at ${fmt(a.grossPerCyl)}/cyl (${fmt(a.grossTotal)})`;
+    case 'REQUEST_RAISED': return `${byId(s.accounts, ev.after?.accountId)?.name ?? 'Client'}: price request sent to the manager, ${fmt(ev.after?.currentGrossPerCyl)} → ${fmt(ev.after?.requestedGrossPerCyl)}/cyl. Reason: ${ev.after?.reason ?? '—'}`;
+    case 'REQUEST_DRAFTED': return `${byId(s.accounts, ev.after?.accountId)?.name ?? 'Client'}: price request saved as a draft, ${fmt(ev.after?.requestedGrossPerCyl)}/cyl`;
     case 'REQUEST_LOWER': return `${byId(s.accounts, ev.entityId)?.name ?? ev.entityId}: lower price requested, ${fmt(ev.before)} → ${fmt(ev.after)}/cyl`;
     case 'REQUEST_DECIDED': return `${byId(s.accounts, a.accountId)?.name ?? 'Walk-in'}: request ${a.status}. Reason: ${a.decisionReason}`;
     case 'READING_CAPTURED': {

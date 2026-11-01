@@ -1,25 +1,30 @@
-// Price change wizard: Draft → Simulate → Review → Approve → Publish, enforced in order.
-// Simulate is pure (writes only a SIMULATE event). Publish is one atomic commit.
+// Price change proposal: three stages, Draft → Review → Approved.
+// Draft: write the title and changes, then simulate. Review: the two approvers (ticked "May approve" in Configuration → Users)
+// each click Approve. Approved: publish. Simulate is pure (writes only a SIMULATE event). Publish is one atomic commit.
 
 import * as store from '../store.js';
 import { canEdit, canApprove } from '../access.js';
-import { fmt, fmtSigned, toCentavos, toInput } from '../money.js';
+import { fmt, fmtSigned, toCentavos } from '../money.js';
 import { esc, toast, options, preserveFocus } from '../ui.js';
 import {
   byId, simulate, applyChanges, describeChange, CHANGE_TYPES, componentKind, currentCostBasis, marginRule, bufferFor,
-  currentPublication, allBoardPrices, skuLabel, channelLabel, userName, fmtDateTime,
+  currentPublication, allBoardPrices, clientPriceSnapshot, skuLabel, channelLabel, userName, fmtDateTime,
 } from '../pricing.js';
 
-const STEPS = [['draft', 'Draft'], ['simulate', 'Simulate'], ['review', 'Review'], ['approve', 'Approve'], ['publish', 'Publish']];
+// The three stages shown on the Price room. Each internal step belongs to one of them.
+const STAGES = [['draft', 'Draft'], ['review', 'Review'], ['approved', 'Approved']];
+const STAGE_OF = { draft: 0, simulate: 0, review: 1, publish: 2, done: 2 };
 
 const fresh = () => ({
   proposalId: null, step: 'draft', objective: '', changes: [], drafterId: null,
-  instructedBy: '', verifiedBy: '', error: '', simKey: null, sharedParam: null, showAll: false, published: null, simSearch: '',
+  error: '', simKey: null, sharedParam: null, showAll: false, published: null, simSearch: '',
   add: { type: 'ACQ', channelId: 'DEALER', skuId: '11KG_MGAS', accountId: '', code: '', value: '', remove: false },
 });
 let w = fresh();
 
 const keyOf = changes => JSON.stringify(changes);
+const approversOf = s => s.users.filter(u => u.canApprove);
+const approvalsOf = p => p?.approvals || [];
 
 function encode(obj) {
   return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -43,18 +48,18 @@ export function pendingChanges() {
 }
 
 // Used by the client pricing grid: merge a batch of changes into the open proposal.
-// Editing the set invalidates any simulation, so the wizard returns to Draft.
+// Editing the set invalidates any simulation, so the proposal returns to Draft.
 export function addChanges(list) {
   for (const c of list) {
     const same = x => x.type === c.type && x.accountId === c.accountId && x.code === c.code && x.channelId === c.channelId && x.skuId === c.skuId;
     w.changes = [...w.changes.filter(x => !same(x)), c];
   }
-  if (w.step !== 'draft') w.step = 'draft';
+  w.step = 'draft';
   w.simKey = null;
   return w.changes.length;
 }
 
-// Review (03) and Approve (04) write nothing, so the stored status can't tell them apart from Simulate (02).
+// Review and Approved write nothing, so the stored status can't tell them apart from Simulate.
 // Remember the last stage per proposal in this browser so reopening resumes where it was left.
 const RESUME_KEY = 'mgc_pricing_v1_resume';
 function readResume() {
@@ -66,11 +71,11 @@ function writeResume(r) {
 function rememberStage() {
   if (!w.proposalId) return;
   const r = readResume();
-  if (['simulate', 'review', 'approve'].includes(w.step)) r[w.proposalId] = { step: w.step, instructedBy: w.instructedBy, verifiedBy: w.verifiedBy };
+  if (['simulate', 'review'].includes(w.step)) r[w.proposalId] = { step: w.step };
   else delete r[w.proposalId];
   writeResume(r);
 }
-// Only resume past Simulate while the proposal is still simulated for exactly these changes.
+// Only resume past Draft while the proposal is still simulated for exactly these changes.
 function resumeFor(p) {
   const saved = readResume()[p.id];
   if (p.status !== 'simulated' || !saved || p.simKey !== keyOf(p.changes)) return null;
@@ -88,8 +93,8 @@ export function loadShared(param, s) {
     Object.assign(w, {
       proposalId: existing && existing.status !== 'published' ? existing.id : null,
       objective: obj.objective || '', changes: obj.changes || [], drafterId: existing?.draftedBy ?? null,
-      simKey: existing?.simKey ?? null, step: existing?.status === 'approved' ? 'publish' : saved?.step ?? 'simulate', sharedParam: param,
-      instructedBy: existing?.instructedBy ?? saved?.instructedBy ?? '', verifiedBy: existing?.verifiedBy ?? saved?.verifiedBy ?? '',
+      simKey: existing?.simKey ?? null, sharedParam: param,
+      step: existing?.status === 'approved' ? 'publish' : saved?.step ?? 'simulate',
     });
   } catch {
     w = fresh();
@@ -103,8 +108,7 @@ export function openProposal(p) {
   w = fresh();
   Object.assign(w, {
     proposalId: p.id, objective: p.objective, changes: p.changes, drafterId: p.draftedBy, simKey: p.simKey ?? null,
-    instructedBy: p.instructedBy ?? saved?.instructedBy ?? '', verifiedBy: p.verifiedBy ?? saved?.verifiedBy ?? '',
-    step: p.status === 'approved' ? 'publish' : saved ? saved.step : p.status === 'simulated' ? 'simulate' : 'draft',
+    step: p.status === 'approved' ? 'publish' : saved ? saved.step : approvalsOf(p).length ? 'review' : p.status === 'simulated' ? 'simulate' : 'draft',
   });
   if (w.step !== 'draft') {
     w.sharedParam = encode({ proposalId: p.id, objective: p.objective, changes: p.changes });
@@ -116,29 +120,52 @@ export function openProposal(p) {
 
 let propsOpen = false, propsSeen = false;
 
-// Back / Continue for each stage: the ids stay the same as the old in-body buttons so the bindings below still apply.
+// Back / Continue for each stage: the ids stay the same as the in-body buttons so the bindings below still apply.
 function nav(s, user, logged) {
   const none = { back: null, next: null };
-  const approveOk = canApprove(s, user, 'mpl_approve'), publishOk = canApprove(s, user, 'mpl_publish');
+  const publishOk = canApprove(s, user, 'mpl_publish');
   const draftOk = canEdit(s, user, 'mpl_draft');
   return {
-    draft: { back: null, next: { id: 'w-sim', label: 'Continue', off: !draftOk, tip: draftOk ? '' : 'Your access does not include drafting proposals' } },
-    simulate: { back: { id: 'w-back-draft', label: 'Back to draft' }, next: { id: 'w-to-review', label: 'Continue', off: !logged, tip: logged ? '' : 'Run the simulation first' } },
-    review: { back: { id: 'w-back-sim', label: 'Back' }, next: { id: 'w-to-approve', label: 'Continue' } },
-    approve: { back: { id: 'w-back-review', label: 'Back' }, next: { id: 'w-approve', label: 'Approve', off: !approveOk, tip: approveOk ? '' : 'Your access does not include approving proposals' } },
-    publish: { back: { id: 'w-back-approve', label: 'Back' }, next: { id: 'w-publish', label: 'Publish', off: !publishOk, tip: publishOk ? '' : 'Your access does not include publishing' } },
+    draft: { back: null, next: { id: 'w-sim', label: 'Simulate', off: !draftOk, tip: draftOk ? '' : 'Your access does not include drafting proposals' } },
+    simulate: { back: { id: 'w-back-draft', label: 'Back to draft' }, next: { id: 'w-to-review', label: 'Continue to review', off: !logged, tip: logged ? '' : 'Run the simulation first' } },
+    review: { back: { id: 'w-back-sim', label: 'Back to simulation' }, next: null },
+    publish: { back: null, next: { id: 'w-publish', label: 'Publish', off: !publishOk, tip: publishOk ? '' : 'Your access does not include publishing' } },
     done: none,
   }[w.step] || none;
 }
 
-export function html(s, user) {
-  rememberStage();
-  const idx = STEPS.findIndex(([k]) => k === w.step);
-  const bar = `<ol class="chevrons" aria-label="Stages">${STEPS.map(([k, l], i) => {
+// Three stages, shown on the Price room's main page, upper right.
+export function stageBar() {
+  if (!w.proposalId && !w.changes.length) return '';
+  const idx = STAGE_OF[w.step] ?? 0;
+  return `<ol class="chevrons stages" aria-label="Stages">${STAGES.map(([k, l], i) => {
     const cls = w.step === 'done' || i < idx ? 'done' : i === idx ? 'on' : '';
     return `<li class="${cls}"${i === idx ? ' aria-current="step"' : ''}><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${l}</span></li>`;
   }).join('')}</ol>`;
-  const body = { draft: draftHtml, simulate: simulateHtml, review: reviewHtml, approve: approveHtml, publish: publishHtml, done: doneHtml }[w.step](s, user);
+}
+
+// Summary of the pending changes, shown on the Bulk, Commercial and Dealer pages. Each change can be removed.
+export function summaryHtml(s) {
+  if (!w.changes.length || w.step === 'done') return '';
+  return `<div class="chg-summary" aria-label="Pending changes">
+    <span class="small muted">${w.changes.length} pending change${w.changes.length === 1 ? '' : 's'}${w.objective ? ` · <b>${esc(w.objective)}</b>` : ''}</span>
+    <div class="chg-chips">${w.changes.map((c, i) => `<span class="chg-chip"><span class="small muted">${esc(CHANGE_TYPES[c.type])}</span> ${esc(describeChange(s, c))}
+      <button type="button" class="icon small" data-chip-del="${i}" aria-label="Remove change">✕</button></span>`).join('')}</div>
+  </div>`;
+}
+
+export function bindSummary(root, rerender) {
+  root.querySelectorAll('[data-chip-del]').forEach(b => b.onclick = () => {
+    w.changes.splice(+b.dataset.chipDel, 1);
+    w.simKey = null;
+    w.step = 'draft';
+    rerender();
+  });
+}
+
+export function html(s, user) {
+  rememberStage();
+  const body = { draft: draftHtml, simulate: simulateHtml, review: reviewHtml, publish: publishHtml, done: doneHtml }[w.step](s, user);
   const open = s.proposals.filter(p => p.status !== 'published').sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
   const logged = w.simKey === keyOf(w.changes) && !!w.proposalId;
   const nv = nav(s, user, logged);
@@ -150,7 +177,6 @@ export function html(s, user) {
         <button type="button" id="w-new" class="small">New</button>
         ${btn(nv.back, false)}${btn(nv.next, true)}
       </div>
-      ${bar}
     </div>
     ${w.error ? `<div class="banner red" role="alert">${esc(w.error)}</div>` : ''}
     ${body}
@@ -158,7 +184,7 @@ export function html(s, user) {
       <div class="props-head"><b><span class="cnt">${open.length}</span> Open proposals</b><button type="button" id="w-props-x" class="icon small" aria-label="Close">✕</button></div>
       ${open.length ? `<div class="table-wrap"><table><tbody>${open.map(p => `<tr><td><b>${esc(p.objective)}</b><br>
         <span class="small muted">${esc(p.changes.map(c => describeChange(s, c)).join('; '))}</span></td>
-        <td><span class="pill ${p.status === 'approved' ? 'green' : 'amber'}">${esc(p.status[0].toUpperCase() + p.status.slice(1))}</span></td>
+        <td><span class="pill ${p.status === 'approved' ? 'green' : 'amber'}">${esc(p.status[0].toUpperCase() + p.status.slice(1))}${approvalsOf(p).length && p.status !== 'approved' ? ` · ${approvalsOf(p).length}/2` : ''}</span></td>
         <td class="small muted">Drafted by ${esc(userName(s, p.draftedBy))}<br>${fmtDateTime(p.updatedAt)}</td>
         <td><button type="button" class="small" data-open-prop="${esc(p.id)}">Open</button></td></tr>`).join('')}</tbody></table></div>`
         : '<p class="muted small" style="padding:8px 12px">None.</p>'}
@@ -172,7 +198,6 @@ function changeList(s, editable) {
     ${editable ? `<button type="button" class="icon small" data-del-change="${i}" aria-label="Remove change">✕</button>` : ''}</li>`).join('')}</ul>`;
 }
 
-// Compact calculator: one line of inputs, the current value as a hint underneath.
 // Which kinds of change this user may add: each follows the access part for that lever.
 const TYPE_PART = { ACQ: ['mpl_cost'], HAULING: ['mpl_cost'], MARGIN: ['mpl_margin'], BUFFER: ['mpl_buffer'], ACCOUNT_COMPONENT: ['cp_premiums', 'cp_supply', 'cp_compete', 'cp_cash'] };
 const typeAllowed = (s, user, id) => (TYPE_PART[id] || []).some(p => canEdit(s, user, p));
@@ -181,7 +206,7 @@ function draftHtml(s, user) {
   if (!canEdit(s, user, 'mpl_draft')) {
     return `<p class="muted">You can see proposals but not draft or simulate changes.</p>${changeList(s, false)}`;
   }
-  const allowed = Object.keys(CHANGE_TYPES).filter(id => id !== 'ACCOUNT_FIELD' && typeAllowed(s, user, id));
+  const allowed = Object.keys(CHANGE_TYPES).filter(id => !['ACCOUNT_FIELD', 'ACCOUNT_PRODUCT'].includes(id) && typeAllowed(s, user, id));
   if (!allowed.length) return `<p class="muted">Your access does not include any of the levers a proposal can change.</p>${changeList(s, false)}`;
   if (!allowed.includes(w.add.type)) w.add = { ...w.add, type: allowed[0], value: '', code: '', remove: false };
   const cb = currentCostBasis(s);
@@ -209,7 +234,8 @@ function draftHtml(s, user) {
   }
 
   return `<div class="calc">
-      <input id="w-obj" class="calc-obj" type="text" maxlength="160" aria-label="Objective (required)" placeholder="Objective (required) — e.g. Pass through September acquisition increase" value="${esc(w.objective)}">
+      <label class="field"><span>Title</span>
+        <input id="w-obj" class="calc-obj" type="text" maxlength="160" aria-label="Title (required)" placeholder="Title (required), e.g. Pass through September acquisition increase" value="${esc(w.objective)}"></label>
       <div class="calc-row">
         <select id="w-type" aria-label="What changes">${options(Object.entries(CHANGE_TYPES).filter(([id]) => allowed.includes(id)).map(([id, label]) => ({ id, label })), a.type)}</select>
         ${extra}
@@ -224,84 +250,45 @@ function draftHtml(s, user) {
     ${changeList(s, true)}`;
 }
 
-function impactClass(v) {
-  return v > 0 ? 'neg' : v < 0 ? 'pos' : '';
-}
-
 function simulateHtml(s) {
-  const sim = simulate(s, w.changes, new Date().toISOString());
-  const logged = w.simKey === keyOf(w.changes) && !!w.proposalId;
-  const rows = sim.channelRows.filter(r => w.showAll || r.deltaPerCyl || (r.beforePerCyl == null) !== (r.afterPerCyl == null));
-  const accName = id => byId(s.accounts, id)?.name ?? id;
-  const d = v => (v == null ? '—' : fmtSigned(v));
-
-  return `${changeList(s, false)}
-    <div class="strip">
-      <div><b class="${impactClass(sim.monthlyImpact)}">${fmtSigned(sim.monthlyImpact)}</b><span>Estimated monthly peso impact</span></div>
-      <div><b>${sim.excludedNullVolume.length}</b><span>Accounts excluded (no volume on record)</span></div>
-      <div><b>${sim.newlyBelowFloor.length}</b><span>Newly below floor</span></div>
-      <div><b>${sim.crossesCompetitor.length}</b><span>Cross above competitor</span></div>
-    </div>
-    ${sim.excludedNullVolume.length ? `<details class="small muted"><summary>${sim.excludedNullVolume.length} excluded accounts</summary>${esc(sim.excludedNullVolume.map(accName).join(', '))}.</details>` : ''}
-    <div class="cols">
-      <div>
-        <h3><span class="cnt">${sim.newlyBelowFloor.length}</span> Accounts newly below floor</h3>
-        ${sim.newlyBelowFloor.length ? `<ul>${sim.newlyBelowFloor.map(x => `<li><b>${esc(accName(x.accountId))}</b> — ${fmt(-x.marginVsFloorPerKg)}/kg below floor</li>`).join('')}</ul>` : '<p class="muted small">None.</p>'}
-        <h3><span class="cnt">${sim.crossesCompetitor.length}</span> Accounts crossing above the newest competitor reading</h3>
-        ${sim.crossesCompetitor.length ? `<ul>${sim.crossesCompetitor.map(x => { const r = s.competitorReadings.find(c => c.id === x.readingId); return `<li><b>${esc(accName(x.accountId))}</b> — ${fmt(x.afterGrossPerCyl)} vs ${esc(r.brand)} ${fmt(r.pricePerCyl)}</li>`; }).join('')}</ul>` : '<p class="muted small">None.</p>'}
-        <h3><span class="cnt">${sim.accountRows.length}</span> Accounts</h3>
-        <div class="table-wrap"><table><thead><tr><th>Account</th><th class="num">Δ/kg</th><th class="num">Vol kg/mo</th><th class="num">Monthly</th></tr></thead><tbody>
-        ${sim.accountRows.filter(r => { const q = w.simSearch.toLowerCase(); return !q || accName(r.accountId).toLowerCase().includes(q); }).map(r => `<tr><td>${esc(accName(r.accountId))}<br><span class="small muted">${esc(skuLabel(s, r.skuId))} <span class="was">${fmt(r.beforePerKg)}</span> → <span class="now">${fmt(r.afterPerKg)}</span></span></td>
-          <td class="num">${d(r.deltaPerKg)}</td><td class="num">${r.volumeKg == null ? '<span class="muted">none</span>' : r.volumeKg.toLocaleString('en-PH')}</td>
-          <td class="num">${r.impact == null ? '<span class="muted">excluded</span>' : fmtSigned(r.impact)}</td></tr>`).join('')}
-        </tbody></table></div>
-      </div>
-      <div>
-        <div class="row"><h3 class="grow">Channel × product, before and after</h3>
-          <label class="toggle small"><input id="w-showall" type="checkbox" ${w.showAll ? 'checked' : ''}> Show unchanged</label></div>
-        <div class="table-wrap"><table><thead><tr><th>Channel · product</th><th class="num">Per kg</th><th class="num">Δ/kg</th><th class="num">Per cyl, net</th><th class="num">Δ/cyl</th></tr></thead><tbody>
-        ${rows.length ? rows.map(r => `<tr><td>${esc(channelLabel(s, r.channelId))}<br><span class="small muted">${esc(skuLabel(s, r.skuId))}</span></td>
-          <td class="num"><span class="was">${fmt(r.beforePerKg)}</span><br><span class="now">${fmt(r.afterPerKg)}</span></td><td class="num">${d(r.deltaPerKg)}</td>
-          <td class="num"><span class="was">${fmt(r.beforePerCyl)}</span><br><span class="now">${fmt(r.afterPerCyl)}</span></td><td class="num">${d(r.deltaPerCyl)}</td></tr>`).join('')
-          : '<tr><td colspan="5" class="muted">No channel list prices change.</td></tr>'}
-        </tbody></table></div>
-      </div>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <button type="button" id="w-rerun" class="small">${w.proposalId ? 'Re-run simulation' : 'Save as my draft and simulate'}</button>
-      <button type="button" id="w-share" class="small">Copy share link</button>
-      ${logged ? '' : '<span class="small muted">Run the simulation first.</span>'}
-    </div>`;
+  return changeList(s, false);
 }
 
-function reviewHtml(s) {
+// Review: the two approvers (ticked "May approve" in Configuration → Users) each click Approve.
+function reviewHtml(s, user) {
   const sim = simulate(s, w.changes, new Date().toISOString());
+  const p = s.proposals.find(x => x.id === w.proposalId);
+  const approvers = approversOf(s);
+  const done = approvalsOf(p);
+  const mine = approvers.some(u => u.id === user.id);
+  const iApproved = done.some(a => a.userId === user.id);
+  const count = approvers.length;
+  const setup = count === 2 ? '' : `<p class="err" role="alert">Two approvers must be ticked as "May approve" in Configuration → Users. ${count} ${count === 1 ? 'is' : 'are'} ticked now.</p>`;
+  const who = approvers.map(u => {
+    const a = done.find(x => x.userId === u.id);
+    return `<li>${a ? `<span class="pill green">Approved</span> ${esc(u.name)} <span class="small muted">${fmtDateTime(a.at)}</span>` : `<span class="pill amber">Waiting</span> ${esc(u.name)}`}</li>`;
+  }).join('');
+  const action = !count ? '' : iApproved ? '<p class="small muted">You have approved this proposal.</p>'
+    : mine ? `<button type="button" id="w-approve" class="primary">Approve as ${esc(user.name)}</button>`
+    : '<p class="small muted">Only the two approvers can approve this proposal.</p>';
   return `<h3>What will change</h3>
     ${sim.review.length ? `<ul class="stack">${sim.review.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : '<p class="muted">No prices change.</p>'}
     <p>Estimated monthly impact <b>${fmtSigned(sim.monthlyImpact)}</b>${sim.excludedNullVolume.length ? `, excluding ${sim.excludedNullVolume.length} accounts with no volume` : ''}.</p>
-`;
-}
-
-function approveHtml(s, user) {
-  const managers = s.users.filter(u => u.role === 'manager' || u.role === 'admin');
-  const clash = w.verifiedBy && w.verifiedBy === w.drafterId;
-  return `<div class="row">
-      <label class="field grow"><span>Instructed by</span><select id="w-instr">${options(s.users.filter(u => u.role !== 'messenger'), w.instructedBy, { label: u => u.name, placeholder: 'Choose who instructed this' })}</select></label>
-      <label class="field grow"><span>Verified by</span><select id="w-verif">${options(managers, w.verifiedBy, { label: u => u.name + (u.canApprove ? ' — may approve' : ''), placeholder: 'Choose verifier' })}</select></label>
-    </div>
-    ${clash ? `<p class="err" role="alert">The verifier must be a different person from the drafter (${esc(userName(s, w.drafterId))}). Choose another verifier.</p>` : ''}
-`;
+    ${setup}
+    <h3>Approvals</h3>
+    <ul class="stack">${who || '<li class="muted">No approvers yet.</li>'}</ul>
+    <div class="row" style="margin-top:8px">${action}</div>`;
 }
 
 function publishHtml(s, user) {
   const pub = currentPublication(s);
+  const p = s.proposals.find(x => x.id === w.proposalId);
   return `<div class="card stack">
     <div><b>${esc(w.objective)}</b></div>
     ${changeList(s, false)}
     <div class="table-wrap"><table><tbody>
       <tr><td>Drafted by</td><td>${esc(userName(s, w.drafterId))}</td></tr>
-      <tr><td>Instructed by</td><td>${esc(userName(s, w.instructedBy))}</td></tr>
-      <tr><td>Verified by</td><td>${esc(userName(s, w.verifiedBy))}</td></tr>
+      <tr><td>Approved by</td><td>${approvalsOf(p).map(a => esc(userName(s, a.userId))).join(' and ') || '—'}</td></tr>
       <tr><td>Publishing as</td><td>${esc(user.name)}</td></tr>
       <tr><td>Board</td><td>v${pub.version} → <b>v${pub.version + 1}</b>, effective now</td></tr>
     </tbody></table></div>
@@ -372,16 +359,9 @@ export function bind(root, user, rerender) {
 
   // Review
   on('w-back-sim', 'onclick', () => go('simulate'));
-  on('w-to-approve', 'onclick', () => go('approve'));
-
-  // Approve
-  on('w-instr', 'onchange', e => { w.instructedBy = e.target.value; rerender(); });
-  on('w-verif', 'onchange', e => { w.verifiedBy = e.target.value; w.error = ''; rerender(); });
-  on('w-back-review', 'onclick', () => go('review'));
-  on('w-back-approve', 'onclick', () => go('approve'));
   on('w-approve', 'onclick', async () => { await approve(); rerender(); });
 
-  // Publish
+  // Approved
   on('w-publish', 'onclick', async () => { await publish(user); rerender(); });
 }
 
@@ -410,13 +390,12 @@ function addChange() {
   const same = x => x.type === c.type && x.channelId === c.channelId && x.skuId === c.skuId && x.accountId === c.accountId && x.code === c.code;
   w.changes = [...w.changes.filter(x => !same(x)), c];
   w.add.value = '';
-  void s;
 }
 
 async function saveDraftAndSimulate(user) {
   w.error = '';
   if (!canEdit(store.get(), user, 'mpl_draft')) { w.error = 'Your access does not include drafting proposals'; return; }
-  if (!w.objective.trim()) { w.error = 'Write a one-line objective — it is required before simulating'; w.step = 'draft'; return; }
+  if (!w.objective.trim()) { w.error = 'Write a title — it is required before simulating'; w.step = 'draft'; return; }
   if (!w.changes.length) { w.error = 'Add at least one change before simulating'; w.step = 'draft'; return; }
 
   const s = store.get();
@@ -436,7 +415,7 @@ async function saveDraftAndSimulate(user) {
       before: existing ? { changes: existing.changes } : null, after: { changes: w.changes, cause },
     }, d => {
       const p = d.proposals.find(x => x.id === w.proposalId);
-      const row = { id: w.proposalId, objective: w.objective, changes: w.changes, draftedBy: w.drafterId, status: 'draft', simKey: null, instructedBy: null, verifiedBy: null, updatedAt: now };
+      const row = { id: w.proposalId, objective: w.objective, changes: w.changes, draftedBy: w.drafterId, status: 'draft', simKey: null, approvals: [], updatedAt: now };
       if (p) Object.assign(p, row); else d.proposals.push(row);
     });
   }
@@ -452,32 +431,35 @@ async function saveDraftAndSimulate(user) {
     },
   }, d => {
     const p = d.proposals.find(x => x.id === w.proposalId);
-    Object.assign(p, { status: 'simulated', simKey: key, instructedBy: null, verifiedBy: null, updatedAt: now });
+    Object.assign(p, { status: 'simulated', simKey: key, approvals: [], updatedAt: now });
   });
   w.simKey = key;
-  w.instructedBy = '';
-  w.verifiedBy = '';
   w.step = 'simulate';
 }
 
+// One approver's click. The proposal is approved once both approvers have clicked.
 async function approve() {
   const s = store.get();
-  if (!canApprove(s, store.currentUser(), 'mpl_approve')) { w.error = 'Your access does not include approving proposals'; return; }
-  const p = s.proposals.find(x => x.id === w.proposalId);
+  const me = store.currentUser();
   w.error = '';
+  const p = s.proposals.find(x => x.id === w.proposalId);
   if (!p || p.simKey !== keyOf(w.changes)) { w.error = 'This proposal has changed since it was simulated — simulate again first'; w.step = 'simulate'; return; }
-  if (!w.instructedBy) { w.error = 'Choose who instructed this change'; return; }
-  if (!w.verifiedBy) { w.error = 'Choose who verified this change'; return; }
-  if (w.verifiedBy === p.draftedBy) { w.error = `Approval blocked: the verifier must be a different person from the drafter (${userName(s, p.draftedBy)})`; return; }
+  const approvers = approversOf(s);
+  if (approvers.length !== 2) { w.error = 'Two approvers must be ticked as "May approve" in Configuration → Users'; return; }
+  if (!approvers.some(u => u.id === me.id)) { w.error = 'Only the two approvers can approve this proposal'; return; }
+  if (approvalsOf(p).some(a => a.userId === me.id)) { w.error = 'You have already approved this proposal'; return; }
 
+  const when = new Date().toISOString();
+  const approvals = [...approvalsOf(p), { userId: me.id, at: when }];
+  const complete = approvers.every(u => approvals.some(a => a.userId === u.id));
   await store.commit({
     action: 'APPROVE', entity: 'proposal', entityId: p.id, proposalId: p.id, objective: p.objective,
-    instructedBy: w.instructedBy, verifiedBy: w.verifiedBy, after: { draftedBy: p.draftedBy, cause: p.changes.map(c => describeChange(s, c)).join('; ') },
+    after: { approvedBy: me.id, complete, cause: p.changes.map(c => describeChange(s, c)).join('; ') },
   }, d => {
-    Object.assign(d.proposals.find(x => x.id === p.id), { status: 'approved', instructedBy: w.instructedBy, verifiedBy: w.verifiedBy, updatedAt: new Date().toISOString() });
+    Object.assign(d.proposals.find(x => x.id === p.id), { approvals, status: complete ? 'approved' : 'simulated', updatedAt: when });
   });
-  w.step = 'publish';
-  toast('Approved');
+  if (complete) { w.step = 'publish'; toast('Approved'); }
+  else toast(`Approved by ${userName(s, me.id)} — waiting for the second approver`);
 }
 
 async function publish(user) {
@@ -485,9 +467,8 @@ async function publish(user) {
   if (!canApprove(s, user, 'mpl_publish')) { w.error = 'Your access does not include publishing'; return; }
   const p = s.proposals.find(x => x.id === w.proposalId);
   w.error = '';
-  if (!p || p.status !== 'approved') { w.error = 'This proposal is not approved — approve it before publishing'; w.step = 'approve'; return; }
+  if (!p || p.status !== 'approved') { w.error = 'This proposal is not approved yet — both approvers must approve it'; w.step = 'review'; return; }
   if (keyOf(p.changes) !== keyOf(w.changes)) { w.error = 'The changes differ from what was approved — simulate and approve again'; w.step = 'draft'; return; }
-  if (p.verifiedBy === p.draftedBy) { w.error = 'The verifier must be a different person from the drafter'; w.step = 'approve'; return; }
 
   const when = new Date().toISOString();
   const sim = simulate(s, p.changes, when);
@@ -497,12 +478,12 @@ async function publish(user) {
     ...sim.accountRows.filter(r => r.deltaPerKg).map(r => r.accountId),
     ...p.changes.filter(c => c.accountId).map(c => c.accountId),
   ])];
+  const approvedBy = approvalsOf(p).map(a => a.userId);
 
   await store.commit({
     action: 'PUBLISH', entity: 'publication', entityId: `board_v${version}`, proposalId: p.id, objective: p.objective,
-    instructedBy: p.instructedBy, verifiedBy: p.verifiedBy,
     before: { version: cur.version },
-    after: { version, cause: sim.cause, review: sim.review, changes: p.changes, accountIds, monthlyImpact: sim.monthlyImpact, draftedBy: p.draftedBy, publishedBy: user.id },
+    after: { version, cause: sim.cause, review: sim.review, changes: p.changes, accountIds, monthlyImpact: sim.monthlyImpact, draftedBy: p.draftedBy, approvedBy, publishedBy: user.id },
     hashOf: { version, when, changes: p.changes, review: sim.review },
   }, (d, ev) => {
     const prev = currentPublication(d);
@@ -512,10 +493,11 @@ async function publish(user) {
     d.marginRules = next.marginRules;
     d.buffers = next.buffers;
     d.accounts = next.accounts;
+    d.skus = next.skus;
     d.publications.push({
       version, publishedAt: when, proposalId: p.id, objective: p.objective,
-      draftedBy: p.draftedBy, instructedBy: p.instructedBy, verifiedBy: p.verifiedBy, publishedBy: user.id,
-      snapshotHash: ev.snapshotHash, prices: allBoardPrices(d),
+      draftedBy: p.draftedBy, approvedBy, publishedBy: user.id,
+      snapshotHash: ev.snapshotHash, prices: allBoardPrices(d), clientPrices: clientPriceSnapshot(d),
     });
     Object.assign(d.proposals.find(x => x.id === p.id), { status: 'published', publishedAt: when, version, updatedAt: when });
   });

@@ -7,6 +7,9 @@ import { canSeePriceRoom, canSeeTab } from './access.js';
 
 const loaders = {
   quote: () => import('./views/quote.js'),
+  tour: () => import('./views/tour.js'),
+  request: () => import('./views/requests.js'),
+  requests: () => import('./views/requests.js'),
   priceroom: () => import('./views/priceroom.js'),
   market: () => import('./views/market.js'),
   board: () => import('./views/board.js'),
@@ -26,6 +29,9 @@ export function canAccess(s, user, route) {
   const role = user.role;
   switch (route.name) {
     case 'quote': return role === 'seller';
+    case 'tour': return role === 'seller' || role === 'manager';
+    case 'request':
+    case 'requests': return role === 'seller' || role === 'manager' || role === 'admin';
     case 'priceroom': return canSeePriceRoom(s, user);
     case 'log': return role === 'admin';
     case 'config': return role === 'admin' || role === 'manager' || role === 'seller';
@@ -43,15 +49,29 @@ export function canAccess(s, user, route) {
 export const configTabs = s => [['users', 'Users'], ['channels', `Channels (${s.channels.length})`], ['zones', `Zones (${s.zones.length})`],
   ['clients', `Clients (${s.accounts.length})`], ['competitors', `Competitors (${s.trackedBrands.length})`], ['products', `Products (${s.skus.length})`]];
 
-export const priceRoomTabs = [['competitors', 'Competitors board'], ['channels', 'Channels board'], ['grid', 'Client Pricing'], ['history', 'Price History'], ['notices', 'PL Notices']];
+export const priceRoomTabs = [['channels', 'Channels board'], ['grid', 'Client Pricing'], ['history', 'Price History'], ['notices', 'PL Notices']];
 
 export const priceRoomTabsFor = (s, user) => priceRoomTabs.filter(([k]) => canSeeTab(s, user, k));
 
+// Sales Assistant and Sales Manager menu: Tour, Price Room, Price Watch, Price Lists. Price Room and Price Watch open a sub-menu.
 export function navFor(s, user) {
+  if (user.role === 'seller' || user.role === 'manager') {
+    const tabs = priceRoomTabsFor(s, user).filter(([k]) => ['channels', 'grid', 'history'].includes(k));
+    return [
+      { href: '#/tour', label: 'Tour' },
+      { href: '#/priceroom', label: 'Price Room', children: tabs.map(([k, l]) => [`#/priceroom?tab=${k}`, l]) },
+      { href: '#/market', label: 'Price Watch', children: [['#/market', 'Price Watch'], ['#/requests', 'Price Requests'], ['#/request', 'Make a Price Request']] },
+      { href: '#/board', label: 'Price Lists' },
+    ];
+  }
   const items = [];
-  if (user.role === 'seller') items.push(['#/quote', 'Quote desk']);
+  if (user.role === 'seller') items.push(['#/quote', 'Quote desk'], ['#/tour', 'Tour']);
+  if (user.role === 'manager') items.push(['#/tour', 'Tour']);
   if (user.role !== 'messenger' && canSeePriceRoom(s, user)) items.push(['#/priceroom', 'Price room']);
+  if (user.role === 'seller' || user.role === 'manager') items.push(['#/requests', 'Price requests']);
   items.push(['#/market', 'Price Watch']);
+  if (user.role === 'admin') items.push(['#/requests', 'Price requests'], ['#/request', 'Make a Price Request']);
+  if (user.role === 'seller' || user.role === 'manager') items.push(['#/request', 'Price request']);
   if (user.role !== 'messenger') items.push(['#/board', 'Price lists']);
   if (user.role === 'admin') items.push(['#/log', 'Log']);
   if (user.role === 'admin' || user.role === 'manager' || user.role === 'seller') items.push(['#/config', 'Configuration']);
@@ -59,7 +79,7 @@ export function navFor(s, user) {
 }
 
 export function defaultHash(s, user) {
-  if (user.role === 'seller') return '#/quote';
+  if (user.role === 'seller') return '#/board';
   if (user.role !== 'messenger' && canSeePriceRoom(s, user)) return '#/priceroom';
   if (user.role === 'messenger') return '#/market';
   const ch = userChannels(s, user)[0];

@@ -5,7 +5,8 @@ import * as store from '../store.js';
 import { fmt, toCentavos, toInput } from '../money.js';
 import { esc, toast, options, download, preserveFocus } from '../ui.js';
 import { parseCsv, toCsv, rowsToAccounts, accountsToRows, templateRows, newAccount } from '../csv.js';
-import { channelLabel, skuLabel } from '../pricing.js';
+import { channelLabel, skuLabel, derivedParents } from '../pricing.js';
+import * as wizard from './priceroom-wizard.js';
 import { configTabs } from '../router.js';
 import { PARTS, LEVELS, ACCESS_ROLES, ROLE_LABEL, roleLevel, level as userLevel } from '../access.js';
 import { FIELDS, labelFor, inputValue, displayValue, parseValue, usableKg } from '../clientterms.js';
@@ -13,7 +14,7 @@ import { FIELDS, labelFor, inputValue, displayValue, parseValue, usableKg } from
 const ROLES = ['seller', 'accounting', 'manager', 'admin', 'messenger', 'viewer'];
 const ui = { tab: 'users', users: null, base: null, userErr: '', preview: null, mode: 'merge', fileName: '', clientQuery: '', editClient: null, terms: {}, basic: {}, clientErr: '', channels: null, chanBase: null, chanErr: '',
   skus: null, skuBase: null, skuErr: '', zones: null, zoneBase: null, zoneErr: '',
-  brands: null, brandBase: null, brandErr: '', inl: {}, inlErr: '', cp: {}, cpErr: '', accUser: '' };
+  brands: null, brandBase: null, brandErr: '', inl: {}, inlErr: '', cp: {}, cpErr: '', accUser: '', products: null };
 
 export function render(root, ctx) {
   const { state: s } = ctx;
@@ -138,7 +139,7 @@ async function saveUsers(me) {
   }));
   const blankName = users.find(u => !u.name);
   if (blankName) return (ui.userErr = `User ${blankName.id} needs a name`);
-  if (users.filter(u => u.role === 'manager' || u.role === 'admin').length < 2) return (ui.userErr = 'Keep at least two managers or admins — approval needs a verifier who is not the drafter');
+  if (users.filter(u => u.role === 'manager' || u.role === 'admin').length < 2) return (ui.userErr = 'Keep at least two managers or admins — proposals need two approvers');
   const noList = users.find(u => (u.role === 'seller' || u.role === 'viewer') && !u.channels.length);
   if (noList) return (ui.userErr = `${noList.name} needs at least one price list`);
   const meAfter = users.find(u => u.id === me.id);
@@ -265,16 +266,13 @@ async function saveChannelProducts() {
   if (!notes.length) { ui.cp = {}; toast('No changes to save'); return; }
   const hit = drops.reduce((n, x) => n + s.accounts.filter(a => a.channelId === x.chId && a.primarySkuId === x.skuId).length, 0);
   if (hit && !confirm(`${hit} clients have a removed product as their main product and will have no price for it. Save anyway?`)) return;
-  const now = new Date().toISOString();
-  await store.commit({
-    action: 'CONFIG_CHANGED', entity: 'channelProducts', entityId: 'channelProducts', field: 'marginRules',
-    before: null, after: { summary: notes.join('; ') },
-  }, d => {
-    for (const x of drops) for (const r of d.marginRules) if (r.channelId === x.chId && r.skuId === x.skuId && r.effectiveTo == null) r.effectiveTo = now;
-    for (const x of adds) d.marginRules.push({ id: store.uid('mr'), channelId: x.chId, skuId: x.skuId, perKg: x.margin, effectiveFrom: now, effectiveTo: null });
-  });
+  // Margins change prices, so they go into the price proposal, not straight to the price list.
+  wizard.addChanges([
+    ...adds.map(x => ({ type: 'MARGIN', channelId: x.chId, skuId: x.skuId, perKg: x.margin })),
+    ...drops.map(x => ({ type: 'MARGIN_END', channelId: x.chId, skuId: x.skuId })),
+  ]);
   ui.cp = {};
-  toast('Channel products saved');
+  toast('Added to the price proposal. Simulate and approve it in the Price room.');
 }
 
 async function saveChannels() {
@@ -354,6 +352,8 @@ function productsHtml(s) {
         ${isParent ? '<span class="pill blue small">Parent</span>' : ''}
         ${isVariant ? '<span class="pill grey small">Variant</span>' : ''}</td>
       <td>${isParent ? '<span class="muted small">—</span>' : `<input type="number" min="0.1" step="0.1" data-sk="${i}" data-f="contentKg" value="${esc(k.contentKg ?? '')}" aria-label="Content kg">`}</td>
+      <td>${isParent ? '<span class="muted small">—</span>' : `<input type="number" min="0" step="0.01" inputmode="decimal" data-sk="${i}" data-f="volStepPesos" value="${esc(k.volStepPesos ?? (k.volStepCentavos != null ? toInput(k.volStepCentavos) : ''))}" aria-label="Volume discount step per cylinder, ₱">`}</td>
+      <td class="center">${isVariant ? '' : `<input type="checkbox" data-sk="${i}" data-f="priceWatch" ${k.priceWatch ? 'checked' : ''} aria-label="Price Watch">`}</td>
       <td class="center"><input type="checkbox" data-sk="${i}" data-f="active" ${k.active ? 'checked' : ''} aria-label="Sold"></td>
       <td class="center"><input type="checkbox" data-sk="${i}" data-f="hasVariants" ${k.hasVariants ? 'checked' : ''} ${isVariant ? 'disabled' : ''} aria-label="Has variants"></td>
       <td class="small muted">${k._new ? '<i>set on save</i>' : esc(k.id)}</td>
@@ -385,7 +385,7 @@ function productsHtml(s) {
         <button type="button" id="sk-save" class="primary small">Save products</button></div></div>
     ${ui.skuErr ? `<div class="banner red" role="alert">${esc(ui.skuErr)}</div>` : ''}
     <div class="table-wrap"><table class="matrix">
-      <thead><tr><th class="num">#</th><th>Name</th><th class="num">Content kg</th><th class="center">Sold</th><th class="center">Variant</th><th>ID</th><th class="num">Priced</th><th class="num">Clients</th><th class="center">Move</th><th></th></tr></thead>
+      <thead><tr><th class="num">#</th><th>Name</th><th class="num">Content kg</th><th class="num" title="Volume discount deducted per volume band above 1–2 on the price list">Band step ₱/cyl</th><th class="center" title="Products whose competitor prices are read in Price Watch">Price Watch</th><th class="center">Sold</th><th class="center">Variant</th><th>ID</th><th class="num">Priced</th><th class="num">Clients</th><th class="center">Move</th><th></th></tr></thead>
       <tbody>${rows.join('')}</tbody></table></div>
     <p class="small muted">Tick <b>Variant</b> to group child variants under a parent product. Variants drive internal pricing; only the parent name appears on client price lists. Untick <b>Sold</b> to hide a product without deleting it.</p></div>`;
 }
@@ -394,9 +394,13 @@ async function saveProducts() {
   const s = store.get();
   ui.skuErr = '';
   const next = ui.skus.map(k => {
-    const out = { ...k, label: k.label.trim(), active: !!k.active };
+    const { volStepPesos, ...rest } = k;
+    const out = { ...rest, label: k.label.trim(), active: !!k.active };
     if (k.hasVariants) { out.contentKg = null; out.hasVariants = true; }
     else { out.contentKg = Number(k.contentKg); delete out.hasVariants; }
+    out.priceWatch = !!k.priceWatch && !k.parentId;
+    if (!k.hasVariants) out.volStepCentavos = volStepPesos === undefined ? (k.volStepCentavos ?? null) : (toCentavos(volStepPesos) ?? null);
+    else out.volStepCentavos = null;
     if (k.parentId) out.parentId = k.parentId;
     else delete out.parentId;
     return out;
@@ -423,10 +427,28 @@ async function saveProducts() {
     if (!old) { summary.push(`added ${k.label}`); continue; }
     if (old.label !== k.label) summary.push(`renamed ${old.label} → ${k.label}`);
     if (old.contentKg !== k.contentKg) summary.push(`${k.label} content ${old.contentKg} → ${k.contentKg} kg`);
+    if (!!old.priceWatch !== !!k.priceWatch) summary.push(`${k.label} ${k.priceWatch ? 'added to' : 'removed from'} Price Watch`);
+    if ((old.volStepCentavos ?? null) !== (k.volStepCentavos ?? null)) summary.push(`${k.label} band step ${fmt(old.volStepCentavos ?? 0)} → ${fmt(k.volStepCentavos ?? 0)}`);
     if (old.active !== k.active) summary.push(`${k.label} ${k.active ? 'sold again' : 'no longer sold'}`);
   }
   for (const old of s.skus) if (!next.some(k => k.id === old.id)) summary.push(`removed ${old.label}`);
   if (s.skus.map(k => k.id).join() !== next.map(k => k.id).filter(id => s.skus.some(x => x.id === id)).join()) summary.push(`order: ${next.map(k => k.label).join(' › ')}`);
+  // Content and band step change prices, so they go into the price proposal, not straight to the products list.
+  const priceChanges = [];
+  for (const k of next) {
+    const old = s.skus.find(x => x.id === k.id);
+    if (!old || k.hasVariants) continue;
+    for (const f of ['contentKg', 'volStepCentavos']) {
+      if ((old[f] ?? null) !== (k[f] ?? null)) {
+        priceChanges.push({ type: 'SKU_FIELD', skuId: k.id, field: f, value: k[f] ?? null });
+        k[f] = old[f] ?? null;
+      }
+    }
+  }
+  if (priceChanges.length) {
+    wizard.addChanges(priceChanges);
+    summary.push(`proposed: ${priceChanges.map(c => skuLabel(s, c.skuId)).join(', ')} price settings`);
+  }
   if (!summary.length) { toast('No changes to save'); return; }
 
   await store.commit({
@@ -585,43 +607,37 @@ async function saveBrands() {
 function clientsHtml(s) {
   const q = ui.clientQuery.trim().toLowerCase();
   const list = s.accounts.filter(a => !q || a.name.toLowerCase().includes(q) || (a.clientCode || '').toLowerCase().includes(q));
-  const compOut = (xs, cat) => (xs || []).map(x => {
-    const c = s[cat].find(k => k.code === x.code);
-    return `${c?.label ?? x.code}${x.perKg != null ? ` ${fmt(x.perKg)}` : ''}`;
-  }).join(', ') || '—';
+  const chan = id => s.channels.find(c => c.id === id)?.label ?? id;
+  const main = a => (a.primarySkuId ? (s.skus.find(k => k.id === a.primarySkuId)?.label ?? a.primarySkuId) : null);
 
-  return `<div class="card">
-    <div class="card-head"><div><h2>Import clients from CSV</h2>
-      <p class="small muted">Required columns: Name, Channel, Status. Every other column is optional; a column left out keeps the client's current value. Download the template for the full set of columns.</p></div>
-      <div class="row"><button type="button" id="c-template" class="small">Download template</button><button type="button" id="c-export" class="small">Export clients CSV</button></div></div>
-    <div class="row"><label class="btn primary small" for="c-file">Choose CSV file</label><input id="c-file" type="file" accept=".csv,.tsv,.txt,text/csv" hidden>
-      <span class="small muted">${esc(ui.fileName || 'No file chosen')}</span></div>
-    ${ui.preview ? previewHtml(s) : ''}
+  // The editor opens at the top; the list below is plain rows, one per client, with Edit.
+  return `${ui.editClient ? termsEditor(s) : ''}
+  <div class="clients-head">
+    <h2>Clients (${s.accounts.length})</h2>
+    <div class="clients-tools">
+      <input id="c-q" type="search" placeholder="Filter by name or client ID" value="${esc(ui.clientQuery)}" aria-label="Filter clients">
+      <details class="clients-more">
+        <summary class="btn small">Import / export</summary>
+        <div class="clients-menu">
+          <button type="button" id="c-template" class="small">Download template</button>
+          <button type="button" id="c-export" class="small">Export clients CSV</button>
+          <label class="btn small" for="c-file">Choose CSV file</label><input id="c-file" type="file" accept=".csv,.tsv,.txt,text/csv" hidden>
+          <span class="small muted">${esc(ui.fileName || '')}</span>
+          ${ui.preview ? previewHtml(s) : ''}
+        </div>
+      </details>
+    </div>
   </div>
-
-  ${ui.editClient ? termsEditor(s) : ''}
-
-  <div class="card" style="margin-top:16px">
-    <div class="card-head"><h2>Clients (${s.accounts.length})</h2>
-      <div class="row"><input id="c-q" type="search" placeholder="Filter by name or client ID" value="${esc(ui.clientQuery)}" style="max-width:240px" aria-label="Filter clients">
-        <span class="small muted">${inlCount() ? `${inlCount()} client${inlCount() === 1 ? '' : 's'} edited` : 'Edit any cell, then save'}</span>
-        <button type="button" id="ci-discard" class="small" ${inlCount() ? '' : 'disabled'}>Discard changes</button>
-        <button type="button" id="ci-save" class="primary small" ${inlCount() ? '' : 'disabled'}>Save changes</button></div></div>
-    ${ui.inlErr ? `<div class="banner red" role="alert">${esc(ui.inlErr)}</div>` : ''}
-    <datalist id="cfg-zones-i">${s.zones.map(z => `<option value="${esc(z)}"></option>`).join('')}</datalist>
-    <div class="table-wrap"><table class="matrix">
-      <thead><tr><th>Client ID</th><th>Name</th><th>Channel</th><th>Status</th><th>Zone</th><th>Main product</th><th class="num">Avg monthly kg</th><th class="num">Credit days</th><th>Premiums</th><th>Discounts</th><th></th></tr></thead>
-      <tbody>${list.map(a => `<tr class="${ui.inl[a.id] ? 'edited' : ''}"><td><input type="text" data-ci="${esc(a.id)}|clientCode" value="${esc(inlVal(a, 'clientCode'))}" aria-label="Client ID" placeholder="Client ID" style="width:110px"></td><td style="min-width:200px"><input type="text" data-ci="${esc(a.id)}|name" value="${esc(inlVal(a, 'name'))}" aria-label="Client name"><div class="small muted" title="System reference, cannot change">ref ${esc(a.id)}</div></td>
-        <td><select data-ci="${esc(a.id)}|channelId" aria-label="Channel">${s.channels.map(c => `<option value="${esc(c.id)}"${c.id === inlVal(a, 'channelId') ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select></td>
-        <td><select data-ci="${esc(a.id)}|status" aria-label="Status">${['Active', 'Inactive'].map(v => `<option${v === inlVal(a, 'status') ? ' selected' : ''}>${v}</option>`).join('')}</select>${a.needsAttention ? ' <span class="pill amber">Attention</span>' : ''}</td>
-        <td><input type="text" list="cfg-zones-i" data-ci="${esc(a.id)}|zone" value="${esc(inlVal(a, 'zone'))}" aria-label="Zone" style="min-width:110px"></td>
-        <td><select data-ci="${esc(a.id)}|primarySkuId" aria-label="Main product"><option value=""></option>${s.skus.filter(k => k.active).map(k => `<option value="${esc(k.id)}"${k.id === inlVal(a, 'primarySkuId') ? ' selected' : ''}>${esc(k.label)}</option>`).join('')}</select></td>
-        <td class="num"><input type="number" min="0" step="1" data-ci="${esc(a.id)}|avgMonthlyVolumeKg" value="${esc(inlVal(a, 'avgMonthlyVolumeKg'))}" aria-label="Avg monthly kg" style="width:100px;text-align:right"></td>
-        <td class="num"><input type="number" min="0" step="1" data-ci="${esc(a.id)}|creditTermDays" value="${esc(inlVal(a, 'creditTermDays'))}" aria-label="Credit days" style="width:70px;text-align:right"></td>
-        <td class="small">${esc(compOut(a.premiums, 'premiumComponents'))}</td>
-        <td class="small">${esc(compOut(a.discounts, 'discountComponents'))}</td>
-        <td><button type="button" class="small" data-c-edit="${esc(a.id)}">Edit</button></td></tr>`).join('') || '<tr><td colspan="11" class="muted">No clients match.</td></tr>'}
-      </tbody></table></div></div>`;
+  <ul class="client-rows">
+    ${list.map(a => {
+      const details = [a.clientCode, chan(a.channelId), a.status, a.zone, main(a),
+        a.avgMonthlyVolumeKg != null ? `${Number(a.avgMonthlyVolumeKg).toLocaleString('en-PH')} kg/mo` : null].filter(Boolean).join(' · ');
+      return `<li class="client-row${a.id === ui.editClient ? ' on' : ''}">
+        <div class="grow"><b>${esc(a.name)}</b><div class="small muted">${esc(details || '—')}</div></div>
+        <button type="button" class="small" data-c-edit="${esc(a.id)}">Edit</button>
+      </li>`;
+    }).join('') || '<li class="muted">No clients match.</li>'}
+  </ul>`;
 }
 
 // Inline edits in the clients table: drafts live in ui.inl until saved.
@@ -700,13 +716,29 @@ const basicValue = (a, f) => {
 };
 
 // Client editor — the basic record, then the terms the pricing grid shows read-only.
+// The products ticked for the client being edited: the draft if there is one, otherwise the saved checklist,
+// otherwise the worksheet list the client already gets.
+const clientProductsDraft = (s, a) => ui.products ?? (a.products?.length ? a.products : derivedParents(s, a));
+
+// Multi-select: a button showing what is ticked, opening a menu of checkboxes.
+function productsDropdown(s, a) {
+  const chosen = clientProductsDraft(s, a);
+  const names = chosen.map(id => skuLabel(s, id));
+  const label = chosen.length ? (names.length <= 2 ? names.join(', ') : `${names.length} products`) : 'Choose products';
+  return `<details class="multi multi-products">
+    <summary class="multi-btn"><span>${esc(label)}</span><span aria-hidden="true">▾</span></summary>
+    <div class="multi-menu">
+      ${s.skus.filter(k => k.active && !k.parentId).map(k => `<label class="multi-opt"><input type="checkbox" data-cp="${esc(k.id)}" ${chosen.includes(k.id) ? 'checked' : ''}><span class="grow">${esc(k.label)}</span></label>`).join('')}
+    </div>
+  </details>`;
+}
+
 function termsEditor(s) {
   const a = s.accounts.find(x => x.id === ui.editClient);
   if (!a) return '';
   const draft = ui.terms;
-  return `<div class="card terms-editor" style="margin-top:16px">
-    <div class="card-head"><div><h2>${esc(a.name)}</h2>
-      <p class="small muted">${esc(a.id)} · fields marked <span class="pill amber">price lever</span> change the price as soon as they are saved.</p></div>
+  return `<div class="terms-editor">
+    <div class="card-head"><div><h2>${esc(a.name)}</h2></div>
       <div class="row"><button type="button" id="ct-cancel" class="small">Cancel</button><button type="button" id="ct-save" class="primary small">Save client</button></div></div>
     ${ui.clientErr ? `<div class="banner red" role="alert">${esc(ui.clientErr)}</div>` : ''}
     <div class="section-title">Client details</div>
@@ -733,7 +765,11 @@ function termsEditor(s) {
           : `<input data-ct="${esc(f.key)}" type="${f.type === 'date' ? 'date' : 'text'}"${f.type === 'money' || f.type === 'int' ? ' inputmode="decimal"' : ''} value="${esc(v)}">`;
         return `<label class="prof-f"><span>${label}</span>${input}</label>`;
       }).join('')}
-    </div></div>`;
+    </div>
+    <div class="section-title">Products the client buys</div>
+    <p class="small muted">These products show in the client's pricing rows and in Price requests. Starts from the worksheet list; change it here.</p>
+    ${productsDropdown(s, a)}
+    </div>`;
 }
 
 async function saveTerms() {
@@ -741,6 +777,7 @@ async function saveTerms() {
   const a = s.accounts.find(x => x.id === ui.editClient);
   if (!a) return;
   const top = {}, terms = {}, changed = [];
+  const leverChanges = [];
   ui.clientErr = '';
 
   // Basic record first, so a bad value stops the whole save.
@@ -770,9 +807,23 @@ async function saveTerms() {
     const value = parseValue(f, raw);
     const before = (f.top ? a[key] : a.profile?.[key]) ?? null;
     if (before === value) continue;
+    // Price levers (fixed margin, investment) go into the price proposal; everything else saves now.
+    if (f.lever) {
+      leverChanges.push({ type: 'ACCOUNT_FIELD', accountId: a.id, field: key, value });
+      changed.push(`${f.label} ${displayValue(a, f)} → ${displayValue(a, f, { [key]: value })} (proposal)`);
+      continue;
+    }
     (f.top ? top : terms)[key] = value;
     changed.push(`${f.label} ${displayValue(a, f)} → ${displayValue(a, f, { [key]: value })}`);
   }
+  if (ui.products) {
+    const next = [...ui.products].sort();
+    if ([...(a.products || [])].sort().join() !== next.join()) {
+      top.products = next;
+      changed.push(`Products ${next.length ? next.map(id => skuLabel(s, id)).join(', ') : 'none'}`);
+    }
+  }
+  if (leverChanges.length) wizard.addChanges(leverChanges);
   if (!changed.length) { toast('Nothing changed'); return; }
   await store.commit({
     action: 'CLIENT_TERMS_SAVED', entity: 'account', entityId: a.id, field: 'terms',
@@ -784,6 +835,7 @@ async function saveTerms() {
     acc.profile = { ...(acc.profile || {}), ...terms };
   });
   ui.terms = {};
+  ui.products = null;
   ui.basic = {};
   toast('Client saved');
 }
@@ -922,6 +974,7 @@ function bind(root, ctx) {
   root.querySelectorAll('[data-sk][data-f]').forEach(el => {
     const k = ui.skus[+el.dataset.sk];
     if (el.dataset.f === 'active') el.onchange = () => { k.active = el.checked; };
+    else if (el.dataset.f === 'priceWatch') el.onchange = () => { k.priceWatch = el.checked; };
     else if (el.dataset.f === 'hasVariants') el.onchange = () => { k.hasVariants = el.checked; if (!el.checked) ui.skus.filter(v => v.parentId === k.id).forEach(v => { v.parentId = null; }); rerender(); };
     else el.oninput = () => { k[el.dataset.f] = el.value; };
   });
@@ -1005,21 +1058,28 @@ function bind(root, ctx) {
   root.querySelectorAll('[data-c-edit]').forEach(b => b.onclick = () => {
     ui.editClient = b.dataset.cEdit;
     ui.terms = {};
+    ui.products = null;
     ui.basic = {};
     ui.clientErr = '';
     rerender();
-    root.querySelector('[data-ct]')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    root.querySelector('.terms-editor')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   });
   root.querySelectorAll('[data-ct]').forEach(el => {
     const write = () => { ui.terms[el.dataset.ct] = el.value; };
     el.oninput = write;
     el.onchange = () => { write(); rerender(); };
   });
+  // Products the client buys: a draft list, saved with the client.
+  root.querySelectorAll('[data-cp]').forEach(el => el.onchange = () => {
+    const a = store.get().accounts.find(x => x.id === ui.editClient);
+    const base = ui.products ?? (a?.products || []);
+    ui.products = el.checked ? [...new Set([...base, el.dataset.cp])] : base.filter(x => x !== el.dataset.cp);
+  });
   root.querySelectorAll('[data-cb]').forEach(el => {
     const write = () => { ui.basic[el.dataset.cb] = el.value; };
     el.oninput = write;
     el.onchange = () => { write(); rerender(); };
   });
-  if ($('ct-cancel')) $('ct-cancel').onclick = () => { ui.editClient = null; ui.terms = {}; ui.basic = {}; ui.clientErr = ''; rerender(); };
+  if ($('ct-cancel')) $('ct-cancel').onclick = () => { ui.editClient = null; ui.terms = {}; ui.basic = {}; ui.products = null; ui.clientErr = ''; rerender(); };
   if ($('ct-save')) $('ct-save').onclick = async () => { await saveTerms(); rerender(); };
 }

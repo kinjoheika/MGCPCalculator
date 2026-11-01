@@ -3,7 +3,7 @@
 // All money is integer centavos. Rounding is half-up (away from zero) to whole centavos,
 // applied once at the end of each ladder step.
 //
-// Order of operations: (acq + hauling) + margin + premiums − discounts + buffer, then VAT.
+// Order of operations: (acq + hauling) + margin + premiums − discounts + buffer. No VAT is added here.
 
 function roundC(x) {
   const v = Number(Number(x).toFixed(6));
@@ -45,8 +45,6 @@ export function resolvePrice(input) {
     premiums = [],
     discounts = [],
     quantity = 1,
-    vatRate = 0,
-    vatInclusive = true,
     floorPerKg = null,
   } = input;
 
@@ -69,8 +67,7 @@ export function resolvePrice(input) {
 
   const netPerKg = running;
   const netPerCyl = roundC(netPerKg * sku.contentKg);
-  const vatPerCyl = vatInclusive ? roundC(netPerCyl * vatRate) : 0;
-  const grossPerCyl = netPerCyl + vatPerCyl;
+  const grossPerCyl = netPerCyl;
   const qty = Math.max(0, Math.floor(quantity || 0));
   const grossTotal = grossPerCyl * qty;
 
@@ -85,7 +82,6 @@ export function resolvePrice(input) {
     ladder,
     netPerKg,
     netPerCyl,
-    vatPerCyl,
     grossPerCyl,
     grossTotal,
     quantity: qty,

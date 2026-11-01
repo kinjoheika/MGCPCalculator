@@ -15,8 +15,6 @@
   <div class="tools">
     <span id="bellwrap" class="bellwrap"></span>
     <span id="dbstat" class="small dbstat"></span>
-    <label class="row small"><span class="muted">Acting as</span>
-      <select id="who" aria-label="Acting as (prototype role switcher)"></select></label>
   </div>
 </header>
 <main id="app"><p class="muted">Loading…</p></main>
@@ -99,12 +97,9 @@ dbstat.textContent = live ? '● Database' : '○ Local only';
 dbstat.title = live ? 'Saved to the shared database' : 'No database configured (js/config.js). Data stays in this browser.';
 dbstat.classList.toggle('ok', live);
 if (live) {
-  // Signed in: the person is who they logged in as, not a dropdown.
+  // Signed in: the person is who they logged in as.
   const me = store.currentUser();
-  // Hide the account dropdown rather than remove it: the page still uses it below.
-  const lab = document.getElementById('who').closest('label');
-  lab.hidden = true;
-  lab.insertAdjacentHTML('afterend', `<span class="small"><b>${esc(me.name)}</b> <span class="muted">${esc(me.role)}</span></span><button type="button" id="signout" class="small">Sign out</button>`);
+  document.querySelector('.tools').insertAdjacentHTML('beforeend', `<span class="small"><b>${esc(me.name)}</b> <span class="muted">${esc(me.role)}</span></span><button type="button" id="signout" class="small">Sign out</button>`);
   document.getElementById('signout').onclick = async () => { await db.signOut(); location.reload(); };
 }
 
@@ -112,14 +107,24 @@ if (live) {
 const topbar = document.querySelector('.topbar');
 new ResizeObserver(() => document.documentElement.style.setProperty('--topbar-h', topbar.offsetHeight + 'px')).observe(topbar);
 
-const who = document.getElementById('who');
 const nav = document.getElementById('nav');
 
 function paintHeader(route, user) {
   const s = store.get();
-  if (who.isConnected) who.innerHTML = s.users.map(u =>
-    `<option value="${esc(u.id)}"${u.id === user.id ? ' selected' : ''}>${esc(u.name)} — ${esc(u.role)}</option>`).join('');
-  nav.innerHTML = router.navFor(s, user).map(([href, label]) => {
+  nav.innerHTML = router.navFor(s, user).map(item => {
+    // Menu items are either [href, label] pairs, or objects that may open a sub-menu.
+    if (!Array.isArray(item)) {
+      // The parent is lit when its own page or any of its sub-menu pages is open.
+      const on = item.href.slice(2) === route.name || (item.children || []).some(([h]) => h.split('?')[0].slice(2) === route.name);
+      const link = `<a href="${item.href}" class="${on ? 'on' : ''}"${on ? ' aria-current="page"' : ''}>${esc(item.label)}</a>`;
+      if (!item.children) return link;
+      return `<span class="has-sub">${link}<span class="submenu">${item.children.map(([h, l]) => {
+        const tab = new URLSearchParams(h.split('?')[1] || '').get('tab');
+        const current = h.split('?')[0].slice(2) === route.name && (!tab || route.query?.tab === tab);
+        return `<a href="${h}" class="${current ? 'on' : ''}">${esc(l)}</a>`;
+      }).join('')}</span></span>`;
+    }
+    const [href, label] = item;
     const on = href.slice(2) === route.name;
     const link = `<a href="${href}" class="${on ? 'on' : ''}"${on ? ' aria-current="page"' : ''}>${esc(label)}</a>`;
     const subs = href === '#/config' ? [router.configTabs(s), 'users'] : href === '#/priceroom' ? [router.priceRoomTabsFor(s, user), router.priceRoomTabsFor(s, user)[0]?.[0]] : null;
@@ -129,12 +134,6 @@ function paintHeader(route, user) {
       `<a href="${href}?tab=${k}" class="${on && cur === k ? 'on' : ''}">${esc(l)}</a>`).join('')}</span></span>`;
   }).join('');
 }
-
-who.addEventListener('change', () => {
-  if (!who.isConnected) return;
-  store.setCurrentUser(who.value);
-  location.hash = router.defaultHash(store.get(), store.currentUser());
-});
 
 notify.mount(document.getElementById('bellwrap'));
 router.start(app, paintHeader);

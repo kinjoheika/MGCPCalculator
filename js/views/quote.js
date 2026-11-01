@@ -11,6 +11,7 @@ import {
 } from '../pricing.js';
 import { printDoc, savePdf, previewUrl, slug } from '../pricedoc.js';
 import { stamp } from '../ui.js';
+import { REQUEST_STATUSES } from '../price-requests.js';
 
 const DAY = 86400000;
 const ALL = '__all';
@@ -126,7 +127,7 @@ function productsCard(s, account, channelId) {
           <div class="small muted">${p.sku.contentKg} kg${st ? ` · <span class="pill amber">${esc(st)}</span>` : ''}</div></td>
           <td class="num">${fmt(p.result.netPerKg)}</td><td class="num"><b>${fmt(p.result.grossPerCyl)}</b></td></tr>`;
       }).join('')}</tbody></table></div>
-    <p class="small muted">Per cylinder includes VAT. Tick products to include in the quotation.</p>
+    <p class="small muted">Tick products to include in the quotation.</p>
     ${held ? `<p class="small">${held} product${held > 1 ? 's' : ''} marked above ${held > 1 ? 'are' : 'is'} left off the printed price list until approved.</p>` : ''}
     <div class="row" style="margin-top:10px">
       <button type="button" id="q-print" class="grow" ${canIssue ? '' : 'disabled'}>Print</button>
@@ -171,7 +172,7 @@ function listDoc(s, user, account, channelId, lines, withQty) {
     subtitle: `${channelLabel(s, channelId)}${account?.zone ? ` · ${account.zone}` : ''}`,
     version: pub.version, effective: fmtDate(pub.publishedAt), issued: fmtDateTime(now),
     validUntil: fmtDate(new Date(now.getTime() + (s.settings.quoteValidityDays || 7) * DAY)),
-    issuedBy: user.name, vatRate: s.settings.vatRate, ref: '',
+    issuedBy: user.name, ref: '',
     rows: lines.map(p => ({ label: skuDisplayLabel(s, p.sku.id), contentKg: p.sku.contentKg, netPerKg: p.result.netPerKg, grossPerCyl: p.result.grossPerCyl,
       ...(withQty ? { qty: p.result.quantity, total: p.result.grossTotal } : {}) })),
     total: withQty ? lines.reduce((t, p) => t + p.result.grossTotal, 0) : null,
@@ -187,7 +188,7 @@ export function quoteDoc(s, q) {
     subtitle: `${i.channel.label}${zone ? ` · ${zone}` : ''}`,
     version: q.snapshot.boardVersion, effective: pub ? fmtDate(pub.publishedAt) : '—',
     issued: fmtDateTime(q.sentAt), validUntil: fmtDate(q.validUntil), issuedBy: userName(s, q.sentBy),
-    vatRate: i.vatRate, ref: (q.snapshotHash || '').slice(0, 8),
+    ref: (q.snapshotHash || '').slice(0, 8),
     rows: [{ label: i.sku.label, contentKg: i.sku.contentKg, netPerKg: o.netPerKg, grossPerCyl: o.grossPerCyl, qty: o.quantity, total: o.grossTotal }],
     total: o.grossTotal,
   };
@@ -274,9 +275,9 @@ function pastQuotes(s, user) {
     }).join('')}</tbody></table></div>` : '<p class="muted">No quotes sent yet.</p>';
   const requests = reqs.length ? `<h2>Price requests</h2><div class="table-wrap"><table><tbody>
     ${reqs.map(r => `<tr><td>${esc(r.accountId ? byId(s.accounts, r.accountId)?.name ?? r.accountId : 'Walk-in, ' + channelLabel(s, r.channelId))}<br>
-      <span class="small muted">${esc(skuLabel(s, r.skuId))} to ${fmt(r.targetGrossPerCyl)}</span>
+      <span class="small muted">${esc(skuLabel(s, r.skuId))} to ${fmt(r.requestedGrossPerCyl)}</span>
       ${r.decisionReason ? `<br><span class="small">Decision: ${esc(r.decisionReason)}</span>` : ''}</td>
-      <td><span class="pill ${r.status === 'approved' ? 'green' : r.status === 'declined' ? 'red' : 'amber'}">${esc(r.status[0].toUpperCase() + r.status.slice(1))}</span></td></tr>`).join('')}
+      <td><span class="pill ${r.status === 'approved' ? 'green' : r.status === 'review' ? 'amber' : 'grey'}">${esc(REQUEST_STATUSES.find(([k]) => k === r.status)?.[1] ?? r.status)}</span></td></tr>`).join('')}
     </tbody></table></div>` : '';
   return quotes + requests;
 }
@@ -341,53 +342,3 @@ function bind(root, ctx) {
   if ($('q-savelist')) $('q-savelist').onclick = () => issueList(user, 'save');
 }
 
-function requestLower(s, user, skuId) {
-  const { account, channelId } = context(s, user);
-  const p = priceFor(s, { accountId: account?.id ?? null, channelId, skuId, quantity: ui.qty });
-  if (p.error) return;
-  const zone = account ? zoneOf(s, account.zone) : null;
-  const readings = s.competitorReadings
-    .filter(r => r.skuId === p.sku.id && (!zone || r.zone === zone))
-    .sort((a, b) => (a.capturedAt < b.capturedAt ? 1 : -1));
-  const readingLabel = r => `${r.brand}, ${r.zone} — ${fmt(r.pricePerCyl)} · ${fmtDate(r.capturedAt)}${isStaleReading(s, r) ? ` (stale, ${daysSince(r.capturedAt)} days)` : ''}`;
-
-  const dlg = modal('Request lower price', `
-    <p class="small muted">${esc(account ? account.name : 'Walk-in')} · ${esc(p.sku.label)} · now ${fmt(p.result.grossPerCyl)}/cyl</p>
-    <div class="stack">
-      <label class="field"><span>Target price per cylinder, VAT inclusive (₱)</span><input id="rl-target" type="text" inputmode="decimal" placeholder="e.g. 1250.00"></label>
-      <label class="field"><span>Reason</span><textarea id="rl-reason" placeholder="What the customer said, and why this matters"></textarea></label>
-      <label class="field"><span>Competitor reading${zone ? ` in ${esc(zone)}` : ''}</span>
-        <select id="rl-reading">${options(readings, null, { label: readingLabel, placeholder: readings.length ? 'Select a reading' : 'No readings for this product' + (zone ? ' in this zone' : '') })}</select></label>
-      ${readings.length ? '' : '<p class="small muted">Ask a messenger to capture a reading in Price Watch first.</p>'}
-      <div id="rl-err" class="err" role="alert"></div>
-      <div class="row"><button type="button" id="rl-submit" class="primary grow">Submit request</button><button type="button" id="rl-cancel" class="grow">Cancel</button></div>
-    </div>`);
-
-  dlg.querySelector('#rl-cancel').onclick = () => dlg.close();
-  dlg.querySelector('#rl-submit').onclick = async () => {
-    const err = dlg.querySelector('#rl-err');
-    const target = toCentavos(dlg.querySelector('#rl-target').value);
-    const reason = dlg.querySelector('#rl-reason').value.trim();
-    const readingId = dlg.querySelector('#rl-reading').value;
-    if (!target || target <= 0) return (err.textContent = 'Enter a target price, for example 1250.00');
-    if (target >= p.result.grossPerCyl) return (err.textContent = `Target must be below the current ${fmt(p.result.grossPerCyl)}`);
-    if (!reason) return (err.textContent = 'Write the reason for the request');
-    if (!readingId) return (err.textContent = 'Select a competitor reading — a request cannot be submitted without one');
-
-    const id = store.uid('req');
-    await store.commit({
-      action: 'REQUEST_LOWER', entity: 'priceRequest', entityId: account?.id ?? p.lineKey, field: 'grossPerCyl',
-      before: p.result.grossPerCyl, after: target,
-    }, d => {
-      d.priceRequests.push({
-        id, lineKey: p.lineKey, accountId: account?.id ?? null, channelId, skuId: p.sku.id, qty: p.result.quantity,
-        currentGrossPerCyl: p.result.grossPerCyl, currentNetPerKg: p.result.netPerKg, targetGrossPerCyl: target,
-        impliedDiscountPerKg: roundHalfUp((p.result.grossPerCyl - target) / (p.sku.contentKg * (1 + (p.input.vatInclusive ? p.input.vatRate : 0)))),
-        reason, competitorReadingId: readingId, requestedBy: user.id, requestedAt: new Date().toISOString(),
-        status: 'pending', decidedBy: null, decidedAt: null, decisionReason: null, approvedDiscountPerKg: null, validUntil: null,
-      });
-    });
-    dlg.close();
-    toast('Request sent to the Price room');
-  };
-}

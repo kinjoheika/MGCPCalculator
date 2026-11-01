@@ -8,7 +8,7 @@ const KEY = 'mgc_pricing_v1';
 const USER_KEY = 'mgc_pricing_v1_user';
 
 export const ACTIONS = [
-  'DRAFT', 'SIMULATE', 'APPROVE', 'PUBLISH', 'QUOTE_SENT', 'REQUEST_LOWER',
+  'DRAFT', 'SIMULATE', 'APPROVE', 'PUBLISH', 'QUOTE_SENT', 'REQUEST_RAISED', 'REQUEST_DRAFTED', 'CHANNEL_APPROVED',
   'REQUEST_DECIDED', 'READING_CAPTURED', 'BOARD_ACKNOWLEDGED', 'ACCOUNTS_IMPORTED', 'CONFIG_CHANGED', 'PRICE_LIST_ISSUED', 'CLIENT_TERMS_SAVED', 'PL_EMAIL_SENT',
 ];
 
@@ -204,7 +204,7 @@ export function setCurrentUser(id) {
 // ---- The single mutation choke point ----
 //
 // evt: { action, entity, entityId, field, before, after, proposalId, objective,
-//        instructedBy, verifiedBy, hashOf? }
+//        hashOf? }
 // hashOf (optional) is hashed into snapshotHash and not stored on the event.
 // mutationFn(draft, event) mutates a copy of state; it may throw to abort (nothing is written).
 
@@ -218,7 +218,7 @@ export async function commit(evt, mutationFn) {
     actorId: user ? user.id : null,
     actorRole: user ? user.role : null,
     action: null, entity: null, entityId: null, field: null, before: null, after: null,
-    proposalId: null, objective: null, instructedBy: null, verifiedBy: null, snapshotHash: null,
+    proposalId: null, objective: null, snapshotHash: null,
     ...rest,
   };
   if (hashOf !== undefined) event.snapshotHash = await sha256(hashOf);

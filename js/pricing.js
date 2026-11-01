@@ -60,6 +60,32 @@ export function skusForChannel(s, channelId) {
   return s.skus.filter(k => k.active && !k.hasVariants && marginRule(s, channelId, k.id));
 }
 
+// The worksheet's volume-per-drop columns name a product group; these are the parent products they belong to.
+const DROP_PARENT = { '50kg': '50KG', '22kgRegular': '22KG', '22kgForklift': '22KG', '11kg': '11KG', '2.7kg': '2.7KG_PARENT' };
+
+// The products a client buys, as parent products, from the worksheet: its main product and volume-per-drop groups.
+export function derivedParents(s, a) {
+  const ids = [a.primarySkuId, ...Object.keys(a.profile?.volumePerDrop || {}).map(k => DROP_PARENT[k])].filter(Boolean)
+    .map(id => byId(s.skus, id)?.parentId ?? id);
+  return [...new Set(ids)];
+}
+
+// The sellable product a parent stands for for this client: a 50 kg client's class (A, B or C), otherwise the first variant.
+export function representativeSku(s, account, parentId) {
+  const sku = byId(s.skus, parentId);
+  if (!sku) return null;
+  if (!sku.hasVariants) return sku;
+  const kids = s.skus.filter(k => k.parentId === parentId && k.active);
+  const cls = account?.profile?.contentClass;
+  return kids.find(k => cls && k.id === `${parentId}_${cls}`) ?? kids[0] ?? null;
+}
+
+// The client's products for pricing and requests: the saved checklist if there is one, otherwise the worksheet list.
+export function clientSkus(s, account) {
+  const parents = account?.products?.length ? account.products : derivedParents(s, account);
+  return parents.map(id => representativeSku(s, account, id)).filter(Boolean);
+}
+
 export function zoneOf(s, accountZone) {
   if (!accountZone) return null;
   return s.zones.find(z => accountZone === z || accountZone.startsWith(z)) ?? accountZone;
@@ -77,12 +103,23 @@ export function lineKey(accountId, channelId) {
 }
 
 export function pendingRequest(s, key, skuId) {
-  return s.priceRequests.find(r => r.lineKey === key && r.skuId === skuId && r.status === 'pending');
+  return s.priceRequests.find(r => r.lineKey === key && r.skuId === skuId && r.status === 'review');
 }
 
-export function approvedException(s, key, skuId, now = new Date()) {
-  return s.priceRequests.find(r => r.lineKey === key && r.skuId === skuId && r.status === 'approved'
-    && new Date(r.validUntil) >= now);
+// An approved request is the client's price until the next price version is published: it belongs to the version it was approved under.
+// The latest approved sub-version for a client and product under a version: the highest sub-version number.
+// Pricing and every screen that shows a sub-version use this one function, so they always agree.
+export function latestSubVersion(s, accountId, skuId, version = currentPublication(s).version) {
+  return s.priceRequests
+    .filter(r => r.status === 'approved' && r.lineKey === accountId && r.skuId === skuId && r.subOf === version)
+    .sort((a, b) => b.subNo - a.subNo)[0] ?? null;
+}
+
+// The approved price of a sub-version: the final price the manager set.
+export const approvedPrice = r => r.finalGrossPerCyl ?? r.approvedGrossPerCyl;
+
+export function approvedException(s, key, skuId) {
+  return latestSubVersion(s, key, skuId);
 }
 
 // ---- Pricing ----
@@ -95,7 +132,6 @@ export function priceFor(s, { accountId = null, channelId = null, skuId, quantit
   const cb = currentCostBasis(s);
   const mr = marginRule(s, chId, skuId);
   if (!channel || !sku || !cb) return { error: 'Pick a customer or channel and a product' };
-  if (!mr) return { error: `${sku.label} is not priced for ${channel.label}` };
 
   const notes = [];
   const premiums = [];
@@ -117,8 +153,13 @@ export function priceFor(s, { accountId = null, channelId = null, skuId, quantit
   const exception = ignoreException ? null : approvedException(s, key, skuId);
   if (exception) discounts.push({ code: 'APPROVED_EXCEPTION', label: 'Approved price', perKg: exception.approvedDiscountPerKg });
 
-  // A client with a fixed margin uses it in place of the channel margin.
-  const marginPerKg = account?.fixedMarginPerKg ?? mr.perKg;
+  // Per-product terms set in the Commercial grid: each product can carry its own margin, premium and discount.
+  const own = account?.productPricing?.[sku.id] || {};
+  if (own.premiumPerKg != null) premiums.push({ code: 'PRODUCT_PREMIUM', label: 'Premium (this product)', perKg: own.premiumPerKg });
+  if (own.discountPerKg) discounts.push({ code: 'PRODUCT_DISCOUNT', label: 'Discount (this product)', perKg: own.discountPerKg });
+
+  // A product's own margin wins, then a client with a fixed margin, then the channel margin.
+  const marginPerKg = own.marginPerKg ?? account?.fixedMarginPerKg ?? mr?.perKg ?? 0;
   const input = {
     costBasis: { acqPerKg: cb.acqPerKg, haulingPerKg: cb.haulingPerKg, effectiveFrom: cb.effectiveFrom },
     sku: { id: sku.id, contentKg: sku.contentKg, label: sku.label },
@@ -128,17 +169,20 @@ export function priceFor(s, { accountId = null, channelId = null, skuId, quantit
     premiums,
     discounts,
     quantity,
-    vatRate: s.settings.vatRate,
-    vatInclusive: s.settings.vatInclusive,
     floorPerKg: account?.floorOverridePerKg ?? defaultFloorPerKg(cb, marginPerKg),
   };
   return { input, result: resolvePrice(input), account, channel, sku, exception, notes, lineKey: key };
 }
 
+// Fixed volume bands, in cylinders per drop. The first band is the version price; each band above it deducts the product's step once more.
+export const VOLUME_BANDS = ['1–2', '3–5', '6–10', '11 & up'];
+
 export function boardPrices(s, channelId) {
   return skusForChannel(s, channelId).map(sku => {
     const p = priceFor(s, { channelId, skuId: sku.id, quantity: 1 });
-    return { skuId: sku.id, label: sku.label, contentKg: sku.contentKg, netPerKg: p.result.netPerKg, netPerCyl: p.result.netPerCyl, grossPerCyl: p.result.grossPerCyl };
+    const step = sku.volStepCentavos || 0;
+    const bands = VOLUME_BANDS.map((label, k) => ({ label, grossPerCyl: Math.max(0, p.result.grossPerCyl - step * k) }));
+    return { skuId: sku.id, label: sku.label, contentKg: sku.contentKg, netPerKg: p.result.netPerKg, netPerCyl: p.result.netPerCyl, grossPerCyl: p.result.grossPerCyl, bands };
   });
 }
 
@@ -168,11 +212,20 @@ export const CHANGE_TYPES = {
   BUFFER: 'Channel buffer',
   ACCOUNT_COMPONENT: 'Client premium or discount',
   ACCOUNT_FIELD: 'Client pricing field', // set from the client pricing grid, not the one-line calculator
+  ACCOUNT_PRODUCT: 'Client product pricing', // a client's margin, premium or discount on one product, from the Commercial grid
+  MARGIN_END: 'Channel product removed', // a product stops being priced on a channel
+  SKU_FIELD: 'Product price setting', // a product's content or band step
 };
 
 export const ACCOUNT_FIELDS = {
   fixedMarginPerKg: { label: 'Fixed margin', money: true },
   investmentCentavos: { label: 'Total investment', money: true },
+};
+
+export const PRODUCT_FIELDS = {
+  marginPerKg: 'Margin',
+  premiumPerKg: 'Premium',
+  discountPerKg: 'Discount',
 };
 
 // Which catalogue a component code belongs to.
@@ -211,6 +264,18 @@ export function describeChange(s, c) {
       const f = ACCOUNT_FIELDS[c.field];
       const show = v => (v == null ? 'none' : f?.money ? (v / 100).toFixed(2) : v);
       return `${a?.name} — ${f?.label ?? c.field} ${show(a?.[c.field])} → ${show(c.value)}`;
+    }
+    case 'MARGIN_END': return `${channelLabel(s, c.channelId)}: ${skuLabel(s, c.skuId)} removed from the price list`;
+    case 'SKU_FIELD': {
+      const old = byId(s.skus, c.skuId)?.[c.field];
+      const show = v => (v == null ? '—' : c.field === 'contentKg' ? `${v} kg` : fmt(v));
+      return `${skuLabel(s, c.skuId)} ${c.field === 'contentKg' ? 'content' : 'band step'} ${show(old)} → ${show(c.value)}`;
+    }
+    case 'ACCOUNT_PRODUCT': {
+      const a = byId(s.accounts, c.accountId);
+      const show = v => (v == null ? 'none' : (v / 100).toFixed(2));
+      const cur = a?.productPricing?.[c.skuId]?.[c.field];
+      return `${a?.name} — ${skuLabel(s, c.skuId)} ${PRODUCT_FIELDS[c.field] ?? c.field} ${show(cur)} → ${show(c.value)}`;
     }
     // Older proposals drafted before premiums and discounts were merged into one type.
     case 'ACCOUNT_PREMIUM':
@@ -252,6 +317,19 @@ export function applyChanges(src, changes, when, idFn = p => `${p}_${Math.random
     } else if (c.type === 'ACCOUNT_FIELD') {
       const a = byId(s.accounts, c.accountId);
       if (a && ACCOUNT_FIELDS[c.field]) a[c.field] = c.value;
+    } else if (c.type === 'ACCOUNT_PRODUCT') {
+      const a = byId(s.accounts, c.accountId);
+      if (!a || !PRODUCT_FIELDS[c.field]) continue;
+      a.productPricing ||= {};
+      a.productPricing[c.skuId] ||= {};
+      if (c.value == null) delete a.productPricing[c.skuId][c.field];
+      else a.productPricing[c.skuId][c.field] = c.value;
+    } else if (c.type === 'MARGIN_END') {
+      const cur = marginRule(s, c.channelId, c.skuId);
+      if (cur) cur.effectiveTo = when;
+    } else if (c.type === 'SKU_FIELD') {
+      const k = byId(s.skus, c.skuId);
+      if (k && ['contentKg', 'volStepCentavos'].includes(c.field)) k[c.field] = c.value;
     } else if (c.type === 'ACCOUNT_PREMIUM' || c.type === 'ACCOUNT_DISCOUNT') {
       const a = byId(s.accounts, c.accountId);
       if (!a) continue;
@@ -373,10 +451,10 @@ export function exceptions(s, now = new Date()) {
     }
   }
 
-  for (const req of s.priceRequests.filter(r => r.status === 'pending')) {
+  for (const req of s.priceRequests.filter(r => r.status === 'review')) {
     const subject = req.accountId ? byId(s.accounts, req.accountId)?.name : `Walk-in, ${channelLabel(s, req.channelId)}`;
     rows.push({ kind: 'request', severity: 'amber', subject, entityId: req.id, requestId: req.id,
-      text: `Price request ${req.id.slice(-6)}: ${skuLabel(s, req.skuId)} to ${fmt(req.targetGrossPerCyl)}/cyl (now ${fmt(req.currentGrossPerCyl)})` });
+      text: `Price request ${req.id.slice(-6)}: ${skuLabel(s, req.skuId)} to ${fmt(req.requestedGrossPerCyl)}/cyl (now ${fmt(req.currentGrossPerCyl)})` });
   }
 
   return rows;
@@ -390,23 +468,17 @@ export function subVersionsOf(s, version) {
   return s.priceRequests.filter(r => r.status === 'approved' && r.subOf === version).sort((a, b) => a.subNo - b.subNo);
 }
 
-// What to approve for a request: the client's asked price, kept above the floor and below today's price, in whole pesos.
-export function recommendRequest(s, r) {
-  const live = priceFor(s, { accountId: r.accountId, channelId: r.channelId, skuId: r.skuId, quantity: r.qty, ignoreException: true });
-  if (live.error || !live.result) return null;
-  const sku = byId(s.skus, r.skuId);
-  const kg = sku?.contentKg;
-  if (!kg) return null;
-  const vat = s.settings.vatInclusive === false ? 0 : (s.settings.vatRate || 0);
-  const cur = live.result.grossPerCyl;
-  const floorGross = Math.ceil(live.result.floorPerKg * kg * (1 + vat) / 100) * 100;
-  const wanted = Math.min(cur, r.targetGrossPerCyl);
-  const gross = Math.min(cur, Math.max(floorGross, Math.ceil(wanted / 100) * 100));
-  const reading = s.competitorReadings.find(x => x.id === r.competitorReadingId);
-  let why;
-  if (gross >= cur) why = `The floor ${fmt(floorGross)} leaves no room to go below today's ${fmt(cur)}.`;
-  else if (gross > r.targetGrossPerCyl) why = `Client asks ${fmt(r.targetGrossPerCyl)}, but the floor is ${fmt(floorGross)}, so this is the lowest allowed.`;
-  else why = `Client's asked price is above the floor ${fmt(floorGross)}, so it can be given in full.`;
-  if (reading) why += ` ${reading.brand} was at ${fmt(reading.pricePerCyl)}${gross <= reading.pricePerCyl ? ', and this price meets it' : ', and this price stays above it'}.`;
-  return { cur, gross, floorGross, kg, vat, perKg: roundHalfUp((cur - gross) / (kg * (1 + vat))), why };
+
+// Every client's price per product as it stands: the snapshot kept with each published version.
+export function clientPriceSnapshot(s) {
+  const out = {};
+  for (const a of s.accounts) {
+    const row = {};
+    for (const k of clientSkus(s, a)) {
+      const p = priceFor(s, { accountId: a.id, skuId: k.id, quantity: 1 });
+      if (!p.error && p.result) row[k.id] = p.result.grossPerCyl;
+    }
+    if (Object.keys(row).length) out[a.id] = row;
+  }
+  return out;
 }

@@ -1,4 +1,4 @@
-// Shared price-range filter (min / max, pesos per cylinder, VAT incl.) used by every Price room board.
+// Shared price-range filter (min / max, pesos per cylinder) used by every Price room board.
 // Two draggable handles over the span of prices on the board, plus typed Min / Max for exact values.
 
 import { toCentavos, toInput } from './money.js';
@@ -54,7 +54,7 @@ export function rangeBar(shown, total, noun, prices) {
     <span class="range-in"><span>₱</span><input id="rg-max" type="text" inputmode="decimal" placeholder="Max" value="${range.max}" aria-label="Maximum price per cylinder"></span>
     <button type="button" id="rg-apply" class="small primary">Apply</button>
     ${on ? '<button type="button" id="rg-clear" class="small">Clear</button>' : ''}
-    <span class="small muted range-note">per cyl, VAT incl.${on ? ` · showing ${shown} of ${total} ${noun}` : ''}</span>
+    <span class="small muted range-note">per cyl${on ? ` · showing ${shown} of ${total} ${noun}` : ''}</span>
   </div>`;
 }
 

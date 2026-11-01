@@ -12,7 +12,7 @@ const M = 90;
 const C = { navy: '#0B1F3A', blue: '#1F5AD6', blue50: '#EDF3FF', tiffany: '#0ABAB5', tiffanyDark: '#067F7B', alt: '#EAF8F7', line: '#D9E1EA', muted: '#5A6A80' };
 const FONT = '"Inter", "Segoe UI", system-ui, sans-serif';
 
-// d: { title, docNo, customer, subtitle, version, effective, issued, validUntil, issuedBy, vatRate, ref,
+// d: { title, docNo, customer, subtitle, version, effective, issued, validUntil, issuedBy, ref,
 //      rows: [{ label, contentKg, netPerKg, grossPerCyl, qty?, total? }], total? }
 export async function renderDoc(d) {
   try { await document.fonts?.ready; } catch { /* fonts API unavailable */ }
@@ -72,8 +72,8 @@ export async function renderDoc(d) {
   // Table
   const withQty = d.rows.some(r => r.qty != null);
   const cols = withQty
-    ? [['Product', M, 'left'], ['Qty', 610, 'right'], ['Per kg, net', 790, 'right'], ['Per cylinder, VAT incl.', 1000, 'right'], ['Total', W - M, 'right']]
-    : [['Product', M, 'left'], ['Content', 640, 'right'], ['Per kg, net', 880, 'right'], ['Per cylinder, VAT incl.', W - M, 'right']];
+    ? [['Product', M, 'left'], ['Qty', 610, 'right'], ['Per kg', 790, 'right'], ['Per cylinder', 1000, 'right'], ['Total', W - M, 'right']]
+    : [['Product', M, 'left'], ['Content', 640, 'right'], ['Per kg', 880, 'right'], ['Per cylinder', W - M, 'right']];
   const top = 480;
   rect(M - 16, top, W - 2 * M + 32, 58, C.blue50);
   rect(M - 16, top + 58, W - 2 * M + 32, 3, C.navy);
@@ -106,12 +106,12 @@ export async function renderDoc(d) {
     y += 30;
     rect(700, y, W - M + 16 - 700, 84, C.navy);
     rect(700, y + 84, W - M + 16 - 700, 5, C.tiffany);
-    text('Total, VAT incl.', 730, y + 52, { w: 600, px: 22, color: 'rgba(255,255,255,.8)' });
+    text('Total', 730, y + 52, { w: 600, px: 22, color: 'rgba(255,255,255,.8)' });
     text(fmt(d.total), W - M - 10, y + 56, { w: 750, px: 36, color: '#fff', align: 'right' });
     y += 90;
   }
 
-  text(`Per-cylinder prices include ${Math.round((d.vatRate ?? 0.12) * 100)}% VAT. Per-kg prices are net of VAT. Amounts in Philippine pesos.`, M, y + 60, { px: 19, color: C.muted, max: W - 2 * M });
+  text('Amounts in Philippine pesos.', M, y + 60, { px: 19, color: C.muted, max: W - 2 * M });
 
   // Footer
   rect(M, H - 150, W - 2 * M, 2, C.line);

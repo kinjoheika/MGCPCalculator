@@ -25,7 +25,7 @@
   --radius: 10px;
   --shadow: 0 1px 2px rgba(11, 31, 58, .05), 0 6px 20px rgba(11, 31, 58, .05);
   --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --drawer-w: 600px;
+  --drawer-w: max(240px, 16.666vw);
   --topbar-h: 60px;
 }
 
@@ -429,6 +429,94 @@ table.grid-table .col-hist { width: 90px; }
 .terms-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; font-size: 11px; padding: 1px 0 3px; }
 .terms-line .term { white-space: nowrap; font-weight: 650; color: var(--navy); font-variant-numeric: tabular-nums; }
 .terms-line .term i { font-style: normal; font-weight: 400; color: var(--muted); margin-right: 4px; }
+/* Bulk: client terms in a narrow right-hand drawer (one sixth of the page), no scrolling */
+.drawer.ct-drawer { width: 16.666vw; min-width: 200px; }
+.ct-drawer .drawer-head { padding: 4px 4px 0 10px; }
+.ct-drawer .drawer-body { overflow: hidden; padding: 4px 10px 8px; }
+.ct-drawer .sub-h { margin: 6px 0 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.ct-drawer .sub-h.first { margin-top: 0; }
+.drawer-title { color: #fff; font-weight: 650; font-size: 13px; padding: 6px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.term-list { display: grid; gap: 0; }
+.term-row { display: flex; flex-direction: column; gap: 0; padding: 3px 0; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.25; }
+.term-k { color: var(--muted); font-size: 10.5px; }
+.term-v { font-weight: 600; color: var(--navy); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-drawer p { margin: 4px 0 0; font-size: 12px; }
+
+/* Flag a client price: a panel in the centre of the page, over a dimmed background */
+.flag-backdrop { position: fixed; inset: 0; z-index: 70; background: rgba(11, 31, 58, .45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.flag-modal { width: min(440px, 100%); background: var(--surface); border-radius: 12px; box-shadow: 0 20px 50px rgba(11, 31, 58, .3); padding: 16px 18px; }
+
+/* Clients: plain rows, no boxes, no scrolling */
+.clients-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 12px 0 2px; flex-wrap: wrap; }
+.clients-head h2 { margin: 0; font-size: 16px; }
+.clients-tools { display: flex; align-items: center; gap: 8px; }
+.clients-tools input[type=search] { width: 240px; min-height: 32px; }
+.clients-more { position: relative; }
+.clients-more > summary { list-style: none; cursor: pointer; }
+.clients-more > summary::-webkit-details-marker { display: none; }
+.multi-products { position: relative; min-width: 260px; }
+.multi-products > summary { list-style: none; cursor: pointer; }
+.multi-products > summary::-webkit-details-marker { display: none; }
+.multi-products > summary { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 34px; padding: 4px 10px; border: 1px solid var(--line-2, var(--line)); border-radius: 8px; background: var(--surface); }
+.multi-products .multi-menu { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20; max-height: 300px; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 28px rgba(11, 31, 58, .16); padding: 6px; }
+.multi-products .multi-opt { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+.multi-products .multi-opt:hover { background: var(--tiffany-50); }
+.clients-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 260px; display: grid; gap: 6px; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 28px rgba(11, 31, 58, .16); }
+.clients-menu .small { justify-self: start; }
+.clients-more .clients-menu .small.muted { justify-self: stretch; }
+.client-rows { list-style: none; margin: 0; padding: 0; }
+.client-row { display: flex; align-items: center; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--line); }
+.client-row.on { background: var(--blue-50); }
+.client-row .grow > b { font-size: 14px; }
+.terms-editor { margin: 0 0 18px; padding-bottom: 14px; border-bottom: 2px solid var(--line); }
+
+/* Walkthrough overlay: the spotlight's huge shadow dims everything except the target */
+#tour-overlay { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
+#tour-overlay .tour-spot { position: fixed; border-radius: 10px; box-shadow: 0 0 0 9999px rgba(11, 31, 58, .55), 0 0 0 3px var(--tiffany); transition: all .2s ease; display: none; pointer-events: none; }
+#tour-overlay .tour-card { position: fixed; right: 20px; bottom: 20px; width: min(360px, calc(100vw - 40px)); background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--tiffany); border-radius: 12px; box-shadow: 0 14px 36px rgba(11, 31, 58, .25); padding: 14px 16px; pointer-events: auto; }
+#tour-overlay .tour-card.centred { left: 50%; top: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); }
+#tour-overlay .tour-card h3 { margin: 4px 0 6px; font-size: 15px; color: var(--navy); }
+#tour-overlay .tour-card p { margin: 0 0 12px; font-size: 13.5px; line-height: 1.5; }
+#tour-overlay .tour-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+
+/* Spinner on a button while it works */
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255, 255, 255, .45); border-top-color: #fff; border-radius: 50%; vertical-align: -2px; margin-right: 6px; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Pending-change summary on Bulk, Commercial and Dealer */
+.chg-summary { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--tiffany); border-radius: 10px; padding: 8px 10px; margin-bottom: 10px; }
+.chg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.chg-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--blue-50); border: 1px solid var(--line); border-radius: 999px; padding: 3px 4px 3px 10px; font-size: 12.5px; color: var(--navy); }
+.chg-chip button.icon { min-height: 22px; padding: 0 6px; }
+
+/* Three stages, upper right of the Price room */
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.chevrons.stages { margin-left: auto; }
+
+/* Competitor price photo, shown on hover in the Dealer page */
+.ds-photo { position: fixed; z-index: 60; width: 320px; max-width: calc(100vw - 16px); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 14px 36px rgba(11, 31, 58, .25); padding: 6px; pointer-events: none; font-size: 12px; color: var(--muted); }
+.ds-photo img { display: block; width: 100%; height: auto; border-radius: 6px; }
+.ds-photo-cap { margin: 6px 2px 2px; font-size: 12px; color: var(--navy); font-weight: 600; }
+
+/* Guided tour page */
+.tour-list { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 12px; }
+.tour-step { display: grid; grid-template-columns: 34px 1fr; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.tour-n { width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: #fff; display: grid; place-items: center; font-weight: 650; font-size: 13px; }
+.tour-body h3 { margin: 0 0 4px; font-size: 15px; color: var(--navy); }
+.tour-body p { margin: 0 0 8px; font-size: 13.5px; line-height: 1.5; }
+
+/* Hover card on a client name (Commercial) */
+.cg-float { position: fixed; z-index: 60; width: 300px; max-width: 80vw; pointer-events: none; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-top: 3px solid var(--tiffany); border-radius: 10px; box-shadow: 0 14px 36px rgba(11, 31, 58, .18); padding: 12px 14px; font-weight: 400; font-size: 13px; line-height: 1.4; white-space: normal; text-align: left; }
+.cl-tip { cursor: default; }
+.tip-name { display: block; font-weight: 650; font-size: 14px; color: var(--navy); }
+.tip-ident { display: block; font-size: 11.5px; color: var(--muted); margin-bottom: 6px; }
+.tip-sec { display: block; margin: 8px 0 2px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--tiffany-600); font-weight: 650; }
+.tip-row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border-bottom: 1px dashed var(--line); font-size: 12px; }
+.tip-row:last-child { border-bottom: 0; }
+.tip-row.on i { color: var(--navy); font-weight: 650; }
+.tip-row.on b { color: var(--tiffany-600); }
+.tip-row i { font-style: normal; color: var(--muted); }
+.tip-row b { font-weight: 600; color: var(--navy); text-align: right; font-variant-numeric: tabular-nums; }
 .term-edit { margin-left: auto; }
 
 /* Client terms editor in Configuration */
@@ -467,17 +555,16 @@ table.grid-table .col-hist { width: 90px; }
 .board-head .stamp-lg { box-shadow: 0 0 0 4px #fff, 0 0 0 6px var(--tiffany-50); }
 
 /* ---- Competitor Price Watch: compact form ---- */
-.cpw-form { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow); }
-.cpw-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.cpw-form { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; box-shadow: var(--shadow); }
+.cpw-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
 .cpw-f { flex: 1 1 140px; min-width: 0; margin-bottom: 0; }
-.cpw-f > span { font-size: 11.5px; margin-bottom: 2px; }
-.cpw-f input, .cpw-f select { min-height: 36px; padding: 5px 8px; font-size: 13px; }
+.cpw-f > span { font-size: 11px; margin-bottom: 1px; }
+.cpw-f input, .cpw-f select { min-height: 32px; padding: 4px 8px; font-size: 13px; }
 .cpw-f-sm { min-height: 34px !important; padding: 4px 8px !important; font-size: 12.5px !important; }
 .cpw-zone { padding: 2px 0 4px; }
-.cpw-photo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 8px; }
-.cpw-photo input[type=file] { font-size: 12.5px; min-height: 34px; }
-.cpw-photo .toggle { min-height: 34px; }
-.cpw-form .primary { width: 100%; margin-top: 4px; min-height: 40px; }
+.cpw-photo { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 2px 0 6px; }
+.cpw-photo input[type=file] { font-size: 12.5px; min-height: 30px; }
+.cpw-form .primary { width: 100%; margin-top: 2px; min-height: 36px; }
 
 /* ---- Competitors Board: surveyor stamps ---- */
 .comp-stamp { font-size: 11px; color: var(--muted); line-height: 1.3; margin-top: 4px; }
@@ -488,9 +575,9 @@ table.matrix .decision-col { background: var(--tiffany-50); border-right: 2px so
 table.matrix thead .decision-col { background: var(--tiffany-50); }
 
 /* Price Watch sections */
-.cpw-sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 14px; margin-bottom: 14px; }
+.cpw-sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 8px 10px; margin-bottom: 10px; }
 .cpw-main { border-top: 4px solid var(--tiffany); }
-.cpw-sec-head, .cpw-sec > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.cpw-sec-head, .cpw-sec > summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .cpw-sec > summary { cursor: pointer; list-style: none; margin-bottom: 0; }
 .cpw-sec[open] > summary { margin-bottom: 10px; }
 .cpw-sec > summary::-webkit-details-marker { display: none; }
@@ -796,7 +883,11 @@ table.grid-table.simple.hist-open thead th { height: 34px; }
 table.grid-table.simple thead th.grp-margin { color: #0E6B3F; }
 table.grid-table.simple thead th.grp-prem { color: #1848B0; }
 table.grid-table.simple thead th.grp-disc { color: #8A5200; }
-table.grid-table.simple tr.cl-row > th, table.grid-table.simple tr.cl-row > td { background: var(--bg); border-top: 1px solid var(--line-2); }
+table.grid-table.simple tr.cl-row > th, table.grid-table.simple tr.cl-row > td[rowspan] { background: var(--bg); }
+table.grid-table.simple tbody tr.cl-row > * { border-top: 1px solid var(--line-2); }
+table.grid-table.simple td.pr-prod { font-weight: 500; color: var(--text); white-space: nowrap; }
+.cg-filter-menu .multi-actions input[type=search], .multi-menu .multi-actions input[type=search] { flex: 1; min-width: 0; min-height: 30px; font-size: 12.5px; }
+.multi-menu > .multi-actions { display: flex; gap: 8px; align-items: center; }
 .cd-line { display: flex; gap: 22px; flex-wrap: nowrap; font-size: 12px; white-space: nowrap; overflow: hidden; }
 .cd-line i { font-style: normal; color: var(--muted); margin-right: 4px; }
 table.grid-table.simple tr.pr-row > th.pr-th { padding-left: 24px; font-weight: 500; color: var(--text); }
