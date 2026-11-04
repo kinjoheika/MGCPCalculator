@@ -1,239 +1,277 @@
-# MGC Pricing: calculations per page
+# MGC Pricing: how the numbers are worked out
 
-**Last reviewed:** 2026-11-03. Checked against the code at commit `3ce6b5c` plus the uncommitted working changes (including the deleted `db/schema*.sql` files).
-**Method:** read from the code. Nothing here was run in a browser. The engine's own tests are in `engine.test.html`; run them before trusting a change to a formula.
-
-**Keep this file current.** When a change alters a formula, a rounding rule, a default, or what a screen shows, update the section for that page. If it touches the engine or a shared rule, update section 1 as well. Add a line to the change log at the bottom.
-
----
-
-## 1. Shared rules
-
-These apply on several pages. Each one is computed in one place, and every screen reads from it.
-
-**Money.** All amounts are whole centavos (integers). Display goes through `fmt` in [js/money.js](js/money.js). Rounding is half away from zero, to whole centavos. The engine rounds once per ladder step ([js/engine.js:39](js/engine.js:39), `resolvePrice`).
-
-**Channel price** (the price on a price list, with no client terms):
-
-- Ladder per kg: acquisition cost + hauling + channel margin + channel buffer.
-- Each step is rounded on its own. Net per kg is the running sum.
-- Per cylinder = round(net per kg × content kg).
-- Gross per cylinder equals net per cylinder. No VAT is added (see section 4).
-- Source: `priceFor` with no account ([js/pricing.js:127](js/pricing.js:127)), then `boardPrices` ([js/pricing.js:180](js/pricing.js:180)).
-
-**Client price** (one client, one product):
-
-- Ladder per kg: acquisition + hauling + product margin + premiums − discounts + buffer.
-- Product margin: the client's own margin for that product if set, otherwise the channel margin. The client's **fixed margin is not in this chain** (reference only).
-- Premiums: each premium row on the client. A fixed rate comes from the catalogue. Two codes are derived:
-  - `ROI_INSTALL` = investment ÷ TRMV kg.
-  - `ENTRUSTED_CYL` = cylinder count × cylinder cost ÷ TRMV kg.
-  - A premium with no rate and no formula input is skipped, with a note.
-- Discounts: each discount row that has a rate. Also added: the approved price-request discount (`APPROVED_EXCEPTION`), and the product's own premium and discount.
-- Per cylinder = round(net per kg × content kg).
-
-**Volume bands** (`VOLUME_BANDS`, [js/pricing.js:178](js/pricing.js:178)): 1–2, 3–5, 6–10 and 11 & up cylinders per drop. Band k price = max(0, version price − band step × k). The step is per product (`volStepCentavos`). Bands show in the Client Pricing hover and on the Products screen. They are **not printed** on the price list.
-
-**Floor** (`defaultFloorPerKg`, [js/engine.js:19](js/engine.js:19)): acquisition + hauling + margin, with no premiums, discounts or buffer. A client's `floorOverridePerKg` replaces it when set. Below floor means net per kg is under the floor. This feeds the quote's "Needs approval" flag, the red exceptions, and the simulation's "newly below floor" count.
-
-**Current price for a price request** (`currentFor`, [js/price-requests.js:16](js/price-requests.js:16)): the client's price ignoring approved sub-versions. See limitation L15.
-
-**Simulation** (`simulate`, [js/pricing.js:346](js/pricing.js:346)): prices before and after the proposal, for every channel and product that has a margin before or after, and for every active client with a main product. Monthly impact = sum of round(change per kg × average monthly volume kg). Clients with no volume are excluded and counted.
-
-**Staleness.** A competitor reading is stale after `settings.competitorStaleDays` (7) days ([js/pricing.js:201](js/pricing.js:201)). A price list is stale when the cost basis is newer than the list ([js/pricing.js:53](js/pricing.js:53)). A stale list blocks printing, saving and emailing on the Quote desk.
+**Date:** 2026-11-04
+**Purpose:** Explain each number in the app, page by page. Please read it, then sign off at the end.
+**Keep it current:** When a number changes, update its section and add a line to the change log.
 
 ---
 
-## 2. Pages
+## 1. Words used
 
-### Sign-in and shell (`index.html`)
+- **Channel price:** the price on a price list. It has no client-specific terms.
+- **Client price:** the price for one client and one product. It includes that client's terms.
+- **Margin:** our profit per kg. Each channel has one margin per product.
+- **Buffer:** an extra amount per kg on a channel. It can be negative.
+- **Premium:** an extra charge per kg for a client. Examples: tank rental, credit risk.
+- **Discount:** a reduction per kg for a client. Examples: supply only, competition.
+- **Band:** a volume step. Bigger orders get a lower price.
+- **Floor:** the lowest price we accept without approval.
+- **Version:** one published price list. Each new version is numbered one higher.
 
-- No calculations. With a database configured, the sign-in form is shown first. The header badge reads "Database" or "Local only".
-- Every database write that fails shows "Not saved" and leaves the screen as it was.
+---
 
-### Tour (`js/views/tour.js`, `js/tours.js`)
+## 2. How a channel price is worked out
 
-- No calculations. Text and links only. Seller and manager only.
+1. Start with the acquisition cost per kg.
+2. Add hauling per kg.
+3. Add the channel margin per kg.
+4. Add the channel buffer per kg.
+5. Multiply the total per kg by the content of the cylinder in kg. This is the price per cylinder.
 
-### Quote desk (`js/views/quote.js`), seller route
+**Example (made-up numbers):** acquisition 60.00 + hauling 2.00 + margin 18.00 + buffer 0.00 = 80.00 per kg. For an 11 kg cylinder: 80.00 × 11 = **880.00 per cylinder.**
 
-Not in the seller's menu. Reached by URL `#/quote`.
+No VAT is added. Every price is a net price.
 
-- **Customer.** A client from the search, or a walk-in with a channel.
-- **Lines.** Every product sold on the channel (`skusForChannel`), each priced with `priceFor`. The client's terms apply when a client is chosen. Net per kg and per cylinder are shown. The seller does not see the floor or the ladder.
-- **Line status.**
-  - "Request pending": a price request for this client and product is in Review.
-  - "Needs approval": net per kg is below floor and there is no approved exception.
-  - Held lines are left off the printed and emailed list.
-- **Print, Save price list, Send email** are enabled only when the list is not stale and at least one line is selectable and not held.
-- **Valid until** = issue date + `settings.quoteValidityDays` (7). A past quote shows "Expired" under Past quotes.
-- **Email** writes two events: `PRICE_LIST_ISSUED` and `PL_EMAIL_SENT`. It saves the address on the client if it is new.
-- The Past quotes list reads the `quotes` table. No code path creates a quote record (L18).
+---
 
-### Price lists (`js/views/board.js`)
+## 3. How a client price is worked out
 
-**Index.** Lists the channels the user can see.
+1. Start with acquisition plus hauling.
+2. Add the client's margin for this product. If the client has no margin of its own, use the channel margin.
+3. Add the client's premiums.
+4. Subtract the client's discounts.
+5. Add the channel buffer.
+6. Multiply by the cylinder content in kg.
 
-**Channel page:**
+Two premiums are worked out from the client's own figures:
 
-- **Product table.** The stored snapshot for the version shown: net per kg and gross per cylinder. Falls back to a live calculation only when no snapshot exists.
-- **Client prices.** One row per client product. The current figure is the version's stored `clientPrices` snapshot, or a live calculation for the current version when no snapshot exists.
-  - Compare with up to two earlier versions.
-  - Change = current − compared version, per cylinder. An increase shows red.
-- **Approve channel.** Writes `channelApprovals` on the version. Shown to anyone with access to the channel (L6).
-- **Flag.** Opens the price request form for that client and product.
-- **Email.** Opens a mail draft with the lines as text. The PDF is attached by hand.
-- Superseded banner when an older version is open. Stale banner when the cost basis is newer than the list.
+- **Installation cost:** total investment ÷ the client's TRMV (kg).
+- **Entrusted cylinders:** number of cylinders × cylinder cost ÷ TRMV (kg).
 
-### Price Room: Channels board (`js/views/priceroom.js`, `channelsBoard`)
+A premium with no rate and no figures is left out. The app shows a note when this happens.
 
-- Shows up to five channels picked by the user.
-- Rows are products priced on those channels, or priced in the open proposal.
-- Each cell shows the channel price per cylinder now, and the proposed price with its change when the open proposal alters it.
-- Price range filter (₱ per cylinder, min and max) applies to every shown price, current or proposed.
+The client's **fixed margin** is shown on screen, but it does **not** change any price. See item L12.
 
-### Price Room: Client Pricing (`js/views/clientgrid.js`)
+---
 
-One page per channel: Commercial, Bulk, Dealer and the other channels.
+## 4. Volume bands
 
-**Top row inputs** (`js/session.js`). Acq, Hauling cost, Total Acq, Margin and Buffer. Total Acq = Acq + Hauling. A blank hauling uses the current hauling. These values are kept in this browser only. They drive the future prices, and do not change any price until saved to a proposal.
+Each product has four bands, based on cylinders per drop:
 
-**Commercial and Bulk** (one row per client product):
+| Band | Cylinders per drop | Price |
+|---|---|---|
+| 1 | 1 to 2 | Full price |
+| 2 | 3 to 5 | Full price minus one band step |
+| 3 | 6 to 10 | Full price minus two band steps |
+| 4 | 11 and up | Full price minus three band steps |
 
-- **Current price** = client price for that product (`priceFor`), with the latest approved sub-version label beside it.
-- **Future price** per cylinder (`futureValue`, [js/views/clientgrid.js:469](js/views/clientgrid.js:469)) = round((Total Acq + Margin + Buffer + Premiums − Discounts) × content kg).
-  - **Margin:** the client's margin for this product (pending in a proposal first, then saved), else the channel margin in a pending proposal, else the top-row margin.
-  - **Buffer:** the buffer in a pending proposal, else the top-row buffer.
-  - **Premiums:** the total of the premium columns (for ROI, investment ÷ TRMV when the ₱/kg is blank), plus the client's other premiums, plus the product's premium (pending or saved).
-  - **Discounts:** the same, for the discount columns.
-  - Shows "—" when Acq, Margin or Buffer is blank.
-- **Margin column.** A floating client margin chip (dashed when it is waiting in a proposal), the channel margin for reference, and the input.
-- **Premiums and Discounts** totals per client, from the columns beside them.
-- **Hover on future price.** Band prices from the future price, with the band that matches the client's volume per drop highlighted.
-- **Bulk hover on current price.** Margin, acquisition, hauling and buffer behind the price.
-- **Price history columns** (toggle) read dated snapshots from `state.clientPriceHistory`. That data only exists in database mode (L21). The demo shows "—".
-- **Client name** opens the client terms drawer (view only). The Edit link goes to Configuration.
-- **Filters.** Clients (multi-select and search), products (Commercial), and the price range on the main product price.
-- **Save.** Creates proposal changes; it never writes a price directly:
-  - Acq and Hauling, only when different from current, and only with cost-edit access.
-  - Buffer, only when different and with buffer-edit access.
-  - Premium and discount rows per client and code, when different.
-  - Product margin, premium and discount, per client and product, when different.
+The band step is set per product, in pesos per cylinder. A price never goes below zero.
 
-**Dealer** (`js/views/dealersheet.js`):
+Bands show on the Client Pricing hover and on the Products screen. They are **not** printed on the price list (see L22).
 
-- Rows: SRP and Dealer Price, under each Price Watch product. Internal prices use the product's first active variant.
-- **Future price** = round((Total Acq + top-row margin + top-row buffer) × content kg) (`computedFuturePrice`, [js/views/dealersheet.js:38](js/views/dealersheet.js:38)). **No premiums or discounts** are included, which differs from Commercial (L14).
-- **Own columns:** Current (published Dealer price), CODO (CBK channel, live), Dealer pick-up (Dealer channel, live), Semi-dealer (Retail outlet, live).
-- **Competitor columns:** newest reading for each partner, product, basis and service. Difference = reading − future price. Stale readings are marked.
-- **Final price** is typed in and kept in memory only. It is not saved (L14).
+---
 
-### Price Room: Price History (`priceHistoryTab`)
+## 5. The floor
 
-- Columns are versions, newest first. Filter by product and from/to version.
-- Rows: channel prices per product. Each cell is the stored price for that version. Red or green marks a change from the version before it.
-- Sub-version rows: approved price requests, placed under the version they belong to.
-- "Approved by": the first APPROVE event whose proposal published that version (L20).
-- Sub-version table: before, after, approver and date for each approved request.
+- **Floor per kg** = acquisition + hauling + margin.
+- Premiums, discounts and buffer are not in the floor.
+- A client can have its own floor. If it does, that one is used.
+- A price below the floor is marked for approval.
 
-### Price Room: PL Notices (`noticesTab`)
+The floor definition is still open. See question Q4 below.
 
-- Matrix: staff (not messengers) by channel. "Approved" when the version has that channel's approval. "Not approved" when the person's channels include it. "·" otherwise.
-- Count shows approved over total for the current version.
-- Email log: rows for the current version.
-- Seeded acknowledgments are not read here (L19).
+---
 
-### Price Room: MPL calculator (`js/views/priceroom-wizard.js`)
+## 6. Each page
 
-Stages: Draft, Review, Approved. Simulate sits between Draft and Review.
+### 6.1 Quote desk (seller)
 
-- **Draft.** The calculator offers two change types: channel margin (channel, product, ₱ per kg) and channel buffer (₱ per kg, negative allowed). Acquisition, hauling, client and product changes come from Client Pricing and Configuration.
-- **Simulate.** Runs `simulate` on a copy. Shows channel changes, client changes, monthly impact, clients newly below floor, and competitor crossings.
-- **Review.** Lists channel prices per cylinder before and after, and the number of client prices that change. Shows approval pills for the two approvers.
-- **Publish.** Creates version = current + 1 via `applyChanges`. Rows are versioned: the current row gets an end date and a new row is added. Stores the channel snapshot and the client snapshot. Stores `snapshotHash`, a SHA-256 of version, time, changes and review. The fallback on `file://` is labelled FNV-1a.
-- **Open proposals sheet.** Lists every unpublished proposal, its status, approvals (for example "1/2"), changes, drafter and time.
-- **Preview.** The changes in every open proposal, plus the one being drafted, feed Client Pricing's future prices and margins (`pendingAll`).
+- **Shows:** each product's price per kg and per cylinder, for one client or for a walk-in customer.
+- **Worked out:** the client price (section 3), or the channel price for a walk-in.
+- **"Request pending":** a price request for this client and product is waiting for review.
+- **"Needs approval":** the price is below the floor and nobody has approved it.
+- **Valid until:** issue date + 7 days.
+- **Print, save, send email:** available only when the price list is current and at least one line is ticked and not on hold.
 
-### Price Watch (`js/views/market.js`)
+### 6.2 Price lists
 
-- **Due this week.** For each tracked brand with a zone: due when there is no reading for that zone and brand, or the newest is older than 7 days.
-- **Today.** Readings this user has submitted today.
-- **Outlier check.** When the new price is more than 10% away from the newest reading for the same zone, product and brand, it asks for confirmation and shows the percentage.
-- **Recent readings.** The latest 12. Stale ones are marked with their age.
-- **Zone** defaults from the brand's zone.
-- **Price** is stored in centavos. A photo is required. Submit requires a database connection (L13).
+- **Product table:** the prices saved when that version was published.
+- **Client prices:** one row per client product. You can compare with up to two earlier versions.
+- **Change column:** this version's price minus the earlier version's price. Increases show in red.
+- **Approve button:** records that the channel's list was approved.
+- **Flag button:** opens a price request for that client and product.
+- **Email button:** opens a new email with the prices typed in. The PDF is attached by hand.
 
-### Price Requests (`js/views/requests.js`, `js/price-requests.js`)
+### 6.3 Price Room: Channels board
 
-- **Clients:** bulk and commercial only. **Products:** the client's own list, or every product on its channel if none is set.
-- **Current price:** `currentFor` (ignores approved sub-versions, L15).
-- **Difference shown** = current − requested, when above zero.
-- **Submit for review:** requested price must be below current, and a reason is required.
-- **Save as draft:** only requires a price above zero.
-- **Margin implication** (managers only): new margin = current margin − round((current − requested) ÷ content kg).
-- **Number:** `PR-YYYY-NNNN`, one above the highest in the year.
-- **Approve** (`decide`): final price defaults to the requested price and must be above zero and below the current price stored at submission. Sub-version = `v{version}.{n}`, where n counts approved requests under that version, across all clients. The approved discount per kg = round((current − final) ÷ content kg). It applies to the client's pricing until the next version.
+- **Shows:** up to five channels side by side, one row per product.
+- **Each cell:** the channel price per cylinder today. If a proposal changes it, the new price and the difference show too.
+- **Price range filter:** shows only prices between the minimum and maximum you enter.
+
+### 6.4 Price Room: Client Pricing
+
+This is the main working screen for each channel.
+
+**Top row (Acq, Hauling, Margin, Buffer):**
+- These numbers are used only for the future prices on this screen.
+- Total Acq = Acq + Hauling. A blank hauling uses the current hauling.
+- These numbers do **not** change any price until you press Save.
+
+**Commercial and Bulk, per client product:**
+
+- **Current price:** the client price today.
+- **Future price:** (Total Acq + Margin + Buffer + Premiums − Discounts) × cylinder content.
+  - **Margin:** the client's own margin if it has one. Otherwise the margin waiting in a proposal. Otherwise the top-row margin.
+  - **Buffer:** the buffer waiting in a proposal, or the top-row buffer.
+  - **Premiums and discounts:** the client's amounts, including anything waiting in a proposal.
+  - If Acq, Margin or Buffer is blank, the future price shows "—".
+- **Margin column:** the client's own margin, in a small badge over the cell. A dashed badge means it is waiting in a proposal.
+- **Hover on the future price:** shows the band prices. The band that matches the client's drop is highlighted.
+- **Price history columns:** show past prices for the client. They are empty in the demo (see L21).
+- **Save:** does not change prices directly. It adds the changes to the open proposal.
+
+**Dealer channel:** see 6.5.
+
+### 6.5 Price Room: Dealer sheet
+
+- **Rows:** SRP and Dealer Price, for each product that Price Watch tracks.
+- **Future price:** (Total Acq + top-row Margin + top-row Buffer) × cylinder content. Premiums and discounts are **not** included (see L14).
+- **Our prices:** the current Dealer price, CODO, Dealer pick-up and Semi-dealer.
+- **Competitor prices:** the newest reading for each competitor. The difference is the reading minus the future price. Old readings are marked "stale".
+- **Final price column:** you can type a number, but it is not saved (see L14).
+
+### 6.6 Price Room: Price History
+
+- **Columns:** one per version, newest first.
+- **Cells:** the saved price for that version.
+- **Colour:** red means the price went up from the version before. Green means it went down.
+- **Sub-version rows:** approved price requests, shown under the version they belong to.
+- **Approved by:** shows only the first approver (see L20).
+
+### 6.7 Price Room: PL Notices
+
+- **Table:** each staff member against each channel. Shows whether they approved the channel's current list.
+- **Count:** approved out of total, for the current version.
+- **Email log:** the emails sent for the current version.
+
+### 6.8 Price Room: MPL calculator (proposals)
+
+A proposal goes through four steps: **Draft → Simulate → Review → Publish.**
+
+1. **Draft:** add a channel margin or a channel buffer.
+2. **Simulate:** calculates the new prices, and the monthly change in money. Nothing is saved.
+   - Monthly change = change per kg × average monthly volume.
+   - Clients with no volume figure are left out, and the number left out is shown.
+   - It also lists clients who would fall below floor.
+3. **Review:** two approvers must each press Approve.
+4. **Publish:** creates the next version. The old version keeps its prices.
+
+Each published version gets a fingerprint (a hash) of its date, changes and review. This shows the version was not changed later.
+
+**Open proposals list:** every proposal not yet published, with its status and approvals.
+
+**Preview:** all open proposals feed the future prices in Client Pricing.
+
+### 6.9 Price Watch (competitor readings)
+
+- **Due this week:** each tracked competitor in a zone with no reading in the last 7 days.
+- **Outlier check:** if a new price is more than 10% away from the last reading for the same zone, product and competitor, the app asks you to confirm.
+- **Recent readings:** the last 12 readings. Old ones are marked.
+- **Photo:** required for every reading.
+
+### 6.10 Price requests
+
+- **Who can ask:** bulk and commercial clients only.
+- **Current price:** the client's price today, without approved sub-versions (see L15).
+- **Difference:** current price minus requested price.
+- **Submit:** requested price must be lower than current, and a reason is required.
+- **Save as draft:** no check on the price.
+- **Margin effect (managers only):** shows what the margin becomes if the request is approved.
+- **Number:** PR-year-number, counting up each year.
+- **Approve:** the final price must be above zero and below the current price. Approved requests get a sub-version number, such as v5.1. The discount applies until the next version is published.
 - **Cancel:** a reason is required.
 
-### Notifications bell (`js/notify.js`)
+### 6.11 Notifications bell
 
-- **Count:** requests in Review. Shown only to users who can see approvals.
-- **Panel for managers:** requests waiting, and the three newest sub-versions of the current version.
-- **Exceptions** (`exceptions`, [js/pricing.js:406](js/pricing.js:406)) are calculated but not drawn (L11). The rules are:
+- **Number on the bell:** requests waiting for a decision. Managers only.
+- **Panel:** requests waiting, and the three newest sub-versions.
+- **Exception warnings:** the app works these out, but does not show them (see L11). They are:
   - Below floor (red).
   - Contract expired (red), or ending within 30 days (amber).
-  - Behind TRMV pace: volume ÷ TRMV is less than the share of contract time elapsed (amber).
-  - No competitor reading in 7 days for a zone (amber).
-  - A competitor is lower than the client's price for the same zone and product (amber).
+  - Behind contract pace (amber). Pace = volume ÷ TRMV, compared with time used so far.
+  - No competitor reading for 7 days in a zone (amber).
+  - A competitor cheaper than our client price in the same zone (amber).
 
-### Log (`js/views/log.js`, admin only)
+### 6.12 Log (admin only)
 
-- **Issues:** events from the last 7 days, grouped by proposal, with the cause shown.
-- **Channels, Clients, Competitors, Users, Products:** the same events grouped by that item. Products also shows a price table by version.
-- Each event's text is built from its own `after` fields. No new calculations.
+- Shows every change, in order.
+- **Issues:** the last 7 days, grouped by proposal.
+- Other tabs group the same changes by channel, client, competitor, user or product.
 
-### Configuration (`js/views/config.js`)
+### 6.13 Configuration
 
-- **Users.** Saves only if at least two managers or admins remain, and at least one price list for sellers and viewers. Logs what changed.
-- **Access matrix.** Admin only. Roles by part, plus per-person overrides. "Same as role" removes an override.
-- **Channels.** Order, add, rename. Remove only when no clients and no priced products.
-- **Products sold per channel.** Ticking a product needs a starting margin, which goes to the proposal. Unticking goes to the proposal as a channel product removal.
-- **Products.** Name, content kg, band step (₱ per cylinder), Price Watch, sold, variants. Content and band step changes go to the proposal and the field is reset to its old value (L16). Remove only when unused.
-- **Zones and competitor brands.** Renaming carries readings and clients across. Remove only when unused.
-- **Clients (CSV import).**
-  - Channel matched by ID, label or audience (prefix allowed).
-  - Clients matched by Account ID, then by name.
-  - Merge or replace. Rows with errors are skipped and listed.
-  - Main product falls back to 11 kg MGas when none is given and it is priced.
-  - Premium codes take an optional ₱ per kg. Discounts need a rate.
-- **Client editor.** Basic record, then terms. Fixed margin and total investment are price levers and go to the proposal. Other terms save directly.
-- **Usable kg** (`usableKg`, [js/clientterms.js:41](js/clientterms.js:41)) = Σ tanks × capacity × 0.9 × 0.6.
+- **Users:** at least two managers or admins must remain. Each change is logged.
+- **Access:** admin only. Sets what each role can see and do.
+- **Channels:** a channel can be removed only when no clients or products use it.
+- **Products sold per channel:** adding a product needs a starting margin. The change goes into a proposal.
+- **Products:** changes to content or band step go into a proposal. The screen then shows the old value again (see L16).
+- **Zones and competitors:** renaming keeps the old readings and clients. Removing needs them unused.
+- **Clients (CSV import):** the app previews the file first. Rows with errors are skipped and listed.
+- **Client edit:** basic details save straight away. Fixed margin and total investment go into a proposal.
+- **Usable kg:** sum of tank sizes × tank count × 90% × 60%.
 
 ---
 
-## 3. Calculated values that are stored but not used
+## 7. Values saved but not used
 
-- `settings.vatRate` (0.12) and `vatInclusive` are in the seed. No code reads them (L23).
-- `fixedMarginPerKg` is shown, editable and sent to proposals, but no price uses it (L12).
-- `user.canDraft` is stored and shown, but drafting is decided by the Draft access level (L10).
-- `acknowledgments` in the seed are not displayed (L19).
-- `quotes` have no code that writes them (L18).
-- The inline client editor in Configuration (`saveInline`) has no inputs rendered, so it cannot run (L31).
-- `store.exportJson`, `store.importJson` and `store.reset` have no button in the app.
+- **VAT rate (12%) and "VAT inclusive":** stored, not used (see L23).
+- **Fixed margin:** shown and saved, but it does not change any price (see L12).
+- **"May draft" tick box:** stored, not used (see L10).
+- **Seeded acknowledgments:** stored, not shown (see L19).
+- **Quote records:** the app never creates them (see L18).
 
 ---
 
-## 4. Open questions that change formulas
+## 8. Questions to answer
 
-These are decided by you, not by code. Each one changes a number on the pages above.
+- **Q1. Floor:** should the floor include premiums and discounts? Today it does not.
+- **Q2. VAT:** should prices show VAT? If yes, inclusive or added on top?
+- **Q3. Dealer future price:** should it include premiums and discounts, like Client Pricing does?
+- **Q4. Price requests:** should a new request be measured against the approved sub-version price, not the version price?
 
-- **Floor.** The README still lists the floor definition as open. Today it is acquisition + hauling + margin, with no premiums or discounts.
-- **VAT.** Prices carry no VAT. Is quotation or the price list to show VAT, and how (inclusive or on top)?
-- **Future price, Dealer sheet.** Should it include premiums and discounts, as Client Pricing does?
-- **Approved sub-versions in price requests.** Should a new request be measured against the sub-version price, not the version price?
+---
+
+## 9. Sign-off
+
+Please mark each section.
+
+| Section | Approve | Change needed | Comment |
+|---|---|---|---|
+| 2. Channel price | ☐ | ☐ | |
+| 3. Client price | ☐ | ☐ | |
+| 4. Volume bands | ☐ | ☐ | |
+| 5. Floor | ☐ | ☐ | |
+| 6.1 Quote desk | ☐ | ☐ | |
+| 6.2 Price lists | ☐ | ☐ | |
+| 6.3 Channels board | ☐ | ☐ | |
+| 6.4 Client Pricing | ☐ | ☐ | |
+| 6.5 Dealer sheet | ☐ | ☐ | |
+| 6.6 Price History | ☐ | ☐ | |
+| 6.7 PL Notices | ☐ | ☐ | |
+| 6.8 Proposals | ☐ | ☐ | |
+| 6.9 Price Watch | ☐ | ☐ | |
+| 6.10 Price requests | ☐ | ☐ | |
+| 6.11 Notifications | ☐ | ☐ | |
+| 6.12 Log | ☐ | ☐ | |
+| 6.13 Configuration | ☐ | ☐ | |
+
+Answers to Q1 to Q4: ____________________________________________
+
+Name: ____________________________ Date: ______________ Signature: ____________________
 
 ---
 
 ## Change log
 
-- **2026-11-03.** First version, from the code at `3ce6b5c` plus working changes.
+- **2026-11-04.** Rewritten in plain language. Sign-off section added.
+- **2026-11-03.** First version.
